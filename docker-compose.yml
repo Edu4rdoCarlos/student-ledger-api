@@ -13,6 +13,9 @@ services:
       - MONGODB_URI=mongodb://mongo:mongo@mongodb:27017/student_ledger?authSource=admin
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - JWT_EXPIRES_IN=1d
+      - IPFS_API_URL=http://student-ledger-ipfs:5001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       postgres:
         condition: service_healthy
@@ -22,6 +25,9 @@ services:
       - .:/app
       - /app/node_modules
     command: npm run start:dev
+    networks:
+      - internal
+      - student-ledger-network
 
   postgres:
     image: postgres:15-alpine
@@ -39,6 +45,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal
 
   mongodb:
     image: mongo:7
@@ -56,7 +64,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: student-ledger-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal
 
 volumes:
   postgres_data:
   mongodb_data:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge
+  student-ledger-network:
+    external: true

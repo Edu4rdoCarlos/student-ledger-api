@@ -1,0 +1,73 @@
+export type OrgName = 'coordenacao' | 'orientador' | 'aluno';
+
+export type UserRole = 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+
+export type ResultadoDefesa = 'APROVADO' | 'REPROVADO';
+
+export interface FabricUser {
+  id: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface DocumentSignature {
+  role: 'coordenador' | 'orientador' | 'aluno';
+  email: string;
+  mspId: string;
+  timestamp: string;
+}
+
+export interface DocumentRecord {
+  documentId: string;
+  ipfsCid: string;
+  matricula: string;
+  defenseDate: string;
+  notaFinal: number;
+  resultado: ResultadoDefesa;
+  versao: number;
+  motivo: string;
+  registeredBy: string;
+  status: 'APROVADO';
+  signatures: DocumentSignature[];
+  validatedAt: string;
+}
+
+export interface VerifyDocumentResult {
+  valid: boolean;
+  reason: string;
+  document: DocumentRecord | null;
+}
+
+export interface FabricHealthStatus {
+  status: 'ok' | 'error';
+  message: string;
+}
+
+export interface IFabricGateway {
+  healthCheck(): Promise<FabricHealthStatus>;
+  getOrgForRole(role: UserRole): OrgName;
+  getMspIdForRole(role: 'coordenador' | 'orientador' | 'aluno'): string;
+
+  registerDocument(
+    user: FabricUser,
+    ipfsCid: string,
+    matricula: string,
+    defenseDate: string,
+    notaFinal: number,
+    resultado: ResultadoDefesa,
+    motivo: string,
+    signatures: DocumentSignature[],
+    validatedAt: string,
+  ): Promise<DocumentRecord>;
+
+  verifyDocument(user: FabricUser, ipfsCid: string): Promise<VerifyDocumentResult>;
+  getLatestDocument(user: FabricUser, matricula: string): Promise<DocumentRecord>;
+  getDocument(user: FabricUser, matricula: string, versao: number): Promise<DocumentRecord>;
+  getDocumentHistory(user: FabricUser, matricula: string): Promise<DocumentRecord[]>;
+  getDocumentModificationHistory(user: FabricUser, matricula: string, versao: number): Promise<any[]>;
+  getApprovedDocument(user: FabricUser, matricula: string): Promise<DocumentRecord>;
+  documentExists(user: FabricUser, matricula: string): Promise<boolean>;
+  getVersionCount(user: FabricUser, matricula: string): Promise<number>;
+}
+
+export const FABRIC_GATEWAY = Symbol('IFabricGateway');
