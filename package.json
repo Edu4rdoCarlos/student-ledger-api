@@ -23,7 +23,8 @@
     "prisma:migrate": "prisma migrate dev --schema=prisma/models",
     "prisma:migrate:prod": "prisma migrate deploy --schema=prisma/models",
     "prisma:studio": "prisma studio --schema=prisma/models",
-    "prisma:validate": "prisma validate --schema=prisma/models"
+    "prisma:validate": "prisma validate --schema=prisma/models",
+    "prisma:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
