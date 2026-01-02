@@ -1,0 +1,95 @@
+import { Injectable } from '@nestjs/common';
+import { Document as PrismaDocument } from '@prisma/client';
+import { PrismaService } from '../../../../shared/infra/prisma';
+import { Document, DocumentType } from '../../domain/entities';
+import { IDocumentRepository, DocumentFilters } from '../../application/ports';
+import { DocumentMapper } from './document.mapper';
+
+@Injectable()
+export class PrismaDocumentRepository implements IDocumentRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(document: Document): Promise<Document> {
+    const data = DocumentMapper.toPrisma(document);
+    const created = await this.prisma.document.create({ data });
+    return DocumentMapper.toDomain(created);
+  }
+
+  async findById(id: string): Promise<Document | null> {
+    const found = await this.prisma.document.findUnique({ where: { id } });
+    return found ? DocumentMapper.toDomain(found) : null;
+  }
+
+  async findByHash(hash: string): Promise<Document | null> {
+    const found = await this.prisma.document.findFirst({
+      where: { documentoHash: hash },
+    });
+    return found ? DocumentMapper.toDomain(found) : null;
+  }
+
+  async findByDefenseId(defenseId: string): Promise<Document[]> {
+    const documents = await this.prisma.document.findMany({
+      where: { defenseId },
+      orderBy: [{ tipo: 'asc' }, { versao: 'desc' }],
+    });
+    return documents.map(DocumentMapper.toDomain);
+  }
+
+  async findLatestVersion(defenseId: string, tipo: DocumentType): Promise<Document | null> {
+    const found = await this.prisma.document.findFirst({
+      where: { defenseId, tipo },
+      orderBy: { versao: 'desc' },
+    });
+    return found ? DocumentMapper.toDomain(found) : null;
+  }
+
+  async findAll(filters?: DocumentFilters): Promise<Document[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        status: filters?.status,
+        tipo: filters?.tipo,
+        defenseId: filters?.defenseId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return documents.map(DocumentMapper.toDomain);
+  }
+
+  async findHistory(documentId: string): Promise<Document[]> {
+    const history: Document[] = [];
+    let currentId: string | null = documentId;
+
+    while (currentId) {
+      const doc: PrismaDocument | null = await this.prisma.document.findUnique({
+        where: { id: currentId },
+      });
+
+      if (!doc) break;
+
+      history.push(DocumentMapper.toDomain(doc));
+      currentId = doc.previousVersionId;
+    }
+
+    return history;
+  }
+
+  async update(document: Document): Promise<Document> {
+    const data = DocumentMapper.toPrisma(document);
+    const updated = await this.prisma.document.update({
+      where: { id: document.id },
+      data,
+    });
+    return DocumentMapper.toDomain(updated);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.document.delete({ where: { id } });
+  }
+
+  async existsByHash(hash: string): Promise<boolean> {
+    const count = await this.prisma.document.count({
+      where: { documentoHash: hash },
+    });
+    return count > 0;
+  }
+}

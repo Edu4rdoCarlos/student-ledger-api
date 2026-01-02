@@ -1,0 +1,38 @@
+// ============================================
+// APROVACAO - Fluxo multi-peer
+// ============================================
+
+model Approval {
+  id            String         @id @default(uuid())
+  role          ApprovalRole
+  status        ApprovalStatus @default(PENDENTE)
+  justificativa String? // Obrigatorio se rejeitado
+  code          String?        @db.VarChar(6) // Codigo de verificacao
+  codeExpiresAt DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relacionamentos
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id])
+  approverId String?
+  approver   User?    @relation(fields: [approverId], references: [id])
+
+  @@unique([documentId, role])
+  @@index([documentId])
+  @@index([approverId])
+  @@index([status])
+}
+
+enum ApprovalRole {
+  COORDENADOR
+  ORIENTADOR
+  ALUNO
+}
+
+enum ApprovalStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
