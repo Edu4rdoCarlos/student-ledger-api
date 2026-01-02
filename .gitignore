@@ -35,5 +35,5 @@ prisma/migrations/**/migration_lock.toml
 tmp/
 temp/
 
-# Docs (guia interno)
-docs/
+# Docs (guia interno - apenas na raiz)
+/docs/
