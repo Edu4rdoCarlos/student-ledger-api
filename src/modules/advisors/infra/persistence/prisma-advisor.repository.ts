@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/prisma';
 import { Advisor } from '../../domain/entities';
-import { IAdvisorRepository } from '../../application/ports';
+import { IAdvisorRepository, FindAllOptions, FindAllResult } from '../../application/ports';
 import { AdvisorMapper } from './advisor.mapper';
 
 @Injectable()
@@ -32,11 +32,23 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     return advisors.map(AdvisorMapper.toDomain);
   }
 
-  async findAll(): Promise<Advisor[]> {
-    const advisors = await this.prisma.advisor.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-    return advisors.map(AdvisorMapper.toDomain);
+  async findAll(options?: FindAllOptions): Promise<FindAllResult> {
+    const where = options?.courseId ? { courseId: options.courseId } : {};
+
+    const [items, total] = await Promise.all([
+      this.prisma.advisor.findMany({
+        where,
+        skip: options?.skip,
+        take: options?.take,
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.advisor.count({ where }),
+    ]);
+
+    return {
+      items: items.map(AdvisorMapper.toDomain),
+      total,
+    };
   }
 
   async update(advisor: Advisor): Promise<Advisor> {

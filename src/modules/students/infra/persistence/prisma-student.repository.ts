@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../shared/prisma';
 import { Student } from '../../domain/entities';
-import { IStudentRepository } from '../../application/ports';
+import { IStudentRepository, FindAllOptions, FindAllResult } from '../../application/ports';
 import { StudentMapper } from './student.mapper';
 
 @Injectable()
@@ -37,11 +37,23 @@ export class PrismaStudentRepository implements IStudentRepository {
     return students.map(StudentMapper.toDomain);
   }
 
-  async findAll(): Promise<Student[]> {
-    const students = await this.prisma.student.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-    return students.map(StudentMapper.toDomain);
+  async findAll(options?: FindAllOptions): Promise<FindAllResult> {
+    const where = options?.courseId ? { courseId: options.courseId } : {};
+
+    const [items, total] = await Promise.all([
+      this.prisma.student.findMany({
+        where,
+        skip: options?.skip,
+        take: options?.take,
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.student.count({ where }),
+    ]);
+
+    return {
+      items: items.map(StudentMapper.toDomain),
+      total,
+    };
   }
 
   async update(student: Student): Promise<Student> {
