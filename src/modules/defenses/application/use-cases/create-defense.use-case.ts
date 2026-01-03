@@ -6,8 +6,8 @@ import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/applic
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 
 interface CreateDefenseRequest {
-  titulo: string;
-  dataDefesa: Date;
+  title: string;
+  defenseDate: Date;
   advisorId: string;
   studentIds: string[];
 }
@@ -42,11 +42,11 @@ export class CreateDefenseUseCase {
     }
 
     const defense = Defense.create({
-      titulo: request.titulo,
-      dataDefesa: request.dataDefesa,
+      title: request.title,
+      defenseDate: request.defenseDate,
       advisorId: request.advisorId,
       studentIds: request.studentIds,
-      resultado: 'PENDENTE',
+      result: 'PENDING',
     });
 
     return this.defenseRepository.create(defense);

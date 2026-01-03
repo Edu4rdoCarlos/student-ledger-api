@@ -1,19 +1,19 @@
 model Defense {
-  id         String        @id @default(uuid())
-  titulo     String
-  dataDefesa DateTime
-  notaFinal  Float?
-  resultado  DefenseResult @default(PENDENTE)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id          String        @id @default(uuid())
+  title       String
+  defenseDate DateTime
+  finalGrade  Float?
+  result      DefenseResult @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   advisorId String
-  advisor   Advisor           @relation(fields: [advisorId], references: [id])
+  advisor   Advisor          @relation(fields: [advisorId], references: [id])
   students  DefenseStudent[]
   documents Document[]
 
   @@index([advisorId])
-  @@index([resultado])
+  @@index([result])
 }
 
 model DefenseStudent {
@@ -31,7 +31,7 @@ model DefenseStudent {
 }
 
 enum DefenseResult {
-  PENDENTE
-  APROVADO
-  REPROVADO
+  PENDING
+  APPROVED
+  FAILED
 }

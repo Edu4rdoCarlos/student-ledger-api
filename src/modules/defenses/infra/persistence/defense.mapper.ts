@@ -9,10 +9,10 @@ export class DefenseMapper {
   static toDomain(prisma: DefenseWithStudents): Defense {
     return Defense.create(
       {
-        titulo: prisma.titulo,
-        dataDefesa: prisma.dataDefesa,
-        notaFinal: prisma.notaFinal ?? undefined,
-        resultado: prisma.resultado as 'PENDENTE' | 'APROVADO' | 'REPROVADO',
+        title: prisma.title,
+        defenseDate: prisma.defenseDate,
+        finalGrade: prisma.finalGrade ?? undefined,
+        result: prisma.result as 'PENDING' | 'APPROVED' | 'FAILED',
         advisorId: prisma.advisorId,
         studentIds: prisma.students.map((s) => s.studentId),
         createdAt: prisma.createdAt,
@@ -25,10 +25,10 @@ export class DefenseMapper {
   static toPrisma(defense: Defense) {
     return {
       id: defense.id,
-      titulo: defense.titulo,
-      dataDefesa: defense.dataDefesa,
-      notaFinal: defense.notaFinal ?? null,
-      resultado: defense.resultado,
+      title: defense.title,
+      defenseDate: defense.defenseDate,
+      finalGrade: defense.finalGrade ?? null,
+      result: defense.result,
       advisorId: defense.advisorId,
       createdAt: defense.createdAt,
       updatedAt: defense.updatedAt,

@@ -292,10 +292,10 @@ async function main() {
     update: {},
     create: {
       id: 'defense-aprovada',
-      titulo: 'Sistema Distribuído para Gerenciamento de Documentos Acadêmicos usando Blockchain',
-      dataDefesa: new Date('2024-12-15T14:00:00Z'),
-      notaFinal: 9.5,
-      resultado: DefenseResult.APROVADO,
+      title: 'Sistema Distribuído para Gerenciamento de Documentos Acadêmicos usando Blockchain',
+      defenseDate: new Date('2024-12-15T14:00:00Z'),
+      finalGrade: 9.5,
+      result: DefenseResult.APPROVED,
       advisorId: advisor1.id,
       students: {
         create: {
@@ -310,10 +310,10 @@ async function main() {
     update: {},
     create: {
       id: 'defense-reprovada',
-      titulo: 'Análise de Algoritmos de Machine Learning para Detecção de Fraudes',
-      dataDefesa: new Date('2024-11-20T10:00:00Z'),
-      notaFinal: 4.0,
-      resultado: DefenseResult.REPROVADO,
+      title: 'Análise de Algoritmos de Machine Learning para Detecção de Fraudes',
+      defenseDate: new Date('2024-11-20T10:00:00Z'),
+      finalGrade: 4.0,
+      result: DefenseResult.FAILED,
       advisorId: advisor2.id,
       students: {
         create: {
@@ -328,9 +328,9 @@ async function main() {
     update: {},
     create: {
       id: 'defense-pendente',
-      titulo: 'Desenvolvimento de API RESTful com Arquitetura Hexagonal',
-      dataDefesa: new Date('2025-02-10T09:00:00Z'),
-      resultado: DefenseResult.PENDENTE,
+      title: 'Desenvolvimento de API RESTful com Arquitetura Hexagonal',
+      defenseDate: new Date('2025-02-10T09:00:00Z'),
+      result: DefenseResult.PENDING,
       advisorId: advisor1.id,
       students: {
         create: {
@@ -340,9 +340,9 @@ async function main() {
     },
   });
 
-  console.log(`  ✓ "${defenseAprovada.titulo.substring(0, 50)}..." (APROVADO)`);
-  console.log(`  ✓ "${defenseReprovada.titulo.substring(0, 50)}..." (REPROVADO)`);
-  console.log(`  ✓ "${defensePendente.titulo.substring(0, 50)}..." (aguardando)`);
+  console.log(`  ✓ "${defenseAprovada.title.substring(0, 50)}..." (APROVADO)`);
+  console.log(`  ✓ "${defenseReprovada.title.substring(0, 50)}..." (REPROVADO)`);
+  console.log(`  ✓ "${defensePendente.title.substring(0, 50)}..." (PENDENTE)`);
 
   console.log('\n📄 Creating Documents...');
 

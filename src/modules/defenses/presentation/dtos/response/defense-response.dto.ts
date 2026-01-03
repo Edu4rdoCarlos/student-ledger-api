@@ -6,16 +6,16 @@ export class DefenseResponseDto {
   id: string;
 
   @ApiProperty()
-  titulo: string;
+  title: string;
 
   @ApiProperty()
-  dataDefesa: Date;
+  defenseDate: Date;
 
   @ApiProperty({ required: false })
-  notaFinal?: number;
+  finalGrade?: number;
 
-  @ApiProperty({ enum: ['PENDENTE', 'APROVADO', 'REPROVADO'] })
-  resultado: string;
+  @ApiProperty({ enum: ['PENDING', 'APPROVED', 'FAILED'] })
+  result: string;
 
   @ApiProperty()
   advisorId: string;
@@ -32,10 +32,10 @@ export class DefenseResponseDto {
   static fromEntity(defense: Defense): DefenseResponseDto {
     return {
       id: defense.id,
-      titulo: defense.titulo,
-      dataDefesa: defense.dataDefesa,
-      notaFinal: defense.notaFinal,
-      resultado: defense.resultado,
+      title: defense.title,
+      defenseDate: defense.defenseDate,
+      finalGrade: defense.finalGrade,
+      result: defense.result,
       advisorId: defense.advisorId,
       studentIds: defense.studentIds,
       createdAt: defense.createdAt,

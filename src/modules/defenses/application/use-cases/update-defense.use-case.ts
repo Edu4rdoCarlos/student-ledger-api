@@ -5,8 +5,8 @@ import { DefenseNotFoundError } from '../../domain/errors';
 
 interface UpdateDefenseRequest {
   id: string;
-  titulo?: string;
-  dataDefesa?: Date;
+  title?: string;
+  defenseDate?: Date;
 }
 
 @Injectable()
@@ -23,8 +23,8 @@ export class UpdateDefenseUseCase {
     }
 
     defense.update({
-      titulo: request.titulo,
-      dataDefesa: request.dataDefesa,
+      title: request.title,
+      defenseDate: request.defenseDate,
     });
 
     return this.defenseRepository.update(defense);

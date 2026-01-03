@@ -2,24 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsUUID, IsDateString, IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 
 export class CreateDefenseDto {
-  @ApiProperty({ example: 'Defesa de TCC - Sistema de Gerenciamento', description: 'Título da defesa' })
+  @ApiProperty({ example: 'Thesis Defense - Management System', description: 'Defense title' })
   @IsString()
   @IsNotEmpty()
-  titulo: string;
+  title: string;
 
-  @ApiProperty({ example: '2024-12-20T14:00:00Z', description: 'Data e hora da defesa' })
+  @ApiProperty({ example: '2024-12-20T14:00:00Z', description: 'Defense date and time' })
   @IsDateString()
   @IsNotEmpty()
-  dataDefesa: string;
+  defenseDate: string;
 
-  @ApiProperty({ example: 'uuid-do-orientador', description: 'ID do orientador' })
+  @ApiProperty({ example: 'advisor-uuid', description: 'Advisor ID' })
   @IsUUID()
   @IsNotEmpty()
   advisorId: string;
 
   @ApiProperty({
-    example: ['uuid-estudante-1', 'uuid-estudante-2'],
-    description: 'IDs dos estudantes (mínimo 1, máximo 2)',
+    example: ['student-uuid-1', 'student-uuid-2'],
+    description: 'Student IDs (minimum 1, maximum 2)',
     type: [String]
   })
   @IsArray()

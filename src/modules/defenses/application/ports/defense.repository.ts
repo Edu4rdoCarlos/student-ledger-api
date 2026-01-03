@@ -4,7 +4,7 @@ export interface FindAllOptions {
   skip?: number;
   take?: number;
   advisorId?: string;
-  resultado?: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  result?: 'PENDING' | 'APPROVED' | 'FAILED';
 }
 
 export interface FindAllResult {

@@ -48,7 +48,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     const where: any = {};
     if (options?.advisorId) where.advisorId = options.advisorId;
-    if (options?.resultado) where.resultado = options.resultado;
+    if (options?.result) where.result = options.result;
 
     const [items, total] = await Promise.all([
       this.prisma.defense.findMany({
@@ -84,8 +84,8 @@ export class PrismaDefenseRepository implements IDefenseRepository {
       where: {
         studentId,
         defense: {
-          resultado: {
-            in: ['PENDENTE', 'APROVADO'],
+          result: {
+            in: ['PENDING', 'APPROVED'],
           },
         },
       },

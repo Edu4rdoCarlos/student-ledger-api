@@ -50,7 +50,7 @@ export class DefenseController {
   ): Promise<DefenseResponseDto> {
     const defense = await this.createDefenseUseCase.execute({
       ...createDefenseDto,
-      dataDefesa: new Date(createDefenseDto.dataDefesa),
+      defenseDate: new Date(createDefenseDto.defenseDate),
     });
     return DefenseResponseDto.fromEntity(defense);
   }
@@ -60,13 +60,13 @@ export class DefenseController {
   @ApiOperation({ summary: 'List all defenses' })
   async findAll(
     @Query('advisorId') advisorId?: string,
-    @Query('resultado') resultado?: 'PENDENTE' | 'APROVADO' | 'REPROVADO',
+    @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
     @Query('skip') skip?: string,
     @Query('take') take?: string,
   ): Promise<DefenseResponseDto[]> {
     const options = {
       advisorId,
-      resultado,
+      result,
       skip: skip ? parseInt(skip, 10) : undefined,
       take: take ? parseInt(take, 10) : undefined,
     };
@@ -92,9 +92,9 @@ export class DefenseController {
   ): Promise<DefenseResponseDto> {
     const defense = await this.updateDefenseUseCase.execute({
       id,
-      titulo: updateDefenseDto.titulo,
-      dataDefesa: updateDefenseDto.dataDefesa
-        ? new Date(updateDefenseDto.dataDefesa)
+      title: updateDefenseDto.title,
+      defenseDate: updateDefenseDto.defenseDate
+        ? new Date(updateDefenseDto.defenseDate)
         : undefined,
     });
     return DefenseResponseDto.fromEntity(defense);
@@ -109,7 +109,7 @@ export class DefenseController {
   ): Promise<DefenseResponseDto> {
     const defense = await this.setGradeUseCase.execute({
       id,
-      notaFinal: setGradeDto.notaFinal,
+      finalGrade: setGradeDto.finalGrade,
     });
     return DefenseResponseDto.fromEntity(defense);
   }

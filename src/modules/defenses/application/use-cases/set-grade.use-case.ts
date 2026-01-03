@@ -5,7 +5,7 @@ import { DefenseNotFoundError } from '../../domain/errors';
 
 interface SetGradeRequest {
   id: string;
-  notaFinal: number;
+  finalGrade: number;
 }
 
 @Injectable()
@@ -21,7 +21,7 @@ export class SetGradeUseCase {
       throw new DefenseNotFoundError();
     }
 
-    defense.setNota(request.notaFinal);
+    defense.setGrade(request.finalGrade);
 
     return this.defenseRepository.update(defense);
   }

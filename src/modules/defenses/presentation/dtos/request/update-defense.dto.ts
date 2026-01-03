@@ -2,13 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class UpdateDefenseDto {
-  @ApiProperty({ example: 'Defesa de TCC - Sistema Atualizado', description: 'Título da defesa', required: false })
+  @ApiProperty({ example: 'Thesis Defense - Updated System', description: 'Defense title', required: false })
   @IsString()
   @IsOptional()
-  titulo?: string;
+  title?: string;
 
-  @ApiProperty({ example: '2024-12-21T14:00:00Z', description: 'Data e hora da defesa', required: false })
+  @ApiProperty({ example: '2024-12-21T14:00:00Z', description: 'Defense date and time', required: false })
   @IsDateString()
   @IsOptional()
-  dataDefesa?: string;
+  defenseDate?: string;
 }

@@ -9,8 +9,8 @@ export class StudentAlreadyHasActiveDefenseError extends Error {
   constructor(studentId?: string) {
     super(
       studentId
-        ? `Estudante já possui uma defesa ativa (PENDENTE ou APROVADO): ${studentId}`
-        : 'Estudante já possui uma defesa ativa (PENDENTE ou APROVADO)',
+        ? `Estudante já possui uma defesa ativa (PENDENTE ou APROVADA): ${studentId}`
+        : 'Estudante já possui uma defesa ativa (PENDENTE ou APROVADA)',
     );
     this.name = 'StudentAlreadyHasActiveDefenseError';
   }
@@ -24,8 +24,8 @@ export class TooManyStudentsError extends Error {
 }
 
 export class InvalidGradeError extends Error {
-  constructor(nota: number) {
-    super(`Nota inválida: ${nota}. Nota deve estar entre 0 e 10`);
+  constructor(grade: number) {
+    super(`Nota inválida: ${grade}. A nota deve estar entre 0 e 10`);
     this.name = 'InvalidGradeError';
   }
 }

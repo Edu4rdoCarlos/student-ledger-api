@@ -1,8 +1,8 @@
 export interface DefenseProps {
-  titulo: string;
-  dataDefesa: Date;
-  notaFinal?: number;
-  resultado: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  title: string;
+  defenseDate: Date;
+  finalGrade?: number;
+  result: 'PENDING' | 'APPROVED' | 'FAILED';
   advisorId: string;
   studentIds: string[];
   createdAt?: Date;
@@ -29,7 +29,7 @@ export class Defense {
     return new Defense(
       {
         ...props,
-        resultado: props.resultado ?? 'PENDENTE',
+        result: props.result ?? 'PENDING',
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
@@ -41,20 +41,20 @@ export class Defense {
     return this._id;
   }
 
-  get titulo(): string {
-    return this.props.titulo;
+  get title(): string {
+    return this.props.title;
   }
 
-  get dataDefesa(): Date {
-    return this.props.dataDefesa;
+  get defenseDate(): Date {
+    return this.props.defenseDate;
   }
 
-  get notaFinal(): number | undefined {
-    return this.props.notaFinal;
+  get finalGrade(): number | undefined {
+    return this.props.finalGrade;
   }
 
-  get resultado(): 'PENDENTE' | 'APROVADO' | 'REPROVADO' {
-    return this.props.resultado;
+  get result(): 'PENDING' | 'APPROVED' | 'FAILED' {
+    return this.props.result;
   }
 
   get advisorId(): string {
@@ -73,19 +73,19 @@ export class Defense {
     return this.props.updatedAt!;
   }
 
-  setNota(nota: number): void {
-    if (nota < 0 || nota > 10) {
-      throw new Error('Nota deve estar entre 0 e 10');
+  setGrade(grade: number): void {
+    if (grade < 0 || grade > 10) {
+      throw new Error('A nota deve estar entre 0 e 10');
     }
 
-    this.props.notaFinal = nota;
-    this.props.resultado = nota >= 7 ? 'APROVADO' : 'REPROVADO';
+    this.props.finalGrade = grade;
+    this.props.result = grade >= 7 ? 'APPROVED' : 'FAILED';
     this.props.updatedAt = new Date();
   }
 
-  update(data: Partial<Pick<DefenseProps, 'titulo' | 'dataDefesa'>>): void {
-    if (data.titulo !== undefined) this.props.titulo = data.titulo;
-    if (data.dataDefesa !== undefined) this.props.dataDefesa = data.dataDefesa;
+  update(data: Partial<Pick<DefenseProps, 'title' | 'defenseDate'>>): void {
+    if (data.title !== undefined) this.props.title = data.title;
+    if (data.defenseDate !== undefined) this.props.defenseDate = data.defenseDate;
     this.props.updatedAt = new Date();
   }
 }
