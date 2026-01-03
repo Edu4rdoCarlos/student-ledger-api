@@ -10,9 +10,9 @@ import {
 } from '../../application/use-cases';
 import { CreateCourseDto, UpdateCourseDto } from '../dtos';
 
-@ApiTags('Cursos')
+@ApiTags('Courses')
 @ApiBearerAuth()
-@Controller('cursos')
+@Controller('courses')
 export class CoursesController {
   constructor(
     private readonly createCourse: CreateCourseUseCase,

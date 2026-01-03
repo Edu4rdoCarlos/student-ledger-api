@@ -12,9 +12,9 @@ import {
 import { CreateStudentDto, UpdateStudentDto } from '../dtos';
 import { ChangePasswordDto } from '../../../../shared/dtos';
 
-@ApiTags('Alunos')
+@ApiTags('Students')
 @ApiBearerAuth()
-@Controller('alunos')
+@Controller('students')
 export class StudentsController {
   constructor(
     private readonly createStudent: CreateStudentUseCase,

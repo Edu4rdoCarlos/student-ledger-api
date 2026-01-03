@@ -28,9 +28,9 @@ import {
 } from '../dtos/request';
 import { DefenseResponseDto } from '../dtos/response';
 
-@ApiTags('Defesas')
+@ApiTags('Defenses')
 @ApiBearerAuth()
-@Controller('defesas')
+@Controller('defenses')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DefenseController {
   constructor(

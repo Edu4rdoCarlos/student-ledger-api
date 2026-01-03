@@ -12,9 +12,9 @@ import {
 import { CreateAdvisorDto, UpdateAdvisorDto } from '../dtos';
 import { ChangePasswordDto } from '../../../../shared/dtos';
 
-@ApiTags('Orientadores')
+@ApiTags('Advisors')
 @ApiBearerAuth()
-@Controller('orientadores')
+@Controller('advisors')
 export class AdvisorsController {
   constructor(
     private readonly createAdvisor: CreateAdvisorUseCase,
