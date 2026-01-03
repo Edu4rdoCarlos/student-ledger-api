@@ -296,8 +296,12 @@ async function main() {
       dataDefesa: new Date('2024-12-15T14:00:00Z'),
       notaFinal: 9.5,
       resultado: DefenseResult.APROVADO,
-      studentId: student1.id,
       advisorId: advisor1.id,
+      students: {
+        create: {
+          studentId: student1.id,
+        },
+      },
     },
   });
 
@@ -310,8 +314,12 @@ async function main() {
       dataDefesa: new Date('2024-11-20T10:00:00Z'),
       notaFinal: 4.0,
       resultado: DefenseResult.REPROVADO,
-      studentId: student2.id,
       advisorId: advisor2.id,
+      students: {
+        create: {
+          studentId: student2.id,
+        },
+      },
     },
   });
 
@@ -322,9 +330,13 @@ async function main() {
       id: 'defense-pendente',
       titulo: 'Desenvolvimento de API RESTful com Arquitetura Hexagonal',
       dataDefesa: new Date('2025-02-10T09:00:00Z'),
-      resultado: DefenseResult.APROVADO,
-      studentId: student3.id,
+      resultado: DefenseResult.PENDENTE,
       advisorId: advisor1.id,
+      students: {
+        create: {
+          studentId: student3.id,
+        },
+      },
     },
   });
 

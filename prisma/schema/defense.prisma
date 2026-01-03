@@ -3,22 +3,35 @@ model Defense {
   titulo     String
   dataDefesa DateTime
   notaFinal  Float?
-  resultado  DefenseResult
+  resultado  DefenseResult @default(PENDENTE)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  studentId String
-  student   Student    @relation(fields: [studentId], references: [id])
   advisorId String
-  advisor   Advisor    @relation(fields: [advisorId], references: [id])
+  advisor   Advisor           @relation(fields: [advisorId], references: [id])
+  students  DefenseStudent[]
   documents Document[]
 
-  @@index([studentId])
   @@index([advisorId])
   @@index([resultado])
 }
 
+model DefenseStudent {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  defenseId String
+  defense   Defense @relation(fields: [defenseId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@unique([defenseId, studentId])
+  @@index([defenseId])
+  @@index([studentId])
+}
+
 enum DefenseResult {
+  PENDENTE
   APROVADO
   REPROVADO
 }

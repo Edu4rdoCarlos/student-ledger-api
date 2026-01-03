@@ -8,8 +8,8 @@ model Student {
   user   User   @relation(fields: [userId], references: [id])
 
   courseId String
-  course   Course    @relation(fields: [courseId], references: [id])
-  defenses Defense[]
+  course   Course            @relation(fields: [courseId], references: [id])
+  defenses DefenseStudent[]
 
   @@index([courseId])
 }

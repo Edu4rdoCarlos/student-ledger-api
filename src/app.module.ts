@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { StudentsModule } from './modules/students/students.module';
 import { AdvisorsModule } from './modules/advisors/advisors.module';
 import { CoursesModule } from './modules/courses/courses.module';
+import { DefensesModule } from './modules/defenses/defenses.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { FabricModule } from './modules/fabric/fabric.module';
 import { IpfsModule } from './modules/ipfs/ipfs.module';
@@ -38,6 +39,7 @@ import { IpfsModule } from './modules/ipfs/ipfs.module';
     StudentsModule,
     AdvisorsModule,
     CoursesModule,
+    DefensesModule,
     DocumentsModule,
     FabricModule,
     IpfsModule,
