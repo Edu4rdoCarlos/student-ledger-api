@@ -1,9 +1,6 @@
-import { Inject, Injectable, ConflictException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
-import {
-  StudentNotFoundError,
-  CourseNotFoundError,
-} from '../../domain/errors';
+import { StudentNotFoundError } from '../../domain/errors';
 import { UpdateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { PrismaService } from '../../../../shared/prisma';
 
@@ -19,15 +16,6 @@ export class UpdateStudentUseCase {
     const student = await this.studentRepository.findByMatricula(matricula);
     if (!student) {
       throw new StudentNotFoundError(matricula);
-    }
-
-    if (dto.courseId) {
-      const course = await this.prisma.course.findUnique({
-        where: { id: dto.courseId },
-      });
-      if (!course) {
-        throw new CourseNotFoundError(dto.courseId);
-      }
     }
 
     const result = await this.prisma.$transaction(async (tx) => {

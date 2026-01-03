@@ -3,10 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Student } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
-import {
-  StudentMatriculaAlreadyExistsError,
-  CourseNotFoundError,
-} from '../../domain/errors';
+import { StudentMatriculaAlreadyExistsError } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { PrismaService } from '../../../../shared/prisma';
 
@@ -19,13 +16,6 @@ export class CreateStudentUseCase {
   ) {}
 
   async execute(dto: CreateStudentDto): Promise<StudentResponseDto> {
-    const course = await this.prisma.course.findUnique({
-      where: { id: dto.courseId },
-    });
-    if (!course) {
-      throw new CourseNotFoundError(dto.courseId);
-    }
-
     const matriculaExists = await this.studentRepository.existsByMatricula(dto.matricula);
     if (matriculaExists) {
       throw new StudentMatriculaAlreadyExistsError(dto.matricula);

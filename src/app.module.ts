@@ -9,6 +9,7 @@ import { PrismaModule, JwtAuthGuard, RolesGuard } from './shared';
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
 import { StudentsModule } from './modules/students/students.module';
+import { CoursesModule } from './modules/courses/courses.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { FabricModule } from './modules/fabric/fabric.module';
 import { IpfsModule } from './modules/ipfs/ipfs.module';
@@ -34,6 +35,7 @@ import { IpfsModule } from './modules/ipfs/ipfs.module';
     // Feature Modules
     AuthModule,
     StudentsModule,
+    CoursesModule,
     DocumentsModule,
     FabricModule,
     IpfsModule,
