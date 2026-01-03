@@ -1,5 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Res, Req, Inject, UnauthorizedException } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { LoginUseCase, RefreshTokensUseCase, LogoutUseCase } from '../../application/use-cases';
 import { ICookieService, COOKIE_SERVICE } from '../../application/ports';
@@ -23,9 +23,12 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Realizar login' })
-  @ApiResponse({ status: 200, description: 'Login realizado com sucesso', type: LoginHttpResponseDto })
-  @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
+  @ApiOperation({
+    summary: 'Realizar login',
+    description: 'Autentica o usuario e retorna um access token. O refresh token e enviado via cookie HTTP-only.',
+  })
+  @ApiResponse({ status: 200, description: 'Login realizado com sucesso. Refresh token enviado via cookie HTTP-only.', type: LoginHttpResponseDto })
+  @ApiResponse({ status: 401, description: 'Credenciais invalidas' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -40,9 +43,13 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Renovar token de acesso usando refresh token do cookie' })
-  @ApiResponse({ status: 200, description: 'Token renovado com sucesso', type: LoginHttpResponseDto })
-  @ApiResponse({ status: 401, description: 'Refresh token inválido ou expirado' })
+  @ApiCookieAuth('refresh_token')
+  @ApiOperation({
+    summary: 'Renovar tokens',
+    description: 'Renova o access token usando o refresh token do cookie. Implementa rotacao de tokens: o refresh token atual e revogado e um novo e gerado.',
+  })
+  @ApiResponse({ status: 200, description: 'Tokens renovados com sucesso. Novo refresh token enviado via cookie HTTP-only.', type: LoginHttpResponseDto })
+  @ApiResponse({ status: 401, description: 'Refresh token invalido, expirado ou revogado' })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -63,13 +70,17 @@ export class AuthController {
 
   @Public()
   @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Realizar logout (limpar refresh token)' })
-  @ApiResponse({ status: 200, description: 'Logout realizado com sucesso' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCookieAuth('refresh_token')
+  @ApiOperation({
+    summary: 'Realizar logout',
+    description: 'Revoga o refresh token no banco de dados e limpa o cookie. Tokens existentes sao invalidados.',
+  })
+  @ApiResponse({ status: 204, description: 'Logout realizado com sucesso' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<HttpResponse<{ message: string }>> {
+  ): Promise<void> {
     const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
 
     if (refreshToken) {
@@ -77,7 +88,5 @@ export class AuthController {
     }
 
     this.cookieService.clearRefreshToken(res);
-
-    return HttpResponseSerializer.serialize({ message: 'Logout realizado com sucesso' });
   }
 }

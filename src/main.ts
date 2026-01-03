@@ -24,6 +24,12 @@ async function bootstrap() {
     .setDescription('API para gerenciamento de documentos acadêmicos com Hyperledger Fabric')
     .setVersion('1.0')
     .addBearerAuth()
+    .addCookieAuth('refresh_token', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'refresh_token',
+      description: 'Refresh token HTTP-only cookie para renovacao de tokens',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

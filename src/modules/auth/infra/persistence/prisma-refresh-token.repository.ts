@@ -23,10 +23,16 @@ export class PrismaRefreshTokenRepository implements IRefreshTokenRepository {
   }
 
   async revokeByToken(token: string): Promise<void> {
-    await this.prisma.refreshToken.update({
+    const exists = await this.prisma.refreshToken.findUnique({
       where: { token },
-      data: { revokedAt: new Date() },
     });
+
+    if (exists) {
+      await this.prisma.refreshToken.update({
+        where: { token },
+        data: { revokedAt: new Date() },
+      });
+    }
   }
 
   async revokeAllByUserId(userId: string): Promise<void> {
