@@ -12,8 +12,8 @@ export class StudentMatriculaAlreadyExistsError extends ConflictException {
   }
 }
 
-export class StudentEmailAlreadyExistsError extends ConflictException {
-  constructor(email: string) {
-    super(`Email já cadastrado: ${email}`);
+export class StudentUserAlreadyExistsError extends ConflictException {
+  constructor(userId: string) {
+    super(`Usuário já possui vínculo como aluno: ${userId}`);
   }
 }

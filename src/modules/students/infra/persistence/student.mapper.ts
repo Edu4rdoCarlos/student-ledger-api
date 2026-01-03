@@ -6,10 +6,8 @@ export class StudentMapper {
     return Student.create(
       {
         matricula: prisma.matricula,
-        nome: prisma.nome,
-        email: prisma.email,
+        userId: prisma.userId,
         courseId: prisma.courseId,
-        organizationId: prisma.organizationId,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
       },
@@ -21,10 +19,8 @@ export class StudentMapper {
     return {
       id: student.id,
       matricula: student.matricula,
-      nome: student.nome,
-      email: student.email,
+      userId: student.userId,
       courseId: student.courseId,
-      organizationId: student.organizationId,
     };
   }
 }

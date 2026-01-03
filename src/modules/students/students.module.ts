@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../shared/infra/prisma';
+import { PrismaModule } from '../../shared/prisma';
 import { STUDENT_REPOSITORY } from './application/ports';
 import { PrismaStudentRepository } from './infra/persistence';
 import { StudentsController } from './presentation/http';

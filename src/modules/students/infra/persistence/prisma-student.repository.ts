@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../shared/infra/prisma';
+import { PrismaService } from '../../../../shared/prisma';
 import { Student } from '../../domain/entities';
 import { IStudentRepository } from '../../application/ports';
 import { StudentMapper } from './student.mapper';
@@ -24,22 +24,22 @@ export class PrismaStudentRepository implements IStudentRepository {
     return found ? StudentMapper.toDomain(found) : null;
   }
 
-  async findByEmail(email: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { email } });
+  async findByUserId(userId: string): Promise<Student | null> {
+    const found = await this.prisma.student.findUnique({ where: { userId } });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
   async findByCourseId(courseId: string): Promise<Student[]> {
     const students = await this.prisma.student.findMany({
       where: { courseId },
-      orderBy: { nome: 'asc' },
+      orderBy: { createdAt: 'asc' },
     });
     return students.map(StudentMapper.toDomain);
   }
 
   async findAll(): Promise<Student[]> {
     const students = await this.prisma.student.findMany({
-      orderBy: { nome: 'asc' },
+      orderBy: { createdAt: 'asc' },
     });
     return students.map(StudentMapper.toDomain);
   }
@@ -62,8 +62,8 @@ export class PrismaStudentRepository implements IStudentRepository {
     return count > 0;
   }
 
-  async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.prisma.student.count({ where: { email } });
+  async existsByUserId(userId: string): Promise<boolean> {
+    const count = await this.prisma.student.count({ where: { userId } });
     return count > 0;
   }
 }

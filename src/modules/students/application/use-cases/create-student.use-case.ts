@@ -3,7 +3,7 @@ import { Student } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import {
   StudentMatriculaAlreadyExistsError,
-  StudentEmailAlreadyExistsError,
+  StudentUserAlreadyExistsError,
 } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 
@@ -20,17 +20,15 @@ export class CreateStudentUseCase {
       throw new StudentMatriculaAlreadyExistsError(dto.matricula);
     }
 
-    const emailExists = await this.studentRepository.existsByEmail(dto.email);
-    if (emailExists) {
-      throw new StudentEmailAlreadyExistsError(dto.email);
+    const userExists = await this.studentRepository.existsByUserId(dto.userId);
+    if (userExists) {
+      throw new StudentUserAlreadyExistsError(dto.userId);
     }
 
     const student = Student.create({
       matricula: dto.matricula,
-      nome: dto.nome,
-      email: dto.email,
+      userId: dto.userId,
       courseId: dto.courseId,
-      organizationId: dto.organizationId,
     });
 
     const created = await this.studentRepository.create(student);

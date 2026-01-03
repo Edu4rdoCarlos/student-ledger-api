@@ -9,16 +9,10 @@ export class StudentResponseDto {
   matricula: string;
 
   @ApiProperty()
-  nome: string;
-
-  @ApiProperty()
-  email: string;
+  userId: string;
 
   @ApiProperty()
   courseId: string;
-
-  @ApiProperty()
-  organizationId: string;
 
   @ApiProperty()
   createdAt: Date;
@@ -30,10 +24,8 @@ export class StudentResponseDto {
     return {
       id: student.id,
       matricula: student.matricula,
-      nome: student.nome,
-      email: student.email,
+      userId: student.userId,
       courseId: student.courseId,
-      organizationId: student.organizationId,
       createdAt: student.createdAt,
       updatedAt: student.updatedAt,
     };

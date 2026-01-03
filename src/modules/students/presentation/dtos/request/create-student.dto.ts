@@ -1,29 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class CreateStudentDto {
-  @ApiProperty({ example: '20231001' })
+  @ApiProperty({ example: '20231001', description: 'Matrícula do aluno' })
   @IsString()
   @IsNotEmpty()
   matricula: string;
 
-  @ApiProperty({ example: 'João da Silva' })
-  @IsString()
+  @ApiProperty({ example: 'uuid-do-usuario', description: 'ID do usuário associado' })
+  @IsUUID()
   @IsNotEmpty()
-  nome: string;
+  userId: string;
 
-  @ApiProperty({ example: 'joao.silva@email.com' })
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @ApiProperty({ example: 'uuid-do-curso' })
+  @ApiProperty({ example: 'uuid-do-curso', description: 'ID do curso' })
   @IsUUID()
   @IsNotEmpty()
   courseId: string;
-
-  @ApiProperty({ example: 'uuid-da-organizacao' })
-  @IsUUID()
-  @IsNotEmpty()
-  organizationId: string;
 }

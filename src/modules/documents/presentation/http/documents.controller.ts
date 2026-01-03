@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Public } from '../../../../shared/infra/decorators';
+import { Roles, Public } from '../../../../shared/decorators';
 import { DocumentFilters } from '../../application/ports';
 import {
   CreateDocumentUseCase,
@@ -22,14 +22,14 @@ export class DocumentsController {
   ) {}
 
   @Post()
-  @Roles('ADMIN', 'COORDINATOR', 'SECRETARY')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Cadastrar novo documento' })
   create(@Body() dto: CreateDocumentDto) {
     return this.createDocument.execute(dto);
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'SECRETARY', 'ADVISOR')
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
   @ApiOperation({ summary: 'Listar documentos' })
   findAll(@Query() filters: DocumentFilters) {
     return this.listDocuments.execute(filters);

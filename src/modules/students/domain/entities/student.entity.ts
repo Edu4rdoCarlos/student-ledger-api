@@ -1,9 +1,7 @@
 export interface StudentProps {
   matricula: string;
-  nome: string;
-  email: string;
+  userId: string;
   courseId: string;
-  organizationId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -36,20 +34,12 @@ export class Student {
     return this.props.matricula;
   }
 
-  get nome(): string {
-    return this.props.nome;
-  }
-
-  get email(): string {
-    return this.props.email;
+  get userId(): string {
+    return this.props.userId;
   }
 
   get courseId(): string {
     return this.props.courseId;
-  }
-
-  get organizationId(): string {
-    return this.props.organizationId;
   }
 
   get createdAt(): Date {
@@ -60,13 +50,8 @@ export class Student {
     return this.props.updatedAt!;
   }
 
-  updateEmail(email: string): void {
-    this.props.email = email;
-    this.props.updatedAt = new Date();
-  }
-
-  updateName(nome: string): void {
-    this.props.nome = nome;
+  updateCourse(courseId: string): void {
+    this.props.courseId = courseId;
     this.props.updatedAt = new Date();
   }
 }

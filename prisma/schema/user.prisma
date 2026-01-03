@@ -1,0 +1,30 @@
+// ============================================
+// USUARIOS E AUTENTICACAO
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  approvals      Approval[]
+  refreshTokens  RefreshToken[]
+  student        Student?
+  advisor        Advisor?
+  coordinator    Coordinator?
+
+  @@index([organizationId])
+}
+
+enum Role {
+  ADMIN
+  COORDINATOR
+  ADVISOR
+  STUDENT
+}

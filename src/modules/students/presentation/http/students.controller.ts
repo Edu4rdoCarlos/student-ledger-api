@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles } from '../../../../shared/infra/decorators';
+import { Roles } from '../../../../shared/decorators';
 import {
   CreateStudentUseCase,
   GetStudentUseCase,
@@ -20,14 +20,14 @@ export class StudentsController {
   ) {}
 
   @Post()
-  @Roles('ADMIN', 'COORDINATOR', 'SECRETARY')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Cadastrar novo aluno' })
   create(@Body() dto: CreateStudentDto) {
     return this.createStudent.execute(dto);
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'SECRETARY')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Listar alunos' })
   findAll(@Query() query: ListStudentsQuery) {
     return this.listStudents.execute(query);

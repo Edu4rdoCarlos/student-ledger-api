@@ -1,0 +1,20 @@
+model Course {
+  id           String   @id @default(uuid())
+  codigo       String   @unique
+  nome         String
+  departamento String?
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  coordinatorId  String?
+  coordinator    Coordinator? @relation("CourseCoordinator", fields: [coordinatorId], references: [id])
+  students       Student[]
+  advisors       Advisor[]
+
+  @@index([organizationId])
+  @@index([coordinatorId])
+}

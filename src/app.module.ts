@@ -4,7 +4,7 @@ import { BullModule } from '@nestjs/bull';
 import { APP_GUARD } from '@nestjs/core';
 
 // Shared
-import { PrismaModule, JwtAuthGuard, RolesGuard } from './shared/infra';
+import { PrismaModule, JwtAuthGuard, RolesGuard } from './shared';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';

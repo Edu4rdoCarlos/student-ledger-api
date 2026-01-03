@@ -80,7 +80,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
       this.logger.log('Verificando conexão com o Hyperledger Fabric...');
 
       const orgConfig = this.organizations.coordenacao;
-      const certsBasePath = path.resolve(__dirname, '../../../blockchain/certs');
+      const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
       const certPath = path.join(certsBasePath, 'coordenacao', 'cert.pem');
       const keyPath = path.join(certsBasePath, 'coordenacao', 'key.pem');
       const tlsCertPath = path.join(certsBasePath, 'coordenacao', 'tls-ca.crt');
@@ -142,7 +142,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
 
     this.logger.log(`Conectando ao Fabric como ${orgName} para usuário ${user.email}...`);
 
-    const certsBasePath = path.resolve(__dirname, '../../../blockchain/certs');
+    const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
     const certPath = path.join(certsBasePath, orgName, 'cert.pem');
     const keyPath = path.join(certsBasePath, orgName, 'key.pem');
     const tlsCertPath = path.join(certsBasePath, orgName, 'tls-ca.crt');
