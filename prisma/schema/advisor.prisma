@@ -1,10 +1,11 @@
 
 
 model Advisor {
-  id           String   @id @default(uuid())
-  departamento String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  departamento   String?
+  specialization String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])

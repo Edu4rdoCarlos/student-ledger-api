@@ -80,10 +80,10 @@ export class StudentsController {
 
   @Put(':matricula')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('ADMIN', 'COORDINATOR', 'STUDENT')
   @ApiOperation({
     summary: 'Atualizar dados do aluno',
-    description: 'Atualiza o nome do usuário e/ou curso do aluno. Apenas coordenadores e admins podem atualizar.'
+    description: 'Atualiza o nome do usuário e/ou curso do aluno. Estudantes podem atualizar apenas seus próprios dados.'
   })
   @ApiResponse({
     status: 200,
@@ -99,7 +99,7 @@ export class StudentsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão. Apenas coordenadores e admins podem atualizar alunos.'
+    description: 'Sem permissão'
   })
   update(@Param('matricula') matricula: string, @Body() dto: UpdateStudentDto) {
     return this.updateStudent.execute(matricula, dto);
