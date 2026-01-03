@@ -3,15 +3,18 @@ import {
   Get,
   Post,
   Put,
-  Patch,
   Body,
   Param,
   Query,
   UseGuards,
   HttpStatus,
   HttpCode,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles } from '../../../../shared/decorators';
 import {
@@ -19,14 +22,15 @@ import {
   GetDefenseUseCase,
   ListDefensesUseCase,
   UpdateDefenseUseCase,
-  SetGradeUseCase,
+  SubmitDefenseResultUseCase,
 } from '../../application/use-cases';
 import {
   CreateDefenseDto,
   UpdateDefenseDto,
-  SetGradeDto,
+  SubmitDefenseResultDto,
 } from '../dtos/request';
-import { DefenseResponseDto } from '../dtos/response';
+import { DefenseResponseDto, SubmitDefenseResultResponseDto } from '../dtos/response';
+import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
 
 @ApiTags('Defenses')
 @ApiBearerAuth()
@@ -38,7 +42,7 @@ export class DefenseController {
     private readonly getDefenseUseCase: GetDefenseUseCase,
     private readonly listDefensesUseCase: ListDefensesUseCase,
     private readonly updateDefenseUseCase: UpdateDefenseUseCase,
-    private readonly setGradeUseCase: SetGradeUseCase,
+    private readonly submitDefenseResultUseCase: SubmitDefenseResultUseCase,
   ) {}
 
   @Post()
@@ -100,17 +104,53 @@ export class DefenseController {
     return DefenseResponseDto.fromEntity(defense);
   }
 
-  @Patch(':id/grade')
+  @Post(':id/result')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
-  @ApiOperation({ summary: 'Set defense grade' })
-  async setGrade(
+  @UseInterceptors(FileInterceptor('document'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })
+  @ApiBody({
+    description: 'Defense result with grade and document file',
+    schema: {
+      type: 'object',
+      required: ['finalGrade', 'document'],
+      properties: {
+        finalGrade: {
+          type: 'number',
+          minimum: 0,
+          maximum: 10,
+          example: 8.5,
+          description: 'Final grade (0 to 10). Grades >= 7 pass, < 7 fail'
+        },
+        document: {
+          type: 'string',
+          format: 'binary',
+          description: 'Unified defense document file (PDF containing all pages)'
+        }
+      }
+    }
+  })
+  async submitResult(
     @Param('id') id: string,
-    @Body() setGradeDto: SetGradeDto,
-  ): Promise<DefenseResponseDto> {
-    const defense = await this.setGradeUseCase.execute({
+    @Body('finalGrade') finalGrade: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: 'pdf' })
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 }) // 10MB
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
+    )
+    file: Express.Multer.File,
+  ): Promise<SubmitDefenseResultResponseDto> {
+    const { defense, document } = await this.submitDefenseResultUseCase.execute({
       id,
-      finalGrade: setGradeDto.finalGrade,
+      finalGrade: parseFloat(finalGrade),
+      documentFile: file.buffer,
+      documentFilename: file.originalname,
     });
-    return DefenseResponseDto.fromEntity(defense);
+
+    return {
+      defense: DefenseResponseDto.fromEntity(defense),
+      document: DocumentResponseDto.fromEntity(document),
+    };
   }
 }
