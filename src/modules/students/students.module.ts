@@ -7,21 +7,21 @@ import {
   CreateStudentUseCase,
   GetStudentUseCase,
   ListStudentsUseCase,
+  UpdateStudentUseCase,
 } from './application/use-cases';
 
 @Module({
   imports: [PrismaModule],
   controllers: [StudentsController],
   providers: [
-    // Repository
     {
       provide: STUDENT_REPOSITORY,
       useClass: PrismaStudentRepository,
     },
-    // Use Cases
     CreateStudentUseCase,
     GetStudentUseCase,
     ListStudentsUseCase,
+    UpdateStudentUseCase,
   ],
   exports: [STUDENT_REPOSITORY],
 })

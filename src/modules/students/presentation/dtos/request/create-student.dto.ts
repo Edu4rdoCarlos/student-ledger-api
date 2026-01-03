@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsEmail, MinLength } from 'class-validator';
 
 export class CreateStudentDto {
   @ApiProperty({ example: '20231001', description: 'Matrícula do aluno' })
@@ -7,13 +7,28 @@ export class CreateStudentDto {
   @IsNotEmpty()
   matricula: string;
 
-  @ApiProperty({ example: 'uuid-do-usuario', description: 'ID do usuário associado' })
-  @IsUUID()
+  @ApiProperty({ example: 'aluno@ufrgs.edu.br', description: 'Email do aluno' })
+  @IsEmail()
   @IsNotEmpty()
-  userId: string;
+  email: string;
+
+  @ApiProperty({ example: 'senha123', description: 'Senha do aluno', minLength: 6 })
+  @IsString()
+  @MinLength(6)
+  @IsNotEmpty()
+  password: string;
+
+  @ApiProperty({ example: 'João da Silva', description: 'Nome completo do aluno' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
   @ApiProperty({ example: 'uuid-do-curso', description: 'ID do curso' })
   @IsUUID()
   @IsNotEmpty()
   courseId: string;
+
+  @ApiProperty({ example: 'uuid-da-organizacao', description: 'ID da organização', required: false })
+  @IsUUID()
+  organizationId?: string;
 }
