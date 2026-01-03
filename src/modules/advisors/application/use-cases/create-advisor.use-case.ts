@@ -6,6 +6,7 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { AdvisorUserAlreadyExistsError } from '../../domain/errors';
 import { CreateAdvisorDto, AdvisorResponseDto } from '../../presentation/dtos';
 import { PrismaService } from '../../../../shared/prisma';
+import { generateRandomPassword } from '../../../../shared/utils';
 
 @Injectable()
 export class CreateAdvisorUseCase {
@@ -23,7 +24,8 @@ export class CreateAdvisorUseCase {
       throw new ConflictException(`Email já cadastrado: ${dto.email}`);
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const randomPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({

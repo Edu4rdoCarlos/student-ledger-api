@@ -14,7 +14,7 @@ export class RefreshTokensUseCase {
     private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
-  async execute(refreshToken: string): Promise<GeneratedTokens> {
+  async execute(refreshToken: string): Promise<GeneratedTokens & { isFirstAccess: boolean }> {
     try {
       const payload = this.tokenService.verifyRefreshToken(refreshToken);
 
@@ -48,7 +48,10 @@ export class RefreshTokensUseCase {
         tokens.refreshTokenExpiresAt,
       );
 
-      return tokens;
+      return {
+        ...tokens,
+        isFirstAccess: user.isFirstAccess ?? true,
+      };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;

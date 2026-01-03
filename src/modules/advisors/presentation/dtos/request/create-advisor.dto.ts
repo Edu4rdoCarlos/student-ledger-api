@@ -7,12 +7,6 @@ export class CreateAdvisorDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ example: 'senha123', description: 'Senha do orientador', minLength: 6 })
-  @IsString()
-  @MinLength(6)
-  @IsNotEmpty()
-  password: string;
-
   @ApiProperty({ example: 'Prof. Dr. João Silva', description: 'Nome completo do orientador' })
   @IsString()
   @IsNotEmpty()

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
 import {
@@ -7,8 +7,10 @@ import {
   ListAdvisorsUseCase,
   UpdateAdvisorUseCase,
   ListAdvisorsQuery,
+  ChangePasswordUseCase,
 } from '../../application/use-cases';
 import { CreateAdvisorDto, UpdateAdvisorDto } from '../dtos';
+import { ChangePasswordDto } from '../../../../shared/dtos';
 
 @ApiTags('Orientadores')
 @ApiBearerAuth()
@@ -19,6 +21,7 @@ export class AdvisorsController {
     private readonly getAdvisor: GetAdvisorUseCase,
     private readonly listAdvisors: ListAdvisorsUseCase,
     private readonly updateAdvisor: UpdateAdvisorUseCase,
+    private readonly changePassword: ChangePasswordUseCase,
   ) {}
 
   @Post()
@@ -107,5 +110,32 @@ export class AdvisorsController {
   })
   update(@Param('id') id: string, @Body() dto: UpdateAdvisorDto) {
     return this.updateAdvisor.execute(id, dto);
+  }
+
+  @Patch(':id/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Alterar senha do orientador',
+    description: 'Permite que o orientador altere sua própria senha ou que um administrador altere a senha de qualquer orientador.'
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Senha alterada com sucesso.'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Senha atual incorreta ou não autenticado'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Sem permissão'
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Orientador não encontrado'
+  })
+  async changePasswordHandler(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
+    await this.changePassword.execute(id, dto);
   }
 }

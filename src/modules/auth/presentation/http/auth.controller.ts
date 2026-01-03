@@ -33,11 +33,11 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<HttpResponse<LoginResponseDto>> {
-    const { accessToken, refreshToken, expiresIn } = await this.loginUseCase.execute(dto);
+    const { accessToken, refreshToken, expiresIn, isFirstAccess } = await this.loginUseCase.execute(dto);
 
     this.cookieService.setRefreshToken(res, refreshToken);
 
-    return HttpResponseSerializer.serialize({ accessToken, expiresIn });
+    return HttpResponseSerializer.serialize({ accessToken, expiresIn, isFirstAccess });
   }
 
   @Public()
@@ -60,12 +60,12 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token nao encontrado');
     }
 
-    const { accessToken, refreshToken: newRefreshToken, expiresIn } =
+    const { accessToken, refreshToken: newRefreshToken, expiresIn, isFirstAccess } =
       await this.refreshTokensUseCase.execute(refreshToken);
 
     this.cookieService.setRefreshToken(res, newRefreshToken);
 
-    return HttpResponseSerializer.serialize({ accessToken, expiresIn });
+    return HttpResponseSerializer.serialize({ accessToken, expiresIn, isFirstAccess });
   }
 
   @Public()

@@ -12,6 +12,12 @@ export class LoginResponseDto {
     description: 'Tempo de expiração do token em segundos',
   })
   expiresIn: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indica se é o primeiro acesso do usuário (precisa trocar senha)',
+  })
+  isFirstAccess: boolean;
 }
 
 export class LoginHttpResponseDto {

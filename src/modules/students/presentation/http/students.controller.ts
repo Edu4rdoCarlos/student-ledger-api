@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
 import {
@@ -7,8 +7,10 @@ import {
   ListStudentsUseCase,
   UpdateStudentUseCase,
   ListStudentsQuery,
+  ChangePasswordUseCase,
 } from '../../application/use-cases';
 import { CreateStudentDto, UpdateStudentDto } from '../dtos';
+import { ChangePasswordDto } from '../../../../shared/dtos';
 
 @ApiTags('Alunos')
 @ApiBearerAuth()
@@ -19,6 +21,7 @@ export class StudentsController {
     private readonly getStudent: GetStudentUseCase,
     private readonly listStudents: ListStudentsUseCase,
     private readonly updateStudent: UpdateStudentUseCase,
+    private readonly changePassword: ChangePasswordUseCase,
   ) {}
 
   @Post()
@@ -103,5 +106,32 @@ export class StudentsController {
   })
   update(@Param('matricula') matricula: string, @Body() dto: UpdateStudentDto) {
     return this.updateStudent.execute(matricula, dto);
+  }
+
+  @Patch(':matricula/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('STUDENT', 'ADMIN')
+  @ApiOperation({
+    summary: 'Alterar senha do aluno',
+    description: 'Permite que o aluno altere sua própria senha ou que um administrador altere a senha de qualquer aluno.'
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Senha alterada com sucesso.'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Senha atual incorreta ou não autenticado'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Sem permissão'
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Aluno não encontrado'
+  })
+  async changePasswordHandler(@Param('matricula') matricula: string, @Body() dto: ChangePasswordDto) {
+    await this.changePassword.execute(matricula, dto);
   }
 }

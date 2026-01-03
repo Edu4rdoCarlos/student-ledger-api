@@ -20,7 +20,7 @@ export class LoginUseCase {
     private readonly refreshTokenRepository: IRefreshTokenRepository,
   ) {}
 
-  async execute(input: LoginInput): Promise<GeneratedTokens> {
+  async execute(input: LoginInput): Promise<GeneratedTokens & { isFirstAccess: boolean }> {
     const user = await this.userRepository.findByEmail(input.email);
 
     if (!user || !(await bcrypt.compare(input.password, user.password))) {
@@ -39,6 +39,9 @@ export class LoginUseCase {
       tokens.refreshTokenExpiresAt,
     );
 
-    return tokens;
+    return {
+      ...tokens,
+      isFirstAccess: user.isFirstAccess ?? true,
+    };
   }
 }

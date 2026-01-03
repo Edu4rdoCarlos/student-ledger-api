@@ -8,6 +8,7 @@ import {
   GetAdvisorUseCase,
   ListAdvisorsUseCase,
   UpdateAdvisorUseCase,
+  ChangePasswordUseCase,
 } from './application/use-cases';
 
 @Module({
@@ -22,6 +23,7 @@ import {
     GetAdvisorUseCase,
     ListAdvisorsUseCase,
     UpdateAdvisorUseCase,
+    ChangePasswordUseCase,
   ],
   exports: [ADVISOR_REPOSITORY],
 })

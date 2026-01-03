@@ -3,6 +3,7 @@ export interface User {
   email: string;
   password: string;
   role: string;
+  isFirstAccess?: boolean;
 }
 
 export interface IUserRepository {

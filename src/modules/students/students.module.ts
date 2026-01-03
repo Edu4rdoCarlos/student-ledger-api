@@ -8,6 +8,7 @@ import {
   GetStudentUseCase,
   ListStudentsUseCase,
   UpdateStudentUseCase,
+  ChangePasswordUseCase,
 } from './application/use-cases';
 
 @Module({
@@ -22,6 +23,7 @@ import {
     GetStudentUseCase,
     ListStudentsUseCase,
     UpdateStudentUseCase,
+    ChangePasswordUseCase,
   ],
   exports: [STUDENT_REPOSITORY],
 })

@@ -6,6 +6,7 @@ import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentMatriculaAlreadyExistsError } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { PrismaService } from '../../../../shared/prisma';
+import { generateRandomPassword } from '../../../../shared/utils';
 
 @Injectable()
 export class CreateStudentUseCase {
@@ -28,7 +29,8 @@ export class CreateStudentUseCase {
       throw new ConflictException(`Email já cadastrado: ${dto.email}`);
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const randomPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
