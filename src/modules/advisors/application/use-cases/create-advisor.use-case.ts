@@ -19,7 +19,7 @@ export class CreateAdvisorUseCase {
   async execute(dto: CreateAdvisorDto): Promise<AdvisorResponseDto> {
     const emailExists = await this.userRepository.existsByEmail(dto.email);
     if (emailExists) {
-      throw new ConflictException(`Email já cadastrado: ${dto.email}`);
+      throw new ConflictException('Não foi possível criar o orientador. Verifique os dados fornecidos.');
     }
 
     const randomPassword = generateRandomPassword();

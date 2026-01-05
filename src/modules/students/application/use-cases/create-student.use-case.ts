@@ -18,14 +18,13 @@ export class CreateStudentUseCase {
   ) {}
 
   async execute(dto: CreateStudentDto): Promise<StudentResponseDto> {
-    const matriculaExists = await this.studentRepository.existsByMatricula(dto.registration);
-    if (matriculaExists) {
-      throw new StudentMatriculaAlreadyExistsError(dto.registration);
-    }
+    const [emailExists, matriculaExists] = await Promise.all([
+      this.userRepository.existsByEmail(dto.email),
+      this.studentRepository.existsByMatricula(dto.registration),
+    ]);
 
-    const emailExists = await this.userRepository.existsByEmail(dto.email);
-    if (emailExists) {
-      throw new ConflictException(`Email já cadastrado: ${dto.email}`);
+    if (emailExists || matriculaExists) {
+      throw new ConflictException('Email ou matrícula já cadastrados no sistema');
     }
 
     const randomPassword = generateRandomPassword();
