@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsDateString, IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsDateString, IsArray, ArrayMinSize, ArrayMaxSize, MinLength, MaxLength } from 'class-validator';
 
 export class CreateDefenseDto {
   @ApiProperty({ example: 'Thesis Defense - Management System', description: 'Defense title' })
   @IsString()
   @IsNotEmpty()
+  @MinLength(5, { message: 'Título deve ter no mínimo 5 caracteres' })
+  @MaxLength(500, { message: 'Título deve ter no máximo 500 caracteres' })
   title: string;
 
   @ApiProperty({ example: '2024-12-20T14:00:00Z', description: 'Defense date and time' })
