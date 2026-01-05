@@ -4,7 +4,7 @@ import { Response, Request } from 'express';
 import { LoginUseCase, RefreshTokensUseCase, LogoutUseCase } from '../../application/use-cases';
 import { ICookieService, COOKIE_SERVICE } from '../../application/ports';
 import { LoginDto, LoginResponseDto, LoginHttpResponseDto } from '../dtos';
-import { Public } from '../../../../shared/decorators';
+import { Public, Roles } from '../../../../shared/decorators';
 import { HttpResponse, HttpResponseSerializer } from '../../../../shared';
 
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -40,9 +40,9 @@ export class AuthController {
     return HttpResponseSerializer.serialize({ accessToken, expiresIn, isFirstAccess });
   }
 
-  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiCookieAuth('refresh_token')
   @ApiOperation({
     summary: 'Renovar tokens',
@@ -68,9 +68,9 @@ export class AuthController {
     return HttpResponseSerializer.serialize({ accessToken, expiresIn, isFirstAccess });
   }
 
-  @Public()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiCookieAuth('refresh_token')
   @ApiOperation({
     summary: 'Realizar logout',

@@ -68,7 +68,7 @@ export class StudentsController {
   }
 
   @Get(':registration')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Buscar aluno por matrícula' })
   @ApiStudentOkResponse()
   @ApiResponse({
@@ -111,10 +111,10 @@ export class StudentsController {
 
   @Patch(':registration/password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('STUDENT', 'ADMIN')
+  @Roles('STUDENT')
   @ApiOperation({
     summary: 'Alterar senha do aluno',
-    description: 'Permite que o aluno altere sua própria senha ou que um administrador altere a senha de qualquer aluno.'
+    description: 'Permite que o aluno altere sua própria senha.'
   })
   @ApiResponse({
     status: 204,

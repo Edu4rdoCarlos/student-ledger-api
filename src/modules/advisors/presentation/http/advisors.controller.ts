@@ -53,7 +53,7 @@ export class AdvisorsController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Listar orientadores' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
   @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
@@ -68,7 +68,7 @@ export class AdvisorsController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Buscar orientador por ID' })
   @ApiAdvisorOkResponse()
   @ApiResponse({
@@ -111,10 +111,10 @@ export class AdvisorsController {
 
   @Patch(':id/password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR')
   @ApiOperation({
     summary: 'Alterar senha do orientador',
-    description: 'Permite que o orientador altere sua própria senha ou que um administrador altere a senha de qualquer orientador.'
+    description: 'Permite que o orientador altere sua própria senha.'
   })
   @ApiResponse({
     status: 204,

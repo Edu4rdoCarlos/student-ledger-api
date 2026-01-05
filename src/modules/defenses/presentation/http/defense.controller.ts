@@ -64,7 +64,7 @@ export class DefenseController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'List all defenses' })
   @ApiDefenseListResponse()
   async findAll(
@@ -93,7 +93,7 @@ export class DefenseController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Get defense by ID' })
   @ApiDefenseOkResponse()
   async findOne(@Param('id') id: string): Promise<HttpResponse<DefenseResponseDto>> {
@@ -120,7 +120,7 @@ export class DefenseController {
   }
 
   @Post(':id/result')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
+  @Roles('ADMIN', 'COORDINATOR')
   @UseInterceptors(FileInterceptor('document'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })

@@ -41,7 +41,7 @@ export class DepartmentsController {
   }
 
   @Put(':id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Atualizar departamento' })
   @ApiDepartmentOkResponse()
   async update(
