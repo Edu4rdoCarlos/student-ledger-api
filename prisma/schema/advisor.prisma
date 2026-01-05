@@ -2,7 +2,6 @@
 
 model Advisor {
   id             String   @id @default(uuid())
-  departamento   String?
   specialization String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -10,9 +9,13 @@ model Advisor {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
   courseId String?
   course   Course?   @relation(fields: [courseId], references: [id])
   defenses Defense[]
 
+  @@index([departmentId])
   @@index([courseId])
 }

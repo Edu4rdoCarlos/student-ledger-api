@@ -120,6 +120,36 @@ async function main() {
   console.log(`  ✓ ${coordUser1.email}`);
   console.log(`  ✓ ${coordUser2.email}`);
 
+  console.log('\n🏛️  Creating Departments...');
+
+  const deptInformatica = await prisma.department.upsert({
+    where: { name: 'Instituto de Informática' },
+    update: {},
+    create: {
+      name: 'Instituto de Informática',
+    },
+  });
+
+  const deptEngenharia = await prisma.department.upsert({
+    where: { name: 'Escola de Engenharia' },
+    update: {},
+    create: {
+      name: 'Escola de Engenharia',
+    },
+  });
+
+  const deptMatematica = await prisma.department.upsert({
+    where: { name: 'Instituto de Matemática' },
+    update: {},
+    create: {
+      name: 'Instituto de Matemática',
+    },
+  });
+
+  console.log(`  ✓ ${deptInformatica.name}`);
+  console.log(`  ✓ ${deptEngenharia.name}`);
+  console.log(`  ✓ ${deptMatematica.name}`);
+
   console.log('\n📚 Creating Courses...');
 
   const courseCC = await prisma.course.upsert({
@@ -128,9 +158,8 @@ async function main() {
     create: {
       nome: 'Ciência da Computação',
       codigo: 'CC-UFRGS',
-      departamento: 'Instituto de Informática',
+      departmentId: deptInformatica.id,
       ativo: true,
-      organizationId: orgAtiva.id,
       coordinatorId: coordinator1.id,
     },
   });
@@ -141,9 +170,8 @@ async function main() {
     create: {
       nome: 'Sistemas de Informação',
       codigo: 'SI-UFRGS',
-      departamento: 'Instituto de Informática',
+      departmentId: deptInformatica.id,
       ativo: true,
-      organizationId: orgAtiva.id,
       coordinatorId: coordinator2.id,
     },
   });
@@ -154,9 +182,8 @@ async function main() {
     create: {
       nome: 'Engenharia de Computação',
       codigo: 'EC-UFRGS',
-      departamento: 'Escola de Engenharia',
+      departmentId: deptEngenharia.id,
       ativo: false,
-      organizationId: orgAtiva.id,
     },
   });
 
@@ -183,7 +210,7 @@ async function main() {
     update: {},
     create: {
       userId: advisorUser1.id,
-      departamento: 'Instituto de Informática',
+      departmentId: deptInformatica.id,
       courseId: courseCC.id,
     },
   });
@@ -205,7 +232,7 @@ async function main() {
     update: {},
     create: {
       userId: advisorUser2.id,
-      departamento: 'Instituto de Informática',
+      departmentId: deptInformatica.id,
       courseId: courseSI.id,
     },
   });
@@ -228,10 +255,10 @@ async function main() {
   });
 
   const student1 = await prisma.student.upsert({
-    where: { matricula: '00123456' },
+    where: { registration: '00123456' },
     update: {},
     create: {
-      matricula: '00123456',
+      registration: '00123456',
       userId: studentUser1.id,
       courseId: courseCC.id,
     },
@@ -250,10 +277,10 @@ async function main() {
   });
 
   const student2 = await prisma.student.upsert({
-    where: { matricula: '00234567' },
+    where: { registration: '00234567' },
     update: {},
     create: {
-      matricula: '00234567',
+      registration: '00234567',
       userId: studentUser2.id,
       courseId: courseSI.id,
     },
@@ -272,18 +299,18 @@ async function main() {
   });
 
   const student3 = await prisma.student.upsert({
-    where: { matricula: '00345678' },
+    where: { registration: '00345678' },
     update: {},
     create: {
-      matricula: '00345678',
+      registration: '00345678',
       userId: studentUser3.id,
       courseId: courseCC.id,
     },
   });
 
-  console.log(`  ✓ ${studentUser1.email} (${student1.matricula})`);
-  console.log(`  ✓ ${studentUser2.email} (${student2.matricula})`);
-  console.log(`  ✓ ${studentUser3.email} (${student3.matricula})`);
+  console.log(`  ✓ ${studentUser1.email} (${student1.registration})`);
+  console.log(`  ✓ ${studentUser2.email} (${student2.registration})`);
+  console.log(`  ✓ ${studentUser3.email} (${student3.registration})`);
 
   console.log('\n📝 Creating Defenses...');
 

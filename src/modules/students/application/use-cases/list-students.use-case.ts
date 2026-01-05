@@ -6,7 +6,7 @@ import { PaginationMetadata } from '../../../../shared/dtos';
 export interface ListStudentsQuery {
   courseId?: string;
   page?: number;
-  limit?: number;
+  perPage?: number;
 }
 
 export interface ListStudentsResponse {
@@ -23,18 +23,18 @@ export class ListStudentsUseCase {
 
   async execute(query?: ListStudentsQuery): Promise<ListStudentsResponse> {
     const page = query?.page || 1;
-    const limit = query?.limit || 10;
-    const skip = (page - 1) * limit;
+    const perPage = query?.perPage || 10;
+    const skip = (page - 1) * perPage;
 
     const { items, total } = await this.studentRepository.findAll({
       skip,
-      take: limit,
+      take: perPage,
       courseId: query?.courseId,
     });
 
     return {
       data: items.map(StudentResponseDto.fromEntity),
-      metadata: new PaginationMetadata({ page, perPage: limit, total }),
+      metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }
 }

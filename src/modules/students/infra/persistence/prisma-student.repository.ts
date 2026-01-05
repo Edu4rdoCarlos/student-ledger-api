@@ -20,7 +20,7 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   async findByMatricula(matricula: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { matricula } });
+    const found = await this.prisma.student.findUnique({ where: { registration: matricula } });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
@@ -70,7 +70,7 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   async existsByMatricula(matricula: string): Promise<boolean> {
-    const count = await this.prisma.student.count({ where: { matricula } });
+    const count = await this.prisma.student.count({ where: { registration: matricula } });
     return count > 0;
   }
 

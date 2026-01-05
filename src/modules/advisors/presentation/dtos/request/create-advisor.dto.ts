@@ -12,10 +12,10 @@ export class CreateAdvisorDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'Instituto de Informática', description: 'Departamento do orientador', required: false })
-  @IsString()
+  @ApiProperty({ example: 'uuid-do-departamento', description: 'ID do departamento', required: false })
+  @IsUUID()
   @IsOptional()
-  departamento?: string;
+  departmentId?: string;
 
   @ApiProperty({ example: 'Machine Learning', description: 'Área de especialização do orientador', required: false })
   @IsString()

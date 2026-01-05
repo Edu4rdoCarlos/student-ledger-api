@@ -12,17 +12,16 @@ export class CreateCourseUseCase {
   ) {}
 
   async execute(dto: CreateCourseDto): Promise<CourseResponseDto> {
-    const codigoExists = await this.courseRepository.existsByCodigo(dto.codigo);
+    const codigoExists = await this.courseRepository.existsByCodigo(dto.code);
     if (codigoExists) {
-      throw new CourseCodigoAlreadyExistsError(dto.codigo);
+      throw new CourseCodigoAlreadyExistsError(dto.code);
     }
 
     const course = Course.create({
-      codigo: dto.codigo,
-      nome: dto.nome,
-      departamento: dto.departamento,
-      ativo: dto.ativo ?? true,
-      organizationId: dto.organizationId,
+      codigo: dto.code,
+      nome: dto.name,
+      departmentId: dto.departmentId,
+      ativo: dto.active ?? true,
       coordinatorId: dto.coordinatorId,
     });
 

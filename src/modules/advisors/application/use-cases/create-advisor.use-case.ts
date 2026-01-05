@@ -40,7 +40,7 @@ export class CreateAdvisorUseCase {
 
       const advisor = Advisor.create({
         userId: user.id,
-        departamento: dto.departamento,
+        departmentId: dto.departmentId,
         specialization: dto.specialization,
         courseId: dto.courseId,
       });
@@ -49,7 +49,7 @@ export class CreateAdvisorUseCase {
         data: {
           id: advisor.id,
           userId: advisor.userId,
-          departamento: advisor.departamento || null,
+          departmentId: advisor.departmentId || null,
           specialization: advisor.specialization || null,
           courseId: advisor.courseId || null,
           createdAt: advisor.createdAt,
@@ -63,7 +63,7 @@ export class CreateAdvisorUseCase {
     const created = Advisor.create(
       {
         userId: result.userId,
-        departamento: result.departamento || undefined,
+        departmentId: result.departmentId || undefined,
         specialization: result.specialization || undefined,
         courseId: result.courseId || undefined,
         createdAt: result.createdAt,

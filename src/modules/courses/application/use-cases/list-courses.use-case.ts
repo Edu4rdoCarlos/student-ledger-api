@@ -4,9 +4,9 @@ import { CourseResponseDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
 
 export interface ListCoursesQuery {
-  organizationId?: string;
   page?: number;
-  limit?: number;
+  perPage?: number;
+  departmentId?: string;
 }
 
 export interface ListCoursesResponse {
@@ -23,18 +23,18 @@ export class ListCoursesUseCase {
 
   async execute(query: ListCoursesQuery = {}): Promise<ListCoursesResponse> {
     const page = query?.page || 1;
-    const limit = query?.limit || 10;
-    const skip = (page - 1) * limit;
+    const perPage = query?.perPage || 10;
+    const skip = (page - 1) * perPage;
 
     const { items, total } = await this.courseRepository.findAll({
       skip,
-      take: limit,
-      organizationId: query?.organizationId,
+      take: perPage,
+      departmentId: query?.departmentId,
     });
 
     return {
       data: items.map(CourseResponseDto.fromEntity),
-      metadata: new PaginationMetadata({ page, perPage: limit, total }),
+      metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }
 }

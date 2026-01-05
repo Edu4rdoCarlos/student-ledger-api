@@ -17,9 +17,9 @@ export class CreateStudentUseCase {
   ) {}
 
   async execute(dto: CreateStudentDto): Promise<StudentResponseDto> {
-    const matriculaExists = await this.studentRepository.existsByMatricula(dto.matricula);
+    const matriculaExists = await this.studentRepository.existsByMatricula(dto.registration);
     if (matriculaExists) {
-      throw new StudentMatriculaAlreadyExistsError(dto.matricula);
+      throw new StudentMatriculaAlreadyExistsError(dto.registration);
     }
 
     const emailExists = await this.prisma.user.findUnique({
@@ -44,7 +44,7 @@ export class CreateStudentUseCase {
       });
 
       const student = Student.create({
-        matricula: dto.matricula,
+        matricula: dto.registration,
         userId: user.id,
         courseId: dto.courseId,
       });
@@ -52,7 +52,7 @@ export class CreateStudentUseCase {
       const createdStudent = await tx.student.create({
         data: {
           id: student.id,
-          matricula: student.matricula,
+          registration: student.matricula,
           userId: student.userId,
           courseId: student.courseId,
           createdAt: student.createdAt,
@@ -65,7 +65,7 @@ export class CreateStudentUseCase {
 
     const created = Student.create(
       {
-        matricula: result.matricula,
+        matricula: result.registration,
         userId: result.userId,
         courseId: result.courseId,
         createdAt: result.createdAt,

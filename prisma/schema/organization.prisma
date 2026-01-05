@@ -9,8 +9,7 @@ model Organization {
   updatedAt    DateTime           @updatedAt
 
   // Relacionamentos
-  users   User[]
-  courses Course[]
+  users User[]
 
   @@index([status])
 }

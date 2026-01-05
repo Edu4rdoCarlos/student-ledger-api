@@ -5,7 +5,7 @@ export class CreateStudentDto {
   @ApiProperty({ example: '20231001', description: 'Matrícula do aluno' })
   @IsString()
   @IsNotEmpty()
-  matricula: string;
+  registration: string;
 
   @ApiProperty({ example: 'aluno@ufrgs.edu.br', description: 'Email do aluno' })
   @IsEmail()

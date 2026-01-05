@@ -2,28 +2,28 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Student } from '../../../domain/entities';
 
 export class StudentResponseDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do estudante' })
   id: string;
 
-  @ApiProperty()
-  matricula: string;
+  @ApiProperty({ description: 'Matrícula do estudante' })
+  registration: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do usuário associado' })
   userId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do curso' })
   courseId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de criação' })
   createdAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de atualização' })
   updatedAt: Date;
 
   static fromEntity(student: Student): StudentResponseDto {
     return {
       id: student.id,
-      matricula: student.matricula,
+      registration: student.matricula,
       userId: student.userId,
       courseId: student.courseId,
       createdAt: student.createdAt,

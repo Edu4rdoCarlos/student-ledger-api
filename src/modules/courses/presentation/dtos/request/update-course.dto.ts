@@ -5,17 +5,17 @@ export class UpdateCourseDto {
   @ApiProperty({ example: 'Ciência da Computação', description: 'Nome do curso', required: false })
   @IsString()
   @IsOptional()
-  nome?: string;
+  name?: string;
 
-  @ApiProperty({ example: 'Instituto de Informática', description: 'Departamento do curso', required: false })
-  @IsString()
+  @ApiProperty({ example: 'uuid-do-departamento', description: 'ID do departamento', required: false })
+  @IsUUID()
   @IsOptional()
-  departamento?: string;
+  departmentId?: string;
 
   @ApiProperty({ example: true, description: 'Indica se o curso está ativo', required: false })
   @IsBoolean()
   @IsOptional()
-  ativo?: boolean;
+  active?: boolean;
 
   @ApiProperty({ example: 'uuid-do-coordenador', description: 'ID do coordenador do curso', required: false })
   @IsUUID()

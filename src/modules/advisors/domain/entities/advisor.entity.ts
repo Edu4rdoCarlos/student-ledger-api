@@ -1,6 +1,6 @@
 export interface AdvisorProps {
   userId: string;
-  departamento?: string;
+  departmentId?: string;
   specialization?: string;
   courseId?: string;
   createdAt?: Date;
@@ -35,8 +35,8 @@ export class Advisor {
     return this.props.userId;
   }
 
-  get departamento(): string | undefined {
-    return this.props.departamento;
+  get departmentId(): string | undefined {
+    return this.props.departmentId;
   }
 
   get specialization(): string | undefined {
@@ -55,8 +55,8 @@ export class Advisor {
     return this.props.updatedAt!;
   }
 
-  update(data: Partial<Pick<AdvisorProps, 'departamento' | 'specialization' | 'courseId'>>): void {
-    if (data.departamento !== undefined) this.props.departamento = data.departamento;
+  update(data: Partial<Pick<AdvisorProps, 'departmentId' | 'specialization' | 'courseId'>>): void {
+    if (data.departmentId !== undefined) this.props.departmentId = data.departmentId;
     if (data.specialization !== undefined) this.props.specialization = data.specialization;
     if (data.courseId !== undefined) this.props.courseId = data.courseId;
     this.props.updatedAt = new Date();

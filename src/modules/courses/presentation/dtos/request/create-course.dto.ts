@@ -5,27 +5,22 @@ export class CreateCourseDto {
   @ApiProperty({ example: 'CC-UFRGS', description: 'Código único do curso' })
   @IsString()
   @IsNotEmpty()
-  codigo: string;
+  code: string;
 
   @ApiProperty({ example: 'Ciência da Computação', description: 'Nome do curso' })
   @IsString()
   @IsNotEmpty()
-  nome: string;
+  name: string;
 
-  @ApiProperty({ example: 'Instituto de Informática', description: 'Departamento do curso', required: false })
-  @IsString()
+  @ApiProperty({ example: 'uuid-do-departamento', description: 'ID do departamento', required: false })
+  @IsUUID()
   @IsOptional()
-  departamento?: string;
+  departmentId?: string;
 
   @ApiProperty({ example: true, description: 'Indica se o curso está ativo', default: true })
   @IsBoolean()
   @IsOptional()
-  ativo?: boolean;
-
-  @ApiProperty({ example: 'uuid-da-organizacao', description: 'ID da organização' })
-  @IsUUID()
-  @IsNotEmpty()
-  organizationId: string;
+  active?: boolean;
 
   @ApiProperty({ example: 'uuid-do-coordenador', description: 'ID do coordenador do curso', required: false })
   @IsUUID()

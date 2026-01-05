@@ -24,16 +24,8 @@ export class PrismaCourseRepository implements ICourseRepository {
     return found ? CourseMapper.toDomain(found) : null;
   }
 
-  async findByOrganizationId(organizationId: string): Promise<Course[]> {
-    const courses = await this.prisma.course.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: 'asc' },
-    });
-    return courses.map(CourseMapper.toDomain);
-  }
-
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    const where = options?.organizationId ? { organizationId: options.organizationId } : {};
+    const where = options?.departmentId ? { departmentId: options.departmentId } : {};
 
     const [items, total] = await Promise.all([
       this.prisma.course.findMany({

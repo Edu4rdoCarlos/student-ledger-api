@@ -26,16 +26,16 @@ export class UpdateAdvisorUseCase {
         });
       }
 
-      if (dto.departamento !== undefined || dto.specialization !== undefined || dto.courseId !== undefined) {
+      if (dto.departmentId !== undefined || dto.specialization !== undefined || dto.courseId !== undefined) {
         advisor.update({
-          departamento: dto.departamento,
+          departmentId: dto.departmentId,
           specialization: dto.specialization,
           courseId: dto.courseId,
         });
         const updated = await tx.advisor.update({
           where: { id: advisor.id },
           data: {
-            departamento: advisor.departamento || null,
+            departmentId: advisor.departmentId || null,
             specialization: advisor.specialization || null,
             courseId: advisor.courseId || null,
             updatedAt: advisor.updatedAt,

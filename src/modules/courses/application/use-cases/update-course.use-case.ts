@@ -17,9 +17,9 @@ export class UpdateCourseUseCase {
     }
 
     course.update({
-      nome: dto.nome,
-      departamento: dto.departamento,
-      ativo: dto.ativo,
+      nome: dto.name,
+      departmentId: dto.departmentId,
+      ativo: dto.active,
       coordinatorId: dto.coordinatorId,
     });
 

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
 import {
   CreateAdvisorUseCase,
@@ -7,10 +7,13 @@ import {
   ListAdvisorsUseCase,
   UpdateAdvisorUseCase,
   ListAdvisorsQuery,
+  ListAdvisorsResponse,
   ChangePasswordUseCase,
 } from '../../application/use-cases';
-import { CreateAdvisorDto, UpdateAdvisorDto } from '../dtos';
-import { ChangePasswordDto } from '../../../../shared/dtos';
+import { CreateAdvisorDto, UpdateAdvisorDto, AdvisorResponseDto } from '../dtos';
+import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
+import { ApiAdvisorListResponse, ApiAdvisorCreatedResponse, ApiAdvisorOkResponse } from '../docs';
 
 @ApiTags('Advisors')
 @ApiBearerAuth()
@@ -31,10 +34,7 @@ export class AdvisorsController {
     summary: 'Cadastrar novo orientador',
     description: 'Cria um novo usuário com role ADVISOR e vincula ao registro de orientador. A operação é atômica: ou cria ambos ou nenhum.'
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Orientador cadastrado com sucesso. Usuário e orientador criados em uma transação atômica.'
-  })
+  @ApiAdvisorCreatedResponse()
   @ApiResponse({
     status: 409,
     description: 'Email já cadastrado'
@@ -47,32 +47,30 @@ export class AdvisorsController {
     status: 403,
     description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar orientadores.'
   })
-  create(@Body() dto: CreateAdvisorDto) {
-    return this.createAdvisor.execute(dto);
+  async create(@Body() dto: CreateAdvisorDto): Promise<HttpResponse<AdvisorResponseDto>> {
+    const advisor = await this.createAdvisor.execute(dto);
+    return HttpResponseSerializer.serialize(advisor);
   }
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Listar orientadores' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de orientadores retornada com sucesso'
-  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
+  @ApiQuery({ name: 'courseId', required: false, type: String, description: 'Filtrar por ID do curso' })
+  @ApiAdvisorListResponse()
   @ApiResponse({
     status: 401,
     description: 'Não autenticado'
   })
-  findAll(@Query() query: ListAdvisorsQuery) {
+  async findAll(@Query() query: ListAdvisorsQuery): Promise<ListAdvisorsResponse> {
     return this.listAdvisors.execute(query);
   }
 
   @Get(':id')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Buscar orientador por ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Orientador encontrado'
-  })
+  @ApiAdvisorOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Orientador não encontrado'
@@ -81,8 +79,9 @@ export class AdvisorsController {
     status: 401,
     description: 'Não autenticado'
   })
-  findOne(@Param('id') id: string) {
-    return this.getAdvisor.execute(id);
+  async findOne(@Param('id') id: string): Promise<HttpResponse<AdvisorResponseDto>> {
+    const advisor = await this.getAdvisor.execute(id);
+    return HttpResponseSerializer.serialize(advisor);
   }
 
   @Put(':id')
@@ -92,10 +91,7 @@ export class AdvisorsController {
     summary: 'Atualizar dados do orientador',
     description: 'Atualiza nome, departamento e/ou curso do orientador. Orientadores podem atualizar apenas seus próprios dados.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Orientador atualizado com sucesso.'
-  })
+  @ApiAdvisorOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Orientador não encontrado'
@@ -108,8 +104,9 @@ export class AdvisorsController {
     status: 403,
     description: 'Sem permissão'
   })
-  update(@Param('id') id: string, @Body() dto: UpdateAdvisorDto) {
-    return this.updateAdvisor.execute(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateAdvisorDto): Promise<HttpResponse<AdvisorResponseDto>> {
+    const advisor = await this.updateAdvisor.execute(id, dto);
+    return HttpResponseSerializer.serialize(advisor);
   }
 
   @Patch(':id/password')

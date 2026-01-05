@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
 import {
   CreateStudentUseCase,
@@ -7,10 +7,13 @@ import {
   ListStudentsUseCase,
   UpdateStudentUseCase,
   ListStudentsQuery,
+  ListStudentsResponse,
   ChangePasswordUseCase,
 } from '../../application/use-cases';
-import { CreateStudentDto, UpdateStudentDto } from '../dtos';
-import { ChangePasswordDto } from '../../../../shared/dtos';
+import { CreateStudentDto, UpdateStudentDto, StudentResponseDto } from '../dtos';
+import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
+import { ApiStudentListResponse, ApiStudentCreatedResponse, ApiStudentOkResponse } from '../docs';
 
 @ApiTags('Students')
 @ApiBearerAuth()
@@ -31,10 +34,7 @@ export class StudentsController {
     summary: 'Cadastrar novo aluno',
     description: 'Cria um novo usuário com role STUDENT e vincula ao registro de aluno. A operação é atômica: ou cria ambos ou nenhum.'
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Aluno cadastrado com sucesso. Usuário e estudante criados em uma transação atômica.'
-  })
+  @ApiStudentCreatedResponse()
   @ApiResponse({
     status: 409,
     description: 'Matrícula ou email já cadastrados'
@@ -51,24 +51,26 @@ export class StudentsController {
     status: 403,
     description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar alunos.'
   })
-  create(@Body() dto: CreateStudentDto) {
-    return this.createStudent.execute(dto);
+  async create(@Body() dto: CreateStudentDto): Promise<HttpResponse<StudentResponseDto>> {
+    const student = await this.createStudent.execute(dto);
+    return HttpResponseSerializer.serialize(student);
   }
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Listar alunos' })
-  findAll(@Query() query: ListStudentsQuery) {
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
+  @ApiQuery({ name: 'courseId', required: false, type: String, description: 'Filtrar por ID do curso' })
+  @ApiStudentListResponse()
+  async findAll(@Query() query: ListStudentsQuery): Promise<ListStudentsResponse> {
     return this.listStudents.execute(query);
   }
 
-  @Get(':matricula')
+  @Get(':registration')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Buscar aluno por matrícula' })
-  @ApiResponse({
-    status: 200,
-    description: 'Aluno encontrado'
-  })
+  @ApiStudentOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Aluno não encontrado'
@@ -77,21 +79,19 @@ export class StudentsController {
     status: 401,
     description: 'Não autenticado'
   })
-  findOne(@Param('matricula') matricula: string) {
-    return this.getStudent.execute(matricula);
+  async findOne(@Param('registration') registration: string): Promise<HttpResponse<StudentResponseDto>> {
+    const student = await this.getStudent.execute(registration);
+    return HttpResponseSerializer.serialize(student);
   }
 
-  @Put(':matricula')
+  @Put(':registration')
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'COORDINATOR', 'STUDENT')
   @ApiOperation({
     summary: 'Atualizar dados do aluno',
     description: 'Atualiza o nome do usuário e/ou curso do aluno. Estudantes podem atualizar apenas seus próprios dados.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Aluno atualizado com sucesso.'
-  })
+  @ApiStudentOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Aluno ou curso não encontrado'
@@ -104,11 +104,12 @@ export class StudentsController {
     status: 403,
     description: 'Sem permissão'
   })
-  update(@Param('matricula') matricula: string, @Body() dto: UpdateStudentDto) {
-    return this.updateStudent.execute(matricula, dto);
+  async update(@Param('registration') registration: string, @Body() dto: UpdateStudentDto): Promise<HttpResponse<StudentResponseDto>> {
+    const student = await this.updateStudent.execute(registration, dto);
+    return HttpResponseSerializer.serialize(student);
   }
 
-  @Patch(':matricula/password')
+  @Patch(':registration/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('STUDENT', 'ADMIN')
   @ApiOperation({
@@ -131,7 +132,7 @@ export class StudentsController {
     status: 404,
     description: 'Aluno não encontrado'
   })
-  async changePasswordHandler(@Param('matricula') matricula: string, @Body() dto: ChangePasswordDto) {
-    await this.changePassword.execute(matricula, dto);
+  async changePasswordHandler(@Param('registration') registration: string, @Body() dto: ChangePasswordDto) {
+    await this.changePassword.execute(registration, dto);
   }
 }

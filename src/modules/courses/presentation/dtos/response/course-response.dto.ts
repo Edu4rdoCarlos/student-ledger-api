@@ -5,38 +5,34 @@ export class CourseResponseDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
-  codigo: string;
+  @ApiProperty({ description: 'Código único do curso' })
+  code: string;
 
-  @ApiProperty()
-  nome: string;
+  @ApiProperty({ description: 'Nome do curso' })
+  name: string;
 
-  @ApiProperty({ required: false })
-  departamento?: string;
+  @ApiProperty({ required: false, description: 'ID do departamento' })
+  departmentId?: string;
 
-  @ApiProperty()
-  ativo: boolean;
+  @ApiProperty({ description: 'Indica se o curso está ativo' })
+  active: boolean;
 
-  @ApiProperty()
-  organizationId: string;
-
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: 'ID do coordenador' })
   coordinatorId?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de criação' })
   createdAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de atualização' })
   updatedAt: Date;
 
   static fromEntity(course: Course): CourseResponseDto {
     const dto = new CourseResponseDto();
     dto.id = course.id;
-    dto.codigo = course.codigo;
-    dto.nome = course.nome;
-    dto.departamento = course.departamento;
-    dto.ativo = course.ativo;
-    dto.organizationId = course.organizationId;
+    dto.code = course.codigo;
+    dto.name = course.nome;
+    dto.departmentId = course.departmentId;
+    dto.active = course.ativo;
     dto.coordinatorId = course.coordinatorId;
     dto.createdAt = course.createdAt;
     dto.updatedAt = course.updatedAt;

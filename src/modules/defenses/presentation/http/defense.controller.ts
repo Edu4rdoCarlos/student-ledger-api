@@ -29,8 +29,11 @@ import {
   UpdateDefenseDto,
   SubmitDefenseResultDto,
 } from '../dtos/request';
-import { DefenseResponseDto, SubmitDefenseResultResponseDto } from '../dtos/response';
+import { DefenseResponseDto, SubmitDefenseResultResponseDto, ListDefensesResponseDto } from '../dtos/response';
 import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
+import { PaginationMetadata, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
+import { ApiDefenseListResponse, ApiDefenseCreatedResponse, ApiDefenseOkResponse } from '../docs';
 
 @ApiTags('Defenses')
 @ApiBearerAuth()
@@ -49,51 +52,63 @@ export class DefenseController {
   @Roles('ADMIN', 'COORDINATOR')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new defense' })
+  @ApiDefenseCreatedResponse()
   async create(
     @Body() createDefenseDto: CreateDefenseDto,
-  ): Promise<DefenseResponseDto> {
+  ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.createDefenseUseCase.execute({
       ...createDefenseDto,
       defenseDate: new Date(createDefenseDto.defenseDate),
     });
-    return DefenseResponseDto.fromEntity(defense);
+    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
   }
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
   @ApiOperation({ summary: 'List all defenses' })
+  @ApiDefenseListResponse()
   async findAll(
     @Query('advisorId') advisorId?: string,
     @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
-    @Query('skip') skip?: string,
-    @Query('take') take?: string,
-  ): Promise<DefenseResponseDto[]> {
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ListDefensesResponseDto> {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    const skip = (pageNum - 1) * limitNum;
+
     const options = {
       advisorId,
       result,
-      skip: skip ? parseInt(skip, 10) : undefined,
-      take: take ? parseInt(take, 10) : undefined,
+      skip,
+      take: limitNum,
     };
 
-    const { items } = await this.listDefensesUseCase.execute(options);
-    return items.map(DefenseResponseDto.fromEntity);
+    const { items, total } = await this.listDefensesUseCase.execute(options);
+
+    return {
+      data: items.map(DefenseResponseDto.fromEntity),
+      metadata: new PaginationMetadata({ page: pageNum, perPage: limitNum, total }),
+    };
   }
 
   @Get(':id')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
   @ApiOperation({ summary: 'Get defense by ID' })
-  async findOne(@Param('id') id: string): Promise<DefenseResponseDto> {
+  @ApiDefenseOkResponse()
+  async findOne(@Param('id') id: string): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.getDefenseUseCase.execute(id);
-    return DefenseResponseDto.fromEntity(defense);
+    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
   }
 
   @Put(':id')
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Update defense' })
+  @ApiDefenseOkResponse()
   async update(
     @Param('id') id: string,
     @Body() updateDefenseDto: UpdateDefenseDto,
-  ): Promise<DefenseResponseDto> {
+  ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.updateDefenseUseCase.execute({
       id,
       title: updateDefenseDto.title,
@@ -101,7 +116,7 @@ export class DefenseController {
         ? new Date(updateDefenseDto.defenseDate)
         : undefined,
     });
-    return DefenseResponseDto.fromEntity(defense);
+    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
   }
 
   @Post(':id/result')

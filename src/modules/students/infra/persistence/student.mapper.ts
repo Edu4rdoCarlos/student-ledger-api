@@ -5,7 +5,7 @@ export class StudentMapper {
   static toDomain(prisma: PrismaStudent): Student {
     return Student.create(
       {
-        matricula: prisma.matricula,
+        matricula: prisma.registration,
         userId: prisma.userId,
         courseId: prisma.courseId,
         createdAt: prisma.createdAt,
@@ -18,7 +18,7 @@ export class StudentMapper {
   static toPrisma(student: Student) {
     return {
       id: student.id,
-      matricula: student.matricula,
+      registration: student.matricula,
       userId: student.userId,
       courseId: student.courseId,
     };

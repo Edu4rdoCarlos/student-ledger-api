@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
 import {
   CreateCourseUseCase,
@@ -7,8 +7,12 @@ import {
   ListCoursesUseCase,
   UpdateCourseUseCase,
   ListCoursesQuery,
+  ListCoursesResponse,
 } from '../../application/use-cases';
-import { CreateCourseDto, UpdateCourseDto } from '../dtos';
+import { CreateCourseDto, UpdateCourseDto, CourseResponseDto } from '../dtos';
+import { HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
+import { ApiCourseListResponse, ApiCourseCreatedResponse, ApiCourseOkResponse } from '../docs';
 
 @ApiTags('Courses')
 @ApiBearerAuth()
@@ -28,10 +32,7 @@ export class CoursesController {
     summary: 'Cadastrar novo curso',
     description: 'Cria um novo curso no sistema. Apenas coordenadores e admins podem cadastrar.'
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Curso cadastrado com sucesso.'
-  })
+  @ApiCourseCreatedResponse()
   @ApiResponse({
     status: 409,
     description: 'Código de curso já cadastrado'
@@ -48,32 +49,30 @@ export class CoursesController {
     status: 403,
     description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar cursos.'
   })
-  create(@Body() dto: CreateCourseDto) {
-    return this.createCourse.execute(dto);
+  async create(@Body() dto: CreateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
+    const course = await this.createCourse.execute(dto);
+    return HttpResponseSerializer.serialize(course);
   }
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Listar cursos' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de cursos retornada com sucesso'
-  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
+  @ApiQuery({ name: 'departmentId', required: false, type: String, description: 'Filtrar por ID do departamento' })
+  @ApiCourseListResponse()
   @ApiResponse({
     status: 401,
     description: 'Não autenticado'
   })
-  findAll(@Query() query: ListCoursesQuery) {
+  async findAll(@Query() query: ListCoursesQuery): Promise<ListCoursesResponse> {
     return this.listCourses.execute(query);
   }
 
-  @Get(':codigo')
+  @Get(':code')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Buscar curso por código' })
-  @ApiResponse({
-    status: 200,
-    description: 'Curso encontrado'
-  })
+  @ApiCourseOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Curso não encontrado'
@@ -82,21 +81,19 @@ export class CoursesController {
     status: 401,
     description: 'Não autenticado'
   })
-  findOne(@Param('codigo') codigo: string) {
-    return this.getCourse.execute(codigo);
+  async findOne(@Param('code') code: string): Promise<HttpResponse<CourseResponseDto>> {
+    const course = await this.getCourse.execute(code);
+    return HttpResponseSerializer.serialize(course);
   }
 
-  @Put(':codigo')
+  @Put(':code')
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
     summary: 'Atualizar dados do curso',
     description: 'Atualiza nome, departamento, status ativo e/ou coordenador do curso. Apenas coordenadores e admins podem atualizar.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Curso atualizado com sucesso.'
-  })
+  @ApiCourseOkResponse()
   @ApiResponse({
     status: 404,
     description: 'Curso ou coordenador não encontrado'
@@ -109,7 +106,8 @@ export class CoursesController {
     status: 403,
     description: 'Sem permissão. Apenas coordenadores e admins podem atualizar cursos.'
   })
-  update(@Param('codigo') codigo: string, @Body() dto: UpdateCourseDto) {
-    return this.updateCourse.execute(codigo, dto);
+  async update(@Param('code') code: string, @Body() dto: UpdateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
+    const course = await this.updateCourse.execute(code, dto);
+    return HttpResponseSerializer.serialize(course);
   }
 }

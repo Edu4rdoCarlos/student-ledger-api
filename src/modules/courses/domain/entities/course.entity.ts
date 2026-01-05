@@ -1,9 +1,8 @@
 export interface CourseProps {
   codigo: string;
   nome: string;
-  departamento?: string;
+  departmentId?: string;
   ativo: boolean;
-  organizationId: string;
   coordinatorId?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -41,16 +40,12 @@ export class Course {
     return this.props.nome;
   }
 
-  get departamento(): string | undefined {
-    return this.props.departamento;
+  get departmentId(): string | undefined {
+    return this.props.departmentId;
   }
 
   get ativo(): boolean {
     return this.props.ativo;
-  }
-
-  get organizationId(): string {
-    return this.props.organizationId;
   }
 
   get coordinatorId(): string | undefined {
@@ -65,9 +60,9 @@ export class Course {
     return this.props.updatedAt!;
   }
 
-  update(data: Partial<Pick<CourseProps, 'nome' | 'departamento' | 'ativo' | 'coordinatorId'>>): void {
+  update(data: Partial<Pick<CourseProps, 'nome' | 'departmentId' | 'ativo' | 'coordinatorId'>>): void {
     if (data.nome !== undefined) this.props.nome = data.nome;
-    if (data.departamento !== undefined) this.props.departamento = data.departamento;
+    if (data.departmentId !== undefined) this.props.departmentId = data.departmentId;
     if (data.ativo !== undefined) this.props.ativo = data.ativo;
     if (data.coordinatorId !== undefined) this.props.coordinatorId = data.coordinatorId;
     this.props.updatedAt = new Date();
