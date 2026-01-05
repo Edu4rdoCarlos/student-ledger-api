@@ -152,6 +152,10 @@ export class EmailTemplateService {
   }
 
   private documentApprovalRequest(data: EmailTemplateData): EmailTemplateResult {
+    const approvalUrl = data.approvalId
+      ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/approvals/${data.approvalId}`
+      : '#';
+
     return {
       subject: `Solicitação de aprovação de documento - ${data.documentType}`,
       html: `
@@ -164,7 +168,17 @@ export class EmailTemplateService {
           <li><strong>Aluno(s):</strong> ${data.studentsNames || 'N/A'}</li>
           <li><strong>Data de Submissão:</strong> ${new Date(data.submittedAt).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</li>
         </ul>
-        <p>Por favor, acesse o sistema para revisar e aprovar/rejeitar o documento.</p>
+
+        <div style="margin: 30px 0;">
+          <a href="${approvalUrl}"
+             style="background-color: #3b82f6; color: white; padding: 14px 28px;
+                    text-decoration: none; border-radius: 6px; font-weight: bold;
+                    display: inline-block;">
+            Revisar e Aprovar Documento
+          </a>
+        </div>
+
+        <p>Por favor, faça login no sistema e revise o documento para aprová-lo ou rejeitá-lo.</p>
         <br>
         <p>Atenciosamente,<br>Student Ledger</p>
       `,

@@ -17,6 +17,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { DefensesModule } from './modules/defenses/defenses.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { ApprovalsModule } from './modules/approvals/approvals.module';
 import { FabricModule } from './modules/fabric/fabric.module';
 import { IpfsModule } from './modules/ipfs/ipfs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -54,6 +55,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     DepartmentsModule,
     DefensesModule,
     DocumentsModule,
+    ApprovalsModule,
     FabricModule,
     IpfsModule,
     NotificationsModule,

@@ -12,6 +12,7 @@ import {
 } from '../../../documents/application/ports';
 import { MongoStorageService } from '../../../../database/mongo';
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
+import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
 
 interface SubmitDefenseResultRequest {
   id: string;
@@ -36,6 +37,7 @@ export class SubmitDefenseResultUseCase {
     private readonly documentRepository: IDocumentRepository,
     private readonly mongoStorage: MongoStorageService,
     private readonly notifyDefenseResultUseCase: NotifyDefenseResultUseCase,
+    private readonly createApprovalsUseCase: CreateApprovalsUseCase,
   ) {}
 
   async execute(request: SubmitDefenseResultRequest): Promise<SubmitDefenseResultResponse> {
@@ -71,6 +73,10 @@ export class SubmitDefenseResultUseCase {
 
       this.notifyDefenseResultUseCase.execute(request.id).catch((error) => {
         this.logger.error(`Failed to send notification: ${error.message}`);
+      });
+
+      this.createApprovalsUseCase.execute({ documentId: updatedDocument.id }).catch((error) => {
+        this.logger.error(`Failed to create approvals: ${error.message}`);
       });
 
       return {

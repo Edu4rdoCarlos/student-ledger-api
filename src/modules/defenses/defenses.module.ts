@@ -27,6 +27,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
     StudentsModule,
     AdvisorsModule,
     forwardRef(() => DocumentsModule),
+    forwardRef(() => require('../approvals/approvals.module').ApprovalsModule),
     IpfsModule,
     NotificationsModule,
     AuthModule,

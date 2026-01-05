@@ -3,8 +3,6 @@ model Approval {
   role          ApprovalRole
   status        ApprovalStatus @default(PENDING)
   justification String? // Required if rejected
-  code          String?        @db.VarChar(6) // Verification code
-  codeExpiresAt DateTime?
   approvedAt    DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
