@@ -1,5 +1,5 @@
 import { Controller, Get, Put, Param, Body, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import {
   GetDepartmentUseCase,
   ListDepartmentsUseCase,
@@ -13,6 +13,7 @@ import { Roles } from '../../../../shared/decorators';
 import { ApiDepartmentOkResponse, ApiDepartmentListResponse } from '../docs/responses/success.response';
 
 @ApiTags('Departments')
+@ApiBearerAuth()
 @Controller('departments')
 export class DepartmentsController {
   constructor(
