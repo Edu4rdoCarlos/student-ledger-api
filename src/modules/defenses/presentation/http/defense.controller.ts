@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { PdfContentValidator } from '../../../../shared/validators';
@@ -128,6 +129,7 @@ export class DefenseController {
 
   @Post(':id/result')
   @Roles('ADMIN', 'COORDINATOR')
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('document'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })

@@ -10,6 +10,7 @@ import {
   ApiOkResponse,
   ApiProduces,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Roles, Public, CurrentUser } from '../../../../shared/decorators';
 import { ValidateDocumentUseCase, DownloadDocumentUseCase } from '../../application/use-cases';
 import { ValidateDocumentResponseDto } from '../dtos/response/document-response.dto';
@@ -55,6 +56,7 @@ export class DocumentsController {
 
   @Post('validate')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Validate document authenticity via file upload (public endpoint)' })

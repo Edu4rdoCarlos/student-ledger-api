@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Res, Req, Inject, UnauthorizedException } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { LoginUseCase, RefreshTokensUseCase, LogoutUseCase } from '../../application/use-cases';
 import { ICookieService, COOKIE_SERVICE } from '../../application/ports';
@@ -23,6 +24,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     summary: 'Realizar login',
     description: 'Autentica o usuario e retorna um access token. O refresh token e enviado via cookie HTTP-only.',
