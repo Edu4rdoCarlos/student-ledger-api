@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../shared/prisma';
+import { PrismaModule } from '../../database/prisma';
 import { DepartmentsController } from './presentation/http/departments.controller';
 import {
   GetDepartmentUseCase,

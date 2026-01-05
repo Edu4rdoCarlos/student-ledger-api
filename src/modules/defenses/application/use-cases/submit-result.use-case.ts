@@ -10,7 +10,7 @@ import {
   IDocumentRepository,
   DOCUMENT_REPOSITORY
 } from '../../../documents/application/ports';
-import { MongoStorageService } from '../../../../shared/storage';
+import { MongoStorageService } from '../../../../database/mongo';
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 
 interface SubmitDefenseResultRequest {

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../shared/prisma';
+import { PrismaModule } from '../../database/prisma';
 import { COURSE_REPOSITORY } from './application/ports';
 import { PrismaCourseRepository } from './infra/persistence';
 import { CoursesController } from './presentation/http';

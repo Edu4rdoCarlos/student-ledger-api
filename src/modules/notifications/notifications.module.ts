@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '../../shared/prisma';
+import { PrismaModule } from '../../database/prisma';
 import { SendEmailUseCase } from './application/use-cases';
 import {
   NOTIFICATION_REPOSITORY,

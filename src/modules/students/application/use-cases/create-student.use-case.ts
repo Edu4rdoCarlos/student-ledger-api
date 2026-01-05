@@ -5,7 +5,7 @@ import { Student } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentMatriculaAlreadyExistsError } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
-import { PrismaService } from '../../../../shared/prisma';
+import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
 
 @Injectable()
@@ -13,7 +13,8 @@ export class CreateStudentUseCase {
   constructor(
     @Inject(STUDENT_REPOSITORY)
     private readonly studentRepository: IStudentRepository,
-    private readonly prisma: PrismaService,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async execute(dto: CreateStudentDto): Promise<StudentResponseDto> {
@@ -22,9 +23,7 @@ export class CreateStudentUseCase {
       throw new StudentMatriculaAlreadyExistsError(dto.registration);
     }
 
-    const emailExists = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const emailExists = await this.userRepository.existsByEmail(dto.email);
     if (emailExists) {
       throw new ConflictException(`Email já cadastrado: ${dto.email}`);
     }
@@ -32,45 +31,21 @@ export class CreateStudentUseCase {
     const randomPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: dto.email,
-          password: hashedPassword,
-          name: dto.name,
-          role: Role.STUDENT,
-          organizationId: dto.organizationId,
-        },
-      });
-
-      const student = Student.create({
-        matricula: dto.registration,
-        userId: user.id,
-        courseId: dto.courseId,
-      });
-
-      const createdStudent = await tx.student.create({
-        data: {
-          id: user.id,
-          registration: student.matricula,
-          courseId: student.courseId,
-        },
-      });
-
-      return createdStudent;
+    const user = await this.userRepository.create({
+      email: dto.email,
+      password: hashedPassword,
+      name: dto.name,
+      role: Role.STUDENT,
+      organizationId: dto.organizationId,
     });
 
-    const created = Student.create(
-      {
-        matricula: result.registration,
-        userId: result.id,
-        courseId: result.courseId,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      },
-      result.id,
-    );
+    const student = Student.create({
+      matricula: dto.registration,
+      userId: user.id,
+      courseId: dto.courseId,
+    });
 
+    const created = await this.studentRepository.create(student);
     return StudentResponseDto.fromEntity(created);
   }
 }

@@ -2,14 +2,15 @@ import { Inject, Injectable, UnauthorizedException, NotFoundException } from '@n
 import * as bcrypt from 'bcrypt';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { ChangePasswordDto } from '../../../../shared/dtos';
-import { PrismaService } from '../../../../shared/prisma';
+import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
-    private readonly prisma: PrismaService,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async execute(id: string, dto: ChangePasswordDto): Promise<void> {
@@ -18,10 +19,7 @@ export class ChangePasswordUseCase {
       throw new NotFoundException(`Orientador não encontrado: ${id}`);
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: advisor.userId },
-    });
-
+    const user = await this.userRepository.findById(advisor.userId);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
@@ -32,13 +30,6 @@ export class ChangePasswordUseCase {
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        isFirstAccess: false,
-      },
-    });
+    await this.userRepository.changePassword(user.id, hashedPassword, false);
   }
 }

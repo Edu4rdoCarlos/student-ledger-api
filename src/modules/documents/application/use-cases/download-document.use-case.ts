@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
-import { MongoStorageService } from '../../../../shared/storage';
+import { MongoStorageService } from '../../../../database/mongo';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 
 interface DownloadDocumentResponse {

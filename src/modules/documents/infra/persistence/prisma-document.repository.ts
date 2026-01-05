@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Document as PrismaDocument } from '@prisma/client';
-import { PrismaService } from '../../../../shared/prisma';
+import { PrismaService } from '../../../../database/prisma';
 import { Document, DocumentType } from '../../domain/entities';
 import { IDocumentRepository, DocumentFilters } from '../../application/ports';
 import { DocumentMapper } from './document.mapper';

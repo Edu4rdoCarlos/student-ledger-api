@@ -5,7 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 
 // Shared
-import { PrismaModule, JwtAuthGuard, RolesGuard } from './shared';
+import { JwtAuthGuard, RolesGuard } from './shared';
+import { DatabaseModule } from './database';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -36,7 +37,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       inject: [ConfigService],
     }),
     // Shared
-    PrismaModule,
+    DatabaseModule,
 
     // Feature Modules
     AuthModule,

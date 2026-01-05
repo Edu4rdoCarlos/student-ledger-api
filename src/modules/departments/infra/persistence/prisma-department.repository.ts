@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../shared/prisma';
+import { PrismaService } from '../../../../database/prisma';
 import { Department } from '../../domain/entities';
 import { IDepartmentRepository, FindAllOptions, FindAllResult } from '../../application/ports';
 import { DepartmentMapper } from './department.mapper';

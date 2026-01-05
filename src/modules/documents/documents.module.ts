@@ -1,5 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { PrismaModule } from '../../shared/prisma';
+import { PrismaModule } from '../../database/prisma';
 import { DOCUMENT_REPOSITORY } from './application/ports';
 import { PrismaDocumentRepository } from './infra/persistence';
 import { DocumentsController } from './presentation/http';
@@ -10,7 +10,7 @@ import {
   ValidateDocumentUseCase,
   DownloadDocumentUseCase,
 } from './application/use-cases';
-import { MongoStorageService } from '../../shared/storage';
+import { MongoStorageService } from '../../database/mongo';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { DefensesModule } from '../defenses/defenses.module';
 

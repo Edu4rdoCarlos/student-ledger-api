@@ -3,9 +3,8 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
-import { AdvisorUserAlreadyExistsError } from '../../domain/errors';
 import { CreateAdvisorDto, AdvisorResponseDto } from '../../presentation/dtos';
-import { PrismaService } from '../../../../shared/prisma';
+import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
 
 @Injectable()
@@ -13,13 +12,12 @@ export class CreateAdvisorUseCase {
   constructor(
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
-    private readonly prisma: PrismaService,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async execute(dto: CreateAdvisorDto): Promise<AdvisorResponseDto> {
-    const emailExists = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const emailExists = await this.userRepository.existsByEmail(dto.email);
     if (emailExists) {
       throw new ConflictException(`Email já cadastrado: ${dto.email}`);
     }
@@ -27,48 +25,22 @@ export class CreateAdvisorUseCase {
     const randomPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: dto.email,
-          password: hashedPassword,
-          name: dto.name,
-          role: Role.ADVISOR,
-          organizationId: dto.organizationId,
-        },
-      });
-
-      const advisor = Advisor.create({
-        userId: user.id,
-        departmentId: dto.departmentId,
-        specialization: dto.specialization,
-        courseId: dto.courseId,
-      });
-
-      const createdAdvisor = await tx.advisor.create({
-        data: {
-          id: user.id,
-          departmentId: advisor.departmentId || null,
-          specialization: advisor.specialization || null,
-          courseId: advisor.courseId || null,
-        },
-      });
-
-      return createdAdvisor;
+    const user = await this.userRepository.create({
+      email: dto.email,
+      password: hashedPassword,
+      name: dto.name,
+      role: Role.ADVISOR,
+      organizationId: dto.organizationId,
     });
 
-    const created = Advisor.create(
-      {
-        userId: result.id,
-        departmentId: result.departmentId || undefined,
-        specialization: result.specialization || undefined,
-        courseId: result.courseId || undefined,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      },
-      result.id,
-    );
+    const advisor = Advisor.create({
+      userId: user.id,
+      departmentId: dto.departmentId,
+      specialization: dto.specialization,
+      courseId: dto.courseId,
+    });
 
+    const created = await this.advisorRepository.create(advisor);
     return AdvisorResponseDto.fromEntity(created);
   }
 }

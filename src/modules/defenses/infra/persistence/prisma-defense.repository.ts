@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../shared/prisma';
+import { PrismaService } from '../../../../database/prisma';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, FindAllOptions, FindAllResult } from '../../application/ports';
 import { DefenseMapper } from './defense.mapper';

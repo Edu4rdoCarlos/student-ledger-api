@@ -1,12 +1,12 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { PrismaModule } from '../../shared/prisma';
+import { PrismaModule } from '../../database/prisma';
 import { StudentsModule } from '../students/students.module';
 import { AdvisorsModule } from '../advisors/advisors.module';
 import { DocumentsModule } from '../documents/documents.module';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthModule } from '../auth/auth.module';
-import { MongoStorageService } from '../../shared/storage';
+import { MongoStorageService } from '../../database/mongo';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
