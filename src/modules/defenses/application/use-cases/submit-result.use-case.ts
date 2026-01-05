@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
@@ -27,6 +27,8 @@ interface SubmitDefenseResultResponse {
 
 @Injectable()
 export class SubmitDefenseResultUseCase {
+  private readonly logger = new Logger(SubmitDefenseResultUseCase.name);
+
   constructor(
     @Inject(DEFENSE_REPOSITORY)
     private readonly defenseRepository: IDefenseRepository,
@@ -42,38 +44,42 @@ export class SubmitDefenseResultUseCase {
       throw new DefenseNotFoundError();
     }
 
-    // 1. Set the grade on the defense
-    defense.setGrade(request.finalGrade);
-
-    // 2. Create the defense document (without IPFS hash yet)
     const document = Document.create({
       type: DocumentType.ATA,
       defenseId: request.id,
     });
-
-    // 3. Save document to PostgreSQL to get the ID
     const createdDocument = await this.documentRepository.create(document);
 
-    // 4. Upload file to MongoDB GridFS using document ID
-    await this.mongoStorage.uploadFile(
-      createdDocument.id,
-      request.documentFile,
-      request.documentFilename
-    );
+    try {
+      await this.mongoStorage.uploadFile(
+        createdDocument.id,
+        request.documentFile,
+        request.documentFilename
+      );
+    } catch (error) {
+      this.logger.error(`Failed to upload file to MongoDB: ${error.message}`, error.stack);
+      await this.documentRepository.delete(createdDocument.id);
+      throw new InternalServerErrorException('Falha ao fazer upload do arquivo. Tente novamente.');
+    }
 
-    // 5. Update document with MongoDB file ID
-    createdDocument.setMongoFileId(createdDocument.id);
-    const updatedDocument = await this.documentRepository.update(createdDocument);
+    try {
+      createdDocument.setMongoFileId(createdDocument.id);
+      const updatedDocument = await this.documentRepository.update(createdDocument);
 
-    // 6. Update defense
-    const updatedDefense = await this.defenseRepository.update(defense);
+      defense.setGrade(request.finalGrade);
+      const updatedDefense = await this.defenseRepository.update(defense);
 
-    // 7. Send notification emails about the result
-    await this.notifyDefenseResultUseCase.execute(request.id);
+      this.notifyDefenseResultUseCase.execute(request.id).catch((error) => {
+        this.logger.error(`Failed to send notification: ${error.message}`);
+      });
 
-    return {
-      defense: updatedDefense,
-      document: updatedDocument,
-    };
+      return {
+        defense: updatedDefense,
+        document: updatedDocument,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to update defense/document: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Falha ao processar resultado da defesa. Tente novamente.');
+    }
   }
 }
