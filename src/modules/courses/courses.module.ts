@@ -9,9 +9,11 @@ import {
   ListCoursesUseCase,
   UpdateCourseUseCase,
 } from './application/use-cases';
+import { DepartmentsModule } from '../departments/departments.module';
+import { AdvisorsModule } from '../advisors/advisors.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, DepartmentsModule, AdvisorsModule],
   controllers: [CoursesController],
   providers: [
     {
