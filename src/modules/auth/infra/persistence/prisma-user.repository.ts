@@ -13,6 +13,7 @@ export class PrismaUserRepository implements IUserRepository {
         id: true,
         email: true,
         password: true,
+        name: true,
         role: true,
       },
     });
@@ -25,6 +26,22 @@ export class PrismaUserRepository implements IUserRepository {
         id: true,
         email: true,
         password: true,
+        name: true,
+        role: true,
+      },
+    });
+  }
+
+  async findByIds(ids: string[]): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: {
+        id: { in: ids },
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
         role: true,
       },
     });

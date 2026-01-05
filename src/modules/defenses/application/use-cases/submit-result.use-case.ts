@@ -11,6 +11,7 @@ import {
   DOCUMENT_REPOSITORY
 } from '../../../documents/application/ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
+import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 
 interface SubmitDefenseResultRequest {
   id: string;
@@ -32,6 +33,7 @@ export class SubmitDefenseResultUseCase {
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
     private readonly ipfsService: IpfsService,
+    private readonly notifyDefenseResultUseCase: NotifyDefenseResultUseCase,
   ) {}
 
   async execute(request: SubmitDefenseResultRequest): Promise<SubmitDefenseResultResponse> {
@@ -68,6 +70,9 @@ export class SubmitDefenseResultUseCase {
       this.defenseRepository.update(defense),
       this.documentRepository.create(document),
     ]);
+
+    // 5. Send notification emails about the result
+    await this.notifyDefenseResultUseCase.execute(request.id);
 
     return {
       defense: updatedDefense,

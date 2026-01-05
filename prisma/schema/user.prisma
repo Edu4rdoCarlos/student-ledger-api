@@ -16,6 +16,7 @@ model User {
   organization   Organization? @relation(fields: [organizationId], references: [id])
   approvals      Approval[]
   refreshTokens  RefreshToken[]
+  notifications  Notification[]
   student        Student?
   advisor        Advisor?
   coordinator    Coordinator?

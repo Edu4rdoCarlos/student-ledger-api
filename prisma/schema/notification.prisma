@@ -1,0 +1,45 @@
+model Notification {
+  id String @id @default(uuid())
+
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
+  channel     NotificationChannel
+  to          String
+  subject     String?
+  templateId  String?
+  data        Json?
+  contextType NotificationContextType?
+  contextId   String?
+  status      NotificationStatus       @default(PENDING)
+  error       String?
+  retryCount  Int                      @default(0)
+  maxRetries  Int                      @default(3)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sentAt    DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([contextType, contextId])
+}
+
+enum NotificationChannel {
+  EMAIL
+}
+
+enum NotificationContextType {
+  DEFENSE_APPROVAL
+  DOCUMENT_APPROVAL
+  DEFENSE_CREATED
+  DEFENSE_RESULT
+  GENERAL
+}
+
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  RETRY
+}
