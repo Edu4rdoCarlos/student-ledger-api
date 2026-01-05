@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { Roles } from '../../../../shared/decorators';
+import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
   CreateStudentUseCase,
   GetStudentUseCase,
@@ -86,10 +86,10 @@ export class StudentsController {
 
   @Put(':registration')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR', 'STUDENT')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
     summary: 'Atualizar dados do aluno',
-    description: 'Atualiza o nome do usuário e/ou curso do aluno. Estudantes podem atualizar apenas seus próprios dados.'
+    description: 'Atualiza o nome do usuário e/ou curso do aluno. Apenas administradores e coordenadores podem atualizar.'
   })
   @ApiStudentOkResponse()
   @ApiResponse({
@@ -109,7 +109,7 @@ export class StudentsController {
     return HttpResponseSerializer.serialize(student);
   }
 
-  @Patch(':registration/password')
+  @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('STUDENT')
   @ApiOperation({
@@ -132,7 +132,7 @@ export class StudentsController {
     status: 404,
     description: 'Aluno não encontrado'
   })
-  async changePasswordHandler(@Param('registration') registration: string, @Body() dto: ChangePasswordDto) {
-    await this.changePassword.execute(registration, dto);
+  async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
+    await this.changePassword.execute(currentUser.id, dto);
   }
 }

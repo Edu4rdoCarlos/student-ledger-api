@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { Roles } from '../../../../shared/decorators';
+import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
   CreateAdvisorUseCase,
   GetAdvisorUseCase,
@@ -86,10 +86,10 @@ export class AdvisorsController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
+  @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
     summary: 'Atualizar dados do orientador',
-    description: 'Atualiza nome, departamento e/ou curso do orientador. Orientadores podem atualizar apenas seus próprios dados.'
+    description: 'Atualiza nome, departamento e/ou curso do orientador. Apenas administradores e coordenadores podem atualizar.'
   })
   @ApiAdvisorOkResponse()
   @ApiResponse({
@@ -109,7 +109,7 @@ export class AdvisorsController {
     return HttpResponseSerializer.serialize(advisor);
   }
 
-  @Patch(':id/password')
+  @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('ADVISOR')
   @ApiOperation({
@@ -132,7 +132,7 @@ export class AdvisorsController {
     status: 404,
     description: 'Orientador não encontrado'
   })
-  async changePasswordHandler(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
-    await this.changePassword.execute(id, dto);
+  async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
+    await this.changePassword.execute(currentUser.id, dto);
   }
 }

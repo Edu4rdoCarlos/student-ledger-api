@@ -1,25 +1,17 @@
 import { Inject, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { ChangePasswordDto } from '../../../../shared/dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
-    @Inject(STUDENT_REPOSITORY)
-    private readonly studentRepository: IStudentRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(matricula: string, dto: ChangePasswordDto): Promise<void> {
-    const student = await this.studentRepository.findByMatricula(matricula);
-    if (!student) {
-      throw new NotFoundException(`Aluno não encontrado: ${matricula}`);
-    }
-
-    const user = await this.userRepository.findById(student.userId);
+  async execute(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
