@@ -1,16 +1,15 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
   CreateAdvisorUseCase,
   GetAdvisorUseCase,
   ListAdvisorsUseCase,
   UpdateAdvisorUseCase,
-  ListAdvisorsQuery,
   ListAdvisorsResponse,
   ChangePasswordUseCase,
 } from '../../application/use-cases';
-import { CreateAdvisorDto, UpdateAdvisorDto, AdvisorResponseDto } from '../dtos';
+import { CreateAdvisorDto, UpdateAdvisorDto, ListAdvisorsDto, AdvisorResponseDto } from '../dtos';
 import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiAdvisorListResponse, ApiAdvisorCreatedResponse, ApiAdvisorOkResponse } from '../docs';
@@ -55,15 +54,12 @@ export class AdvisorsController {
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Listar orientadores' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
-  @ApiQuery({ name: 'courseId', required: false, type: String, description: 'Filtrar por ID do curso' })
   @ApiAdvisorListResponse()
   @ApiResponse({
     status: 401,
     description: 'Não autenticado'
   })
-  async findAll(@Query() query: ListAdvisorsQuery): Promise<ListAdvisorsResponse> {
+  async findAll(@Query() query: ListAdvisorsDto): Promise<ListAdvisorsResponse> {
     return this.listAdvisors.execute(query);
   }
 

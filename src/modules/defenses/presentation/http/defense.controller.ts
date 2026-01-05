@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   ParseFilePipeBuilder,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -31,7 +32,7 @@ import {
 } from '../dtos/request';
 import { DefenseResponseDto, SubmitDefenseResultResponseDto, ListDefensesResponseDto } from '../dtos/response';
 import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
-import { PaginationMetadata, HttpResponse } from '../../../../shared/dtos';
+import { PaginationMetadata, HttpResponse, PaginationDto } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiDefenseListResponse, ApiDefenseCreatedResponse, ApiDefenseOkResponse } from '../docs';
 import { DefenseSerializer } from '../serializers/defense.serializer';
@@ -70,27 +71,25 @@ export class DefenseController {
   @ApiDefenseListResponse()
   async findAll(
     @CurrentUser() user: { id: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+    @Query() pagination: PaginationDto,
     @Query('advisorId') advisorId?: string,
     @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
   ): Promise<ListDefensesResponseDto> {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 10;
-    const skip = (pageNum - 1) * limitNum;
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
 
     const options = {
       advisorId,
       result,
       skip,
-      take: limitNum,
+      take: limit,
     };
 
     const { items, total } = await this.listDefensesUseCase.execute(options);
 
     return {
       data: DefenseSerializer.serializeList(items, user),
-      metadata: new PaginationMetadata({ page: pageNum, perPage: limitNum, total }),
+      metadata: new PaginationMetadata({ page, perPage: limit, total }),
     };
   }
 
@@ -161,9 +160,15 @@ export class DefenseController {
     )
     file: Express.Multer.File,
   ): Promise<SubmitDefenseResultResponseDto> {
+    const grade = parseFloat(finalGrade);
+
+    if (isNaN(grade) || grade < 0 || grade > 10) {
+      throw new BadRequestException('Nota final inválida. Deve ser um número entre 0 e 10.');
+    }
+
     const { defense, document } = await this.submitDefenseResultUseCase.execute({
       id,
-      finalGrade: parseFloat(finalGrade),
+      finalGrade: grade,
       documentFile: file.buffer,
       documentFilename: file.originalname,
     });

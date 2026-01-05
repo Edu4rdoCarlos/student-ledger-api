@@ -1,16 +1,15 @@
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
   CreateStudentUseCase,
   GetStudentUseCase,
   ListStudentsUseCase,
   UpdateStudentUseCase,
-  ListStudentsQuery,
   ListStudentsResponse,
   ChangePasswordUseCase,
 } from '../../application/use-cases';
-import { CreateStudentDto, UpdateStudentDto, StudentResponseDto } from '../dtos';
+import { CreateStudentDto, UpdateStudentDto, ListStudentsDto, StudentResponseDto } from '../dtos';
 import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiStudentListResponse, ApiStudentCreatedResponse, ApiStudentOkResponse } from '../docs';
@@ -59,11 +58,8 @@ export class StudentsController {
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Listar alunos' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
-  @ApiQuery({ name: 'courseId', required: false, type: String, description: 'Filtrar por ID do curso' })
   @ApiStudentListResponse()
-  async findAll(@Query() query: ListStudentsQuery): Promise<ListStudentsResponse> {
+  async findAll(@Query() query: ListStudentsDto): Promise<ListStudentsResponse> {
     return this.listStudents.execute(query);
   }
 
