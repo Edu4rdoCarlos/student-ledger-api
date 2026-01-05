@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/prisma';
 import { DOCUMENT_REPOSITORY } from './application/ports';
 import { PrismaDocumentRepository } from './infra/persistence';
@@ -8,10 +8,14 @@ import {
   GetDocumentUseCase,
   ListDocumentsUseCase,
   ValidateDocumentUseCase,
+  DownloadDocumentUseCase,
 } from './application/use-cases';
+import { MongoStorageService } from '../../shared/storage';
+import { IpfsModule } from '../ipfs/ipfs.module';
+import { DefensesModule } from '../defenses/defenses.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, IpfsModule, forwardRef(() => DefensesModule)],
   controllers: [DocumentsController],
   providers: [
     // Repository
@@ -19,11 +23,14 @@ import {
       provide: DOCUMENT_REPOSITORY,
       useClass: PrismaDocumentRepository,
     },
+    // Storage
+    MongoStorageService,
     // Use Cases
     CreateDocumentUseCase,
     GetDocumentUseCase,
     ListDocumentsUseCase,
     ValidateDocumentUseCase,
+    DownloadDocumentUseCase,
   ],
   exports: [DOCUMENT_REPOSITORY],
 })

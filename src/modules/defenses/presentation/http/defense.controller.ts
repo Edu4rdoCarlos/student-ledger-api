@@ -16,7 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
-import { Roles } from '../../../../shared/decorators';
+import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
@@ -34,6 +34,7 @@ import { DocumentResponseDto } from '../../../documents/presentation/dtos/respon
 import { PaginationMetadata, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiDefenseListResponse, ApiDefenseCreatedResponse, ApiDefenseOkResponse } from '../docs';
+import { DefenseSerializer } from '../serializers/defense.serializer';
 
 @ApiTags('Defenses')
 @ApiBearerAuth()
@@ -68,6 +69,7 @@ export class DefenseController {
   @ApiOperation({ summary: 'List all defenses' })
   @ApiDefenseListResponse()
   async findAll(
+    @CurrentUser() user: { id: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
     @Query('advisorId') advisorId?: string,
     @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
     @Query('page') page?: string,
@@ -87,7 +89,7 @@ export class DefenseController {
     const { items, total } = await this.listDefensesUseCase.execute(options);
 
     return {
-      data: items.map(DefenseResponseDto.fromEntity),
+      data: DefenseSerializer.serializeList(items, user),
       metadata: new PaginationMetadata({ page: pageNum, perPage: limitNum, total }),
     };
   }
@@ -96,9 +98,12 @@ export class DefenseController {
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Get defense by ID' })
   @ApiDefenseOkResponse()
-  async findOne(@Param('id') id: string): Promise<HttpResponse<DefenseResponseDto>> {
+  async findOne(
+    @CurrentUser() user: { id: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+    @Param('id') id: string,
+  ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.getDefenseUseCase.execute(id);
-    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
+    return HttpResponseSerializer.serialize(DefenseSerializer.serialize(defense, user));
   }
 
   @Put(':id')

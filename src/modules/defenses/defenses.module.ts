@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../shared/prisma';
 import { StudentsModule } from '../students/students.module';
 import { AdvisorsModule } from '../advisors/advisors.module';
@@ -6,6 +6,7 @@ import { DocumentsModule } from '../documents/documents.module';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthModule } from '../auth/auth.module';
+import { MongoStorageService } from '../../shared/storage';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
@@ -25,7 +26,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
     PrismaModule,
     StudentsModule,
     AdvisorsModule,
-    DocumentsModule,
+    forwardRef(() => DocumentsModule),
     IpfsModule,
     NotificationsModule,
     AuthModule,
@@ -36,6 +37,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
       provide: DEFENSE_REPOSITORY,
       useClass: PrismaDefenseRepository,
     },
+    MongoStorageService,
     CreateDefenseUseCase,
     GetDefenseUseCase,
     ListDefensesUseCase,

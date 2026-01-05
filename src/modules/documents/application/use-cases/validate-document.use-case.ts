@@ -1,15 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { DocumentResponseDto, ValidateDocumentResponseDto } from '../../presentation/dtos';
+import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../../presentation/dtos';
+import { IpfsService } from '../../../ipfs/ipfs.service';
+import { Document } from '../../domain/entities';
 
 @Injectable()
 export class ValidateDocumentUseCase {
   constructor(
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
+    private readonly ipfsService: IpfsService,
   ) {}
 
-  async execute(hash: string): Promise<ValidateDocumentResponseDto> {
+  private toSimpleDto(document: Document): SimpleDocumentDto {
+    return {
+      id: document.id,
+      type: document.type,
+      documentHash: document.documentHash,
+      status: document.status,
+    };
+  }
+
+  async execute(fileBuffer: Buffer): Promise<ValidateDocumentResponseDto> {
+    // Calculate CID from uploaded file without storing it
+    const hash = await this.ipfsService.calculateCid(fileBuffer);
+
     const document = await this.documentRepository.findByHash(hash);
 
     if (!document) {
@@ -22,7 +37,7 @@ export class ValidateDocumentUseCase {
     if (document.isInactive()) {
       return {
         isValid: false,
-        document: DocumentResponseDto.fromEntity(document),
+        document: this.toSimpleDto(document),
         message: 'Documento foi inativado',
       };
     }
@@ -30,14 +45,14 @@ export class ValidateDocumentUseCase {
     if (!document.isApproved()) {
       return {
         isValid: false,
-        document: DocumentResponseDto.fromEntity(document),
+        document: this.toSimpleDto(document),
         message: 'Documento ainda não foi aprovado',
       };
     }
 
     return {
       isValid: true,
-      document: DocumentResponseDto.fromEntity(document),
+      document: this.toSimpleDto(document),
       message: 'Documento válido e registrado na blockchain',
     };
   }

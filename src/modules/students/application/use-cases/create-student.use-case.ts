@@ -51,12 +51,9 @@ export class CreateStudentUseCase {
 
       const createdStudent = await tx.student.create({
         data: {
-          id: student.id,
+          id: user.id,
           registration: student.matricula,
-          userId: student.userId,
           courseId: student.courseId,
-          createdAt: student.createdAt,
-          updatedAt: student.updatedAt,
         },
       });
 
@@ -66,7 +63,7 @@ export class CreateStudentUseCase {
     const created = Student.create(
       {
         matricula: result.registration,
-        userId: result.userId,
+        userId: result.id,
         courseId: result.courseId,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,

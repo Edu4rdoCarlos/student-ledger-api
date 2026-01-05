@@ -1,13 +1,16 @@
 model Document {
   id                     String         @id @default(uuid())
-  tipo                   DocumentType
-  versao                 Int            @default(1)
-  documentoHash          String         @db.VarChar(64) // SHA-256
-  arquivoPath            String? // Caminho para download
-  status                 DocumentStatus @default(PENDENTE)
-  motivoAlteracao        String? // Motivo da nova versao
-  motivoInativacao       String?
-  dataInativacao         DateTime?
+  type                   DocumentType
+  version                Int            @default(1)
+  documentHash           String?        @db.VarChar(64) // IPFS CID (content-addressed hash) - filled when submitted to IPFS
+
+  // Storage reference
+  mongoFileId            String?        // GridFS file ID (primary storage, IPFS as fallback using documentHash)
+
+  status                 DocumentStatus @default(PENDING)
+  changeReason           String?        // Reason for new version
+  inactivationReason     String?
+  inactivatedAt          DateTime?
   blockchainTxId         String?
   blockchainRegisteredAt DateTime?
   createdAt              DateTime       @default(now())
@@ -20,9 +23,9 @@ model Document {
   nextVersion       Document?  @relation("DocumentVersions")
   approvals         Approval[]
 
-  @@unique([defenseId, tipo, versao])
+  @@unique([defenseId, type, version])
   @@index([defenseId])
-  @@index([documentoHash])
+  @@index([documentHash])
   @@index([status])
 }
 
@@ -32,7 +35,7 @@ enum DocumentType {
 }
 
 enum DocumentStatus {
-  PENDENTE
-  APROVADO
-  INATIVO
+  PENDING
+  APPROVED
+  INACTIVE
 }

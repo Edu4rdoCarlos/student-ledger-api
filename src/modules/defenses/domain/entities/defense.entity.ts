@@ -15,8 +15,17 @@ export interface StudentInDefense {
 export interface DocumentInDefense {
   id: string;
   type: string;
-  hash: string;
-  path?: string;
+  version: number;
+  documentHash: string;
+  mongoFileId?: string;
+  status: string;
+  blockchainTxId?: string;
+  blockchainRegisteredAt?: Date;
+  defenseId: string;
+  previousVersionId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  downloadUrl?: string;
 }
 
 export interface DefenseProps {

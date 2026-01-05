@@ -77,6 +77,28 @@ export class IpfsHttpAdapter implements IIpfsStorage {
     }
   }
 
+  async calculateCid(file: Buffer): Promise<string> {
+    try {
+      this.logger.log('Calculando CID do arquivo...');
+
+      const formData = new FormData();
+      formData.append('file', file, { filename: 'temp' });
+
+      const response = await this.client.post('/api/v0/add', formData, {
+        params: { 'only-hash': true },
+        headers: formData.getHeaders(),
+      });
+
+      this.logger.log(`CID calculado: ${response.data.Hash}`);
+
+      return response.data.Hash;
+    } catch (error) {
+      const message = error.response?.data?.Message || error.message;
+      this.logger.error(`Erro ao calcular CID: ${message}`);
+      throw new IpfsConnectionError(message);
+    }
+  }
+
   async downloadFile(cid: string): Promise<Buffer> {
     try {
       this.logger.log(`Baixando arquivo: ${cid}`);

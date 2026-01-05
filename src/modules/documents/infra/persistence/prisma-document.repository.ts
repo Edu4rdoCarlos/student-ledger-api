@@ -22,7 +22,7 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   async findByHash(hash: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
-      where: { documentoHash: hash },
+      where: { documentHash: hash },
     });
     return found ? DocumentMapper.toDomain(found) : null;
   }
@@ -30,15 +30,15 @@ export class PrismaDocumentRepository implements IDocumentRepository {
   async findByDefenseId(defenseId: string): Promise<Document[]> {
     const documents = await this.prisma.document.findMany({
       where: { defenseId },
-      orderBy: [{ tipo: 'asc' }, { versao: 'desc' }],
+      orderBy: [{ type: 'asc' }, { version: 'desc' }],
     });
     return documents.map(DocumentMapper.toDomain);
   }
 
-  async findLatestVersion(defenseId: string, tipo: DocumentType): Promise<Document | null> {
+  async findLatestVersion(defenseId: string, type: DocumentType): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
-      where: { defenseId, tipo },
-      orderBy: { versao: 'desc' },
+      where: { defenseId, type },
+      orderBy: { version: 'desc' },
     });
     return found ? DocumentMapper.toDomain(found) : null;
   }
@@ -47,7 +47,7 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     const documents = await this.prisma.document.findMany({
       where: {
         status: filters?.status,
-        tipo: filters?.tipo,
+        type: filters?.type,
         defenseId: filters?.defenseId,
       },
       orderBy: { createdAt: 'desc' },

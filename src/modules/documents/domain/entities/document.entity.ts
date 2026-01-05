@@ -4,20 +4,20 @@ export enum DocumentType {
 }
 
 export enum DocumentStatus {
-  PENDENTE = 'PENDENTE',
-  APROVADO = 'APROVADO',
-  INATIVO = 'INATIVO',
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  INACTIVE = 'INACTIVE',
 }
 
 export interface DocumentProps {
-  tipo: DocumentType;
-  versao: number;
-  documentoHash: string;
-  arquivoPath?: string;
+  type: DocumentType;
+  version: number;
+  documentHash?: string; // IPFS CID - filled when submitted to IPFS
+  mongoFileId?: string;
   status: DocumentStatus;
-  motivoAlteracao?: string;
-  motivoInativacao?: string;
-  dataInativacao?: Date;
+  changeReason?: string;
+  inactivationReason?: string;
+  inactivatedAt?: Date;
   blockchainTxId?: string;
   blockchainRegisteredAt?: Date;
   defenseId: string;
@@ -37,22 +37,21 @@ export class Document {
 
   static create(
     props: Partial<DocumentProps> & {
-      tipo: DocumentType;
-      documentoHash: string;
+      type: DocumentType;
       defenseId: string;
     },
     id?: string,
   ): Document {
     return new Document(
       {
-        tipo: props.tipo,
-        versao: props.versao ?? 1,
-        documentoHash: props.documentoHash,
-        arquivoPath: props.arquivoPath,
-        status: props.status ?? DocumentStatus.PENDENTE,
-        motivoAlteracao: props.motivoAlteracao,
-        motivoInativacao: props.motivoInativacao,
-        dataInativacao: props.dataInativacao,
+        type: props.type,
+        version: props.version ?? 1,
+        documentHash: props.documentHash,
+        mongoFileId: props.mongoFileId,
+        status: props.status ?? DocumentStatus.PENDING,
+        changeReason: props.changeReason,
+        inactivationReason: props.inactivationReason,
+        inactivatedAt: props.inactivatedAt,
         blockchainTxId: props.blockchainTxId,
         blockchainRegisteredAt: props.blockchainRegisteredAt,
         defenseId: props.defenseId,
@@ -68,20 +67,20 @@ export class Document {
     return this._id;
   }
 
-  get tipo(): DocumentType {
-    return this.props.tipo;
+  get type(): DocumentType {
+    return this.props.type;
   }
 
-  get versao(): number {
-    return this.props.versao;
+  get version(): number {
+    return this.props.version;
   }
 
-  get documentoHash(): string {
-    return this.props.documentoHash;
+  get documentHash(): string | undefined {
+    return this.props.documentHash;
   }
 
-  get arquivoPath(): string | undefined {
-    return this.props.arquivoPath;
+  get mongoFileId(): string | undefined {
+    return this.props.mongoFileId;
   }
 
   get status(): DocumentStatus {
@@ -104,16 +103,16 @@ export class Document {
     return this.props.blockchainRegisteredAt;
   }
 
-  get motivoAlteracao(): string | undefined {
-    return this.props.motivoAlteracao;
+  get changeReason(): string | undefined {
+    return this.props.changeReason;
   }
 
-  get motivoInativacao(): string | undefined {
-    return this.props.motivoInativacao;
+  get inactivationReason(): string | undefined {
+    return this.props.inactivationReason;
   }
 
-  get dataInativacao(): Date | undefined {
-    return this.props.dataInativacao;
+  get inactivatedAt(): Date | undefined {
+    return this.props.inactivatedAt;
   }
 
   get createdAt(): Date {
@@ -125,26 +124,26 @@ export class Document {
   }
 
   isPending(): boolean {
-    return this.props.status === DocumentStatus.PENDENTE;
+    return this.props.status === DocumentStatus.PENDING;
   }
 
   isApproved(): boolean {
-    return this.props.status === DocumentStatus.APROVADO;
+    return this.props.status === DocumentStatus.APPROVED;
   }
 
   isInactive(): boolean {
-    return this.props.status === DocumentStatus.INATIVO;
+    return this.props.status === DocumentStatus.INACTIVE;
   }
 
   approve(): void {
-    this.props.status = DocumentStatus.APROVADO;
+    this.props.status = DocumentStatus.APPROVED;
     this.props.updatedAt = new Date();
   }
 
-  inactivate(motivo: string): void {
-    this.props.status = DocumentStatus.INATIVO;
-    this.props.motivoInativacao = motivo;
-    this.props.dataInativacao = new Date();
+  inactivate(reason: string): void {
+    this.props.status = DocumentStatus.INACTIVE;
+    this.props.inactivationReason = reason;
+    this.props.inactivatedAt = new Date();
     this.props.updatedAt = new Date();
   }
 
@@ -154,14 +153,24 @@ export class Document {
     this.props.updatedAt = new Date();
   }
 
-  createNewVersion(hash: string, motivo: string): Document {
+  setMongoFileId(mongoFileId: string): void {
+    this.props.mongoFileId = mongoFileId;
+    this.props.updatedAt = new Date();
+  }
+
+  setDocumentHash(documentHash: string): void {
+    this.props.documentHash = documentHash;
+    this.props.updatedAt = new Date();
+  }
+
+  createNewVersion(hash: string, reason: string): Document {
     return Document.create({
-      tipo: this.props.tipo,
-      versao: this.props.versao + 1,
-      documentoHash: hash,
+      type: this.props.type,
+      version: this.props.version + 1,
+      documentHash: hash,
       defenseId: this.props.defenseId,
       previousVersionId: this.id,
-      motivoAlteracao: motivo,
+      changeReason: reason,
     });
   }
 }

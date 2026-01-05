@@ -25,7 +25,7 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   async findByUserId(userId: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { userId } });
+    const found = await this.prisma.student.findUnique({ where: { id: userId } });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
@@ -75,7 +75,7 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   async existsByUserId(userId: string): Promise<boolean> {
-    const count = await this.prisma.student.count({ where: { userId } });
+    const count = await this.prisma.student.count({ where: { id: userId } });
     return count > 0;
   }
 }

@@ -5,7 +5,7 @@ export class AdvisorMapper {
   static toDomain(prisma: PrismaAdvisor): Advisor {
     return Advisor.create(
       {
-        userId: prisma.userId,
+        userId: prisma.id,
         departmentId: prisma.departmentId || undefined,
         specialization: prisma.specialization || undefined,
         courseId: prisma.courseId || undefined,
@@ -19,7 +19,6 @@ export class AdvisorMapper {
   static toPrisma(advisor: Advisor) {
     return {
       id: advisor.id,
-      userId: advisor.userId,
       departmentId: advisor.departmentId || null,
       specialization: advisor.specialization || null,
       courseId: advisor.courseId || null,

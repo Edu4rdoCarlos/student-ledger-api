@@ -6,7 +6,7 @@ export class StudentMapper {
     return Student.create(
       {
         matricula: prisma.registration,
-        userId: prisma.userId,
+        userId: prisma.id,
         courseId: prisma.courseId,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
@@ -19,7 +19,6 @@ export class StudentMapper {
     return {
       id: student.id,
       registration: student.matricula,
-      userId: student.userId,
       courseId: student.courseId,
     };
   }

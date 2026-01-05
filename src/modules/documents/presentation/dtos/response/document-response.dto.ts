@@ -6,16 +6,16 @@ export class DocumentResponseDto {
   id: string;
 
   @ApiProperty({ enum: DocumentType })
-  tipo: DocumentType;
+  type: DocumentType;
 
   @ApiProperty()
-  versao: number;
+  version: number;
 
-  @ApiProperty()
-  documentoHash: string;
+  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  documentHash?: string;
 
-  @ApiPropertyOptional()
-  arquivoPath?: string;
+  @ApiPropertyOptional({ description: 'MongoDB GridFS file ID' })
+  mongoFileId?: string;
 
   @ApiProperty({ enum: DocumentStatus })
   status: DocumentStatus;
@@ -41,10 +41,10 @@ export class DocumentResponseDto {
   static fromEntity(doc: Document): DocumentResponseDto {
     return {
       id: doc.id,
-      tipo: doc.tipo,
-      versao: doc.versao,
-      documentoHash: doc.documentoHash,
-      arquivoPath: doc.arquivoPath,
+      type: doc.type,
+      version: doc.version,
+      documentHash: doc.documentHash,
+      mongoFileId: doc.mongoFileId,
       status: doc.status,
       blockchainTxId: doc.blockchainTxId,
       blockchainRegisteredAt: doc.blockchainRegisteredAt,
@@ -56,12 +56,26 @@ export class DocumentResponseDto {
   }
 }
 
+export class SimpleDocumentDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ enum: DocumentType })
+  type: DocumentType;
+
+  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  documentHash?: string;
+
+  @ApiProperty({ enum: DocumentStatus })
+  status: DocumentStatus;
+}
+
 export class ValidateDocumentResponseDto {
   @ApiProperty()
   isValid: boolean;
 
-  @ApiPropertyOptional()
-  document?: DocumentResponseDto;
+  @ApiPropertyOptional({ type: SimpleDocumentDto })
+  document?: SimpleDocumentDto;
 
   @ApiProperty()
   message: string;

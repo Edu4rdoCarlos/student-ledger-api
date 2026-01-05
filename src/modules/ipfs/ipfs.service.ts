@@ -73,6 +73,10 @@ export class IpfsService implements OnModuleInit {
     }
   }
 
+  async calculateCid(file: Buffer): Promise<string> {
+    return this.ipfsStorage.calculateCid(file);
+  }
+
   async downloadFile(cid: string): Promise<Buffer> {
     return this.ipfsStorage.downloadFile(cid);
   }

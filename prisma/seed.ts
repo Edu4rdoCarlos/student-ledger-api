@@ -206,10 +206,10 @@ async function main() {
   });
 
   const advisor1 = await prisma.advisor.upsert({
-    where: { userId: advisorUser1.id },
+    where: { id: advisorUser1.id },
     update: {},
     create: {
-      userId: advisorUser1.id,
+      id: advisorUser1.id,
       departmentId: deptInformatica.id,
       courseId: courseCC.id,
     },
@@ -228,10 +228,10 @@ async function main() {
   });
 
   const advisor2 = await prisma.advisor.upsert({
-    where: { userId: advisorUser2.id },
+    where: { id: advisorUser2.id },
     update: {},
     create: {
-      userId: advisorUser2.id,
+      id: advisorUser2.id,
       departmentId: deptInformatica.id,
       courseId: courseSI.id,
     },
@@ -258,8 +258,8 @@ async function main() {
     where: { registration: '00123456' },
     update: {},
     create: {
+      id: studentUser1.id,
       registration: '00123456',
-      userId: studentUser1.id,
       courseId: courseCC.id,
     },
   });
@@ -280,8 +280,8 @@ async function main() {
     where: { registration: '00234567' },
     update: {},
     create: {
+      id: studentUser2.id,
       registration: '00234567',
-      userId: studentUser2.id,
       courseId: courseSI.id,
     },
   });
@@ -302,8 +302,8 @@ async function main() {
     where: { registration: '00345678' },
     update: {},
     create: {
+      id: studentUser3.id,
       registration: '00345678',
-      userId: studentUser3.id,
       courseId: courseCC.id,
     },
   });
@@ -379,11 +379,11 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-1',
-      tipo: DocumentType.ATA,
-      versao: 1,
-      documentoHash: docHash1,
-      arquivoPath: '/documents/atas/ata-defense-1-v1.pdf',
-      status: DocumentStatus.APROVADO,
+      type: DocumentType.ATA,
+      version: 1,
+      documentHash: docHash1,
+      mongoFileId: 'mongo-ata-1',
+      status: DocumentStatus.APPROVED,
       defenseId: defenseAprovada.id,
       blockchainTxId: 'tx_abc123def456',
       blockchainRegisteredAt: new Date('2024-12-16T10:00:00Z'),
@@ -396,11 +396,11 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ficha-1',
-      tipo: DocumentType.FICHA,
-      versao: 1,
-      documentoHash: docHash2,
-      arquivoPath: '/documents/fichas/ficha-defense-1-v1.pdf',
-      status: DocumentStatus.APROVADO,
+      type: DocumentType.FICHA,
+      version: 1,
+      documentHash: docHash2,
+      mongoFileId: 'mongo-ficha-1',
+      status: DocumentStatus.APPROVED,
       defenseId: defenseAprovada.id,
       blockchainTxId: 'tx_xyz789ghi012',
       blockchainRegisteredAt: new Date('2024-12-16T10:05:00Z'),
@@ -413,11 +413,10 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-pendente',
-      tipo: DocumentType.ATA,
-      versao: 1,
-      documentoHash: docHash3,
-      arquivoPath: '/documents/atas/ata-defense-3-v1.pdf',
-      status: DocumentStatus.PENDENTE,
+      type: DocumentType.ATA,
+      version: 1,
+      documentHash: docHash3,
+      status: DocumentStatus.PENDING,
       defenseId: defensePendente.id,
     },
   });
@@ -428,13 +427,12 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-inativo',
-      tipo: DocumentType.ATA,
-      versao: 1,
-      documentoHash: docHash4,
-      arquivoPath: '/documents/atas/ata-defense-2-v1.pdf',
-      status: DocumentStatus.INATIVO,
-      motivoInativacao: 'Documento substituído por nova versão corrigida',
-      dataInativacao: new Date('2024-11-25T15:00:00Z'),
+      type: DocumentType.ATA,
+      version: 1,
+      documentHash: docHash4,
+      status: DocumentStatus.INACTIVE,
+      inactivationReason: 'Documento substituído por nova versão corrigida',
+      inactivatedAt: new Date('2024-11-25T15:00:00Z'),
       defenseId: defenseReprovada.id,
     },
   });

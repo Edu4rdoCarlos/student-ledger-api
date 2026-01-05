@@ -18,6 +18,7 @@ export interface IpfsHealthStatus {
 export interface IIpfsStorage {
   healthCheck(): Promise<IpfsHealthStatus>;
   uploadFile(file: Buffer, filename: string): Promise<IpfsUploadResult>;
+  calculateCid(file: Buffer): Promise<string>;
   downloadFile(cid: string): Promise<Buffer>;
   exists(cid: string): Promise<boolean>;
   getFileInfo(cid: string): Promise<IpfsFileInfo>;

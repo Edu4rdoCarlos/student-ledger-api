@@ -1,50 +1,80 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Public } from '../../../../shared/decorators';
-import { DocumentFilters } from '../../application/ports';
+import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import {
-  CreateDocumentUseCase,
-  GetDocumentUseCase,
-  ListDocumentsUseCase,
-  ValidateDocumentUseCase,
-} from '../../application/use-cases';
-import { CreateDocumentDto } from '../dtos';
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiOkResponse,
+  ApiProduces,
+} from '@nestjs/swagger';
+import { Roles, Public, CurrentUser } from '../../../../shared/decorators';
+import { ValidateDocumentUseCase, DownloadDocumentUseCase } from '../../application/use-cases';
+import { ValidateDocumentResponseDto } from '../dtos/response/document-response.dto';
 
-@ApiTags('Documentos')
+@ApiTags('Documents')
 @ApiBearerAuth()
-@Controller('documentos')
+@Controller('documents')
 export class DocumentsController {
   constructor(
-    private readonly createDocument: CreateDocumentUseCase,
-    private readonly getDocument: GetDocumentUseCase,
-    private readonly listDocuments: ListDocumentsUseCase,
     private readonly validateDocument: ValidateDocumentUseCase,
+    private readonly downloadDocument: DownloadDocumentUseCase,
   ) {}
 
-  @Post()
-  @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Cadastrar novo documento' })
-  create(@Body() dto: CreateDocumentDto) {
-    return this.createDocument.execute(dto);
+  @Get(':id/download')
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @ApiOperation({
+    summary: 'Download document (MongoDB with IPFS fallback)',
+    description: 'Only ADMIN, COORDINATOR, or defense participants (advisor/students) can download. Students and advisors can only download if the defense is APPROVED.'
+  })
+  @ApiProduces('application/pdf')
+  @ApiOkResponse({
+    description: 'Document file downloaded successfully',
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  async download(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { buffer, filename, mimeType } = await this.downloadDocument.execute(id, currentUser);
+
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    return new StreamableFile(buffer);
   }
 
-  @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR')
-  @ApiOperation({ summary: 'Listar documentos' })
-  findAll(@Query() filters: DocumentFilters) {
-    return this.listDocuments.execute(filters);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Buscar documento por ID' })
-  findOne(@Param('id') id: string) {
-    return this.getDocument.execute(id);
-  }
-
-  @Get('validar/:hash')
+  @Post('validate')
   @Public()
-  @ApiOperation({ summary: 'Validar autenticidade do documento via hash (público)' })
-  validate(@Param('hash') hash: string) {
-    return this.validateDocument.execute(hash);
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Validate document authenticity via file upload (public endpoint)' })
+  @ApiOkResponse({
+    description: 'Document validation result',
+    type: ValidateDocumentResponseDto,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'PDF file to validate',
+        },
+      },
+    },
+  })
+  async validate(@UploadedFile() file: Express.Multer.File) {
+    return this.validateDocument.execute(file.buffer);
   }
 }

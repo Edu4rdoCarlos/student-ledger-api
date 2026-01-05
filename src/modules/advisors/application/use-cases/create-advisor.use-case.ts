@@ -47,13 +47,10 @@ export class CreateAdvisorUseCase {
 
       const createdAdvisor = await tx.advisor.create({
         data: {
-          id: advisor.id,
-          userId: advisor.userId,
+          id: user.id,
           departmentId: advisor.departmentId || null,
           specialization: advisor.specialization || null,
           courseId: advisor.courseId || null,
-          createdAt: advisor.createdAt,
-          updatedAt: advisor.updatedAt,
         },
       });
 
@@ -62,7 +59,7 @@ export class CreateAdvisorUseCase {
 
     const created = Advisor.create(
       {
-        userId: result.userId,
+        userId: result.id,
         departmentId: result.departmentId || undefined,
         specialization: result.specialization || undefined,
         courseId: result.courseId || undefined,

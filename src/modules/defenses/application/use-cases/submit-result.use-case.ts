@@ -10,7 +10,7 @@ import {
   IDocumentRepository,
   DOCUMENT_REPOSITORY
 } from '../../../documents/application/ports';
-import { IpfsService } from '../../../ipfs/ipfs.service';
+import { MongoStorageService } from '../../../../shared/storage';
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 
 interface SubmitDefenseResultRequest {
@@ -32,7 +32,7 @@ export class SubmitDefenseResultUseCase {
     private readonly defenseRepository: IDefenseRepository,
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
-    private readonly ipfsService: IpfsService,
+    private readonly mongoStorage: MongoStorageService,
     private readonly notifyDefenseResultUseCase: NotifyDefenseResultUseCase,
   ) {}
 
@@ -42,41 +42,38 @@ export class SubmitDefenseResultUseCase {
       throw new DefenseNotFoundError();
     }
 
-    // 1. Upload file to IPFS
-    const ipfsResult = await this.ipfsService.uploadFile(
+    // 1. Set the grade on the defense
+    defense.setGrade(request.finalGrade);
+
+    // 2. Create the defense document (without IPFS hash yet)
+    const document = Document.create({
+      type: DocumentType.ATA,
+      defenseId: request.id,
+    });
+
+    // 3. Save document to PostgreSQL to get the ID
+    const createdDocument = await this.documentRepository.create(document);
+
+    // 4. Upload file to MongoDB GridFS using document ID
+    await this.mongoStorage.uploadFile(
+      createdDocument.id,
       request.documentFile,
       request.documentFilename
     );
 
-    // Check if upload was queued (IPFS offline)
-    if ('queued' in ipfsResult) {
-      throw new Error('Documento foi enfileirado para upload. IPFS temporariamente indisponível');
-    }
+    // 5. Update document with MongoDB file ID
+    createdDocument.setMongoFileId(createdDocument.id);
+    const updatedDocument = await this.documentRepository.update(createdDocument);
 
-    // 2. Set the grade on the defense
-    defense.setGrade(request.finalGrade);
+    // 6. Update defense
+    const updatedDefense = await this.defenseRepository.update(defense);
 
-    // 3. Create the unified defense document with IPFS CID as hash
-    // The IPFS CID serves as both the content identifier and the document hash
-    const document = Document.create({
-      tipo: DocumentType.ATA,
-      documentoHash: ipfsResult.cid,  // CID is the content-addressed hash
-      arquivoPath: `ipfs://${ipfsResult.cid}`,
-      defenseId: request.id,
-    });
-
-    // 4. Save both in parallel
-    const [updatedDefense, createdDocument] = await Promise.all([
-      this.defenseRepository.update(defense),
-      this.documentRepository.create(document),
-    ]);
-
-    // 5. Send notification emails about the result
+    // 7. Send notification emails about the result
     await this.notifyDefenseResultUseCase.execute(request.id);
 
     return {
       defense: updatedDefense,
-      document: createdDocument,
+      document: updatedDocument,
     };
   }
 }

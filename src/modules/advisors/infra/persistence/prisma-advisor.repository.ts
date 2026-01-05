@@ -20,7 +20,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   }
 
   async findByUserId(userId: string): Promise<Advisor | null> {
-    const found = await this.prisma.advisor.findUnique({ where: { userId } });
+    const found = await this.prisma.advisor.findUnique({ where: { id: userId } });
     return found ? AdvisorMapper.toDomain(found) : null;
   }
 
@@ -61,7 +61,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   }
 
   async existsByUserId(userId: string): Promise<boolean> {
-    const count = await this.prisma.advisor.count({ where: { userId } });
+    const count = await this.prisma.advisor.count({ where: { id: userId } });
     return count > 0;
   }
 }

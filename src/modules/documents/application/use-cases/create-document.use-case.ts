@@ -12,15 +12,15 @@ export class CreateDocumentUseCase {
   ) {}
 
   async execute(dto: CreateDocumentDto): Promise<DocumentResponseDto> {
-    const hashExists = await this.documentRepository.existsByHash(dto.documentoHash);
+    const hashExists = await this.documentRepository.existsByHash(dto.documentHash);
     if (hashExists) {
       throw new DocumentHashAlreadyExistsError();
     }
 
     const document = Document.create({
-      tipo: dto.tipo,
-      documentoHash: dto.documentoHash,
-      arquivoPath: dto.arquivoPath,
+      type: dto.type,
+      documentHash: dto.documentHash,
+      mongoFileId: dto.mongoFileId,
       defenseId: dto.defenseId,
     });
 
