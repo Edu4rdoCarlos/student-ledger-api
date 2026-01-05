@@ -14,13 +14,8 @@ export class DefenseNotificationScheduler {
     private readonly notifyDefenseScheduledUseCase: NotifyDefenseScheduledUseCase,
   ) {}
 
-  /**
-   * Runs every day at 8 AM to check for defenses scheduled for today
-   */
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async checkDefensesScheduledForToday() {
-    this.logger.log('Checking for defenses scheduled for today...');
-
     try {
       const { items: defenses } = await this.defenseRepository.findAll({
         result: 'PENDING',
@@ -42,12 +37,9 @@ export class DefenseNotificationScheduler {
           defenseDate < tomorrow &&
           !this.notifiedDefenses.has(defense.id)
         ) {
-          this.logger.log(`Notifying about defense: ${defense.id} - ${defense.title}`);
-
           try {
             await this.notifyDefenseScheduledUseCase.execute(defense.id);
             this.notifiedDefenses.add(defense.id);
-            this.logger.log(`Successfully notified about defense: ${defense.id}`);
           } catch (error) {
             this.logger.error(
               `Failed to notify about defense ${defense.id}: ${error.message}`,
@@ -66,7 +58,6 @@ export class DefenseNotificationScheduler {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async clearNotifiedDefenses() {
-    this.logger.log('Clearing notified defenses set');
     this.notifiedDefenses.clear();
   }
 }

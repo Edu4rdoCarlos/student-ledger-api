@@ -19,16 +19,10 @@ export class IpfsUploadProcessor {
 
   @Process()
   async handleUpload(job: Job<IpfsUploadJobData>): Promise<IpfsUploadJobResult> {
-    const { file, filename, attemptNumber, originalRequestId } = job.data;
-
-    this.logger.log(
-      `Processando upload enfileirado: ${filename} (tentativa ${attemptNumber}) ${originalRequestId ? `[Request: ${originalRequestId}]` : ''}`,
-    );
+    const { file, filename } = job.data;
 
     try {
       const result = await this.ipfsStorage.uploadFile(file, filename);
-
-      this.logger.log(`Upload bem-sucedido: ${filename} → CID: ${result.cid}`);
 
       return result;
     } catch (error) {

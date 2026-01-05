@@ -77,8 +77,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
 
   async healthCheck(): Promise<FabricHealthStatus> {
     try {
-      this.logger.log('Verificando conexão com o Hyperledger Fabric...');
-
       const orgConfig = this.organizations.coordenacao;
       const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
       const certPath = path.join(certsBasePath, 'coordenacao', 'cert.pem');
@@ -115,7 +113,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
       gateway.close();
       client.close();
 
-      this.logger.log('Hyperledger Fabric está acessível');
       return { status: 'ok', message: 'Fabric conectado com sucesso' };
     } catch (error) {
       this.logger.error(`Falha no health check do Fabric: ${error.message}`);
@@ -139,8 +136,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
   private async createConnection(user: FabricUser): Promise<FabricConnection> {
     const orgName = this.getOrgForRole(user.role);
     const orgConfig = this.organizations[orgName];
-
-    this.logger.log(`Conectando ao Fabric como ${orgName} para usuário ${user.email}...`);
 
     const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
     const certPath = path.join(certsBasePath, orgName, 'cert.pem');
@@ -178,8 +173,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
 
     const network = gateway.getNetwork(this.channelName);
     const contract = network.getContract(this.chaincodeName, 'DocumentContract');
-
-    this.logger.log(`Conectado ao Fabric como ${orgConfig.mspId} para ${user.email}`);
 
     return {
       gateway,
@@ -230,8 +223,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
   ): Promise<DocumentRecord> {
     return this.withConnection(user, async (connection) => {
       try {
-        this.logger.log(`Registrando documento IPFS ${ipfsCid} para matrícula ${matricula}`);
-
         const result = await connection.contract.submitTransaction(
           'registerDocument',
           ipfsCid,

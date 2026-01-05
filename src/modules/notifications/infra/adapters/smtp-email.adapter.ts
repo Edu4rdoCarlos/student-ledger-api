@@ -45,8 +45,6 @@ export class SmtpEmailAdapter implements IEmailProvider {
         text: params.text,
         html: params.html,
       });
-
-      this.logger.log(`Email sent successfully to ${params.to}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       this.logger.error(`Failed to send email to ${params.to}: ${errorMessage}`, error instanceof Error ? error.stack : undefined);

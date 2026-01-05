@@ -38,10 +38,7 @@ export class IpfsHttpAdapter implements IIpfsStorage {
 
   async healthCheck(): Promise<IpfsHealthStatus> {
     try {
-      this.logger.log('Verificando conexão com o IPFS...');
-
       const response = await this.client.post('/api/v0/id');
-      this.logger.log(`IPFS conectado. Peer ID: ${response.data.ID}`);
 
       return { status: 'ok', peerId: response.data.ID };
     } catch (error) {
@@ -53,8 +50,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
 
   async uploadFile(file: Buffer, filename: string): Promise<IpfsUploadResult> {
     try {
-      this.logger.log(`Fazendo upload do arquivo: ${filename}`);
-
       const formData = new FormData();
       formData.append('file', file, { filename });
 
@@ -62,8 +57,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
         params: { pin: true },
         headers: formData.getHeaders(),
       });
-
-      this.logger.log(`Arquivo enviado. CID: ${response.data.Hash}`);
 
       return {
         cid: response.data.Hash,
@@ -79,8 +72,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
 
   async calculateCid(file: Buffer): Promise<string> {
     try {
-      this.logger.log('Calculando CID do arquivo...');
-
       const formData = new FormData();
       formData.append('file', file, { filename: 'temp' });
 
@@ -88,8 +79,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
         params: { 'only-hash': true },
         headers: formData.getHeaders(),
       });
-
-      this.logger.log(`CID calculado: ${response.data.Hash}`);
 
       return response.data.Hash;
     } catch (error) {
@@ -101,8 +90,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
 
   async downloadFile(cid: string): Promise<Buffer> {
     try {
-      this.logger.log(`Baixando arquivo: ${cid}`);
-
       const response = await this.client.post('/api/v0/cat', null, {
         params: { arg: cid },
         responseType: 'arraybuffer',
@@ -150,8 +137,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
       await this.client.post('/api/v0/pin/add', null, {
         params: { arg: cid },
       });
-
-      this.logger.log(`CID fixado: ${cid}`);
     } catch (error) {
       const message = error.response?.data?.Message || error.message;
       this.logger.error(`Erro ao fixar CID: ${message}`);
@@ -164,8 +149,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
       await this.client.post('/api/v0/pin/rm', null, {
         params: { arg: cid },
       });
-
-      this.logger.log(`Fixação removida: ${cid}`);
     } catch (error) {
       const message = error.response?.data?.Message || error.message;
       this.logger.error(`Erro ao remover fixação: ${message}`);
