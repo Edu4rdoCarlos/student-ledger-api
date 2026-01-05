@@ -13,6 +13,7 @@ import {
 import { Roles, Public, CurrentUser } from '../../../../shared/decorators';
 import { ValidateDocumentUseCase, DownloadDocumentUseCase } from '../../application/use-cases';
 import { ValidateDocumentResponseDto } from '../dtos/response/document-response.dto';
+import { ValidateDocumentSerializer } from '../serializers';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
@@ -74,7 +75,11 @@ export class DocumentsController {
       },
     },
   })
-  async validate(@UploadedFile() file: Express.Multer.File) {
-    return this.validateDocument.execute(file.buffer);
+  async validate(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user?: { role?: string },
+  ) {
+    const result = await this.validateDocument.execute(file.buffer);
+    return ValidateDocumentSerializer.serialize(result, user);
   }
 }
