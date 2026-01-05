@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Defense } from '../../../domain/entities';
+import { AdvisorInDefenseDto } from './advisor-in-defense.dto';
+import { StudentInDefenseDto } from './student-in-defense.dto';
+import { DocumentInDefenseDto } from './document-in-defense.dto';
 
 export class DefenseResponseDto {
   @ApiProperty()
@@ -17,17 +20,20 @@ export class DefenseResponseDto {
   @ApiProperty({ enum: ['PENDING', 'APPROVED', 'FAILED'] })
   result: string;
 
-  @ApiProperty()
-  advisorId: string;
+  @ApiProperty({ type: AdvisorInDefenseDto })
+  advisor: AdvisorInDefenseDto;
 
-  @ApiProperty({ type: [String] })
-  studentIds: string[];
+  @ApiProperty({ type: [StudentInDefenseDto] })
+  students: StudentInDefenseDto[];
 
-  @ApiProperty()
-  createdAt: Date;
+  @ApiProperty({ type: [DocumentInDefenseDto], required: false })
+  documents?: DocumentInDefenseDto[];
 
-  @ApiProperty()
-  updatedAt: Date;
+  @ApiProperty({ required: false })
+  createdAt?: Date;
+
+  @ApiProperty({ required: false })
+  updatedAt?: Date;
 
   static fromEntity(defense: Defense): DefenseResponseDto {
     return {
@@ -36,8 +42,9 @@ export class DefenseResponseDto {
       defenseDate: defense.defenseDate,
       finalGrade: defense.finalGrade,
       result: defense.result,
-      advisorId: defense.advisorId,
-      studentIds: defense.studentIds,
+      advisor: defense.advisor!,
+      students: defense.students!,
+      documents: defense.documents,
       createdAt: defense.createdAt,
       updatedAt: defense.updatedAt,
     };

@@ -1,12 +1,20 @@
-import { Defense as PrismaDefense, DefenseStudent } from '@prisma/client';
+import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document } from '@prisma/client';
 import { Defense } from '../../domain/entities';
 
-type DefenseWithStudents = PrismaDefense & {
-  students: DefenseStudent[];
+type DefenseWithRelations = PrismaDefense & {
+  students: (DefenseStudent & {
+    student: Student & {
+      user: User;
+    };
+  })[];
+  advisor: Advisor & {
+    user: User;
+  };
+  documents: Document[];
 };
 
 export class DefenseMapper {
-  static toDomain(prisma: DefenseWithStudents): Defense {
+  static toDomain(prisma: DefenseWithRelations): Defense {
     return Defense.create(
       {
         title: prisma.title,
@@ -15,6 +23,24 @@ export class DefenseMapper {
         result: prisma.result as 'PENDING' | 'APPROVED' | 'FAILED',
         advisorId: prisma.advisorId,
         studentIds: prisma.students.map((s) => s.studentId),
+        advisor: {
+          id: prisma.advisor.id,
+          name: prisma.advisor.user.name,
+          email: prisma.advisor.user.email,
+          specialization: prisma.advisor.specialization ?? undefined,
+        },
+        students: prisma.students.map((s) => ({
+          id: s.student.id,
+          name: s.student.user.name,
+          email: s.student.user.email,
+          registration: s.student.registration,
+        })),
+        documents: prisma.documents.map((d) => ({
+          id: d.id,
+          type: d.tipo,
+          hash: d.documentoHash,
+          path: d.arquivoPath ?? undefined,
+        })),
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
       },

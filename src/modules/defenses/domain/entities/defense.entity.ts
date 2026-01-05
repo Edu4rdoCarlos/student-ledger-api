@@ -1,3 +1,24 @@
+export interface AdvisorInDefense {
+  id: string;
+  name: string;
+  email?: string;
+  specialization?: string;
+}
+
+export interface StudentInDefense {
+  id: string;
+  name: string;
+  email?: string;
+  registration?: string;
+}
+
+export interface DocumentInDefense {
+  id: string;
+  type: string;
+  hash: string;
+  path?: string;
+}
+
 export interface DefenseProps {
   title: string;
   defenseDate: Date;
@@ -5,6 +26,9 @@ export interface DefenseProps {
   result: 'PENDING' | 'APPROVED' | 'FAILED';
   advisorId: string;
   studentIds: string[];
+  advisor?: AdvisorInDefense;
+  students?: StudentInDefense[];
+  documents?: DocumentInDefense[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -63,6 +87,18 @@ export class Defense {
 
   get studentIds(): string[] {
     return this.props.studentIds;
+  }
+
+  get advisor(): AdvisorInDefense | undefined {
+    return this.props.advisor;
+  }
+
+  get students(): StudentInDefense[] | undefined {
+    return this.props.students;
+  }
+
+  get documents(): DocumentInDefense[] | undefined {
+    return this.props.documents;
   }
 
   get createdAt(): Date {

@@ -8,6 +8,24 @@ import { DefenseMapper } from './defense.mapper';
 export class PrismaDefenseRepository implements IDefenseRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly includeRelations = {
+    students: {
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    },
+    advisor: {
+      include: {
+        user: true,
+      },
+    },
+    documents: true,
+  };
+
   async create(defense: Defense): Promise<Defense> {
     const data = DefenseMapper.toPrisma(defense);
 
@@ -20,9 +38,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
           })),
         },
       },
-      include: {
-        students: true,
-      },
+      include: this.includeRelations,
     });
 
     return DefenseMapper.toDomain(created);
@@ -31,7 +47,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
   async findById(id: string): Promise<Defense | null> {
     const found = await this.prisma.defense.findUnique({
       where: { id },
-      include: { students: true },
+      include: this.includeRelations,
     });
     return found ? DefenseMapper.toDomain(found) : null;
   }
@@ -39,7 +55,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
   async findByAdvisorId(advisorId: string): Promise<Defense[]> {
     const defenses = await this.prisma.defense.findMany({
       where: { advisorId },
-      include: { students: true },
+      include: this.includeRelations,
       orderBy: { createdAt: 'desc' },
     });
     return defenses.map(DefenseMapper.toDomain);
@@ -55,7 +71,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
         where,
         skip: options?.skip,
         take: options?.take,
-        include: { students: true },
+        include: this.includeRelations,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.defense.count({ where }),
@@ -73,7 +89,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     const updated = await this.prisma.defense.update({
       where: { id: defense.id },
       data,
-      include: { students: true },
+      include: this.includeRelations,
     });
 
     return DefenseMapper.toDomain(updated);
