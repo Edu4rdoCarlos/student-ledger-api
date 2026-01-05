@@ -10,16 +10,16 @@ export class UpdateCourseUseCase {
     private readonly courseRepository: ICourseRepository,
   ) {}
 
-  async execute(codigo: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
-    const course = await this.courseRepository.findByCodigo(codigo);
+  async execute(code: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
+    const course = await this.courseRepository.findByCode(code);
     if (!course) {
-      throw new CourseNotFoundError(codigo);
+      throw new CourseNotFoundError(code);
     }
 
     course.update({
-      nome: dto.name,
+      name: dto.name,
       departmentId: dto.departmentId,
-      ativo: dto.active,
+      active: dto.active,
       coordinatorId: dto.coordinatorId,
     });
 

@@ -14,7 +14,7 @@ import {
   VerifyDocumentResult,
   OrgName,
   UserRole,
-  ResultadoDefesa,
+  DefenseResult,
 } from '../../application/ports';
 import {
   FabricConnectionError,
@@ -223,7 +223,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     matricula: string,
     defenseDate: string,
     notaFinal: number,
-    resultado: ResultadoDefesa,
+    resultado: DefenseResult,
     motivo: string,
     signatures: DocumentSignature[],
     validatedAt: string,
@@ -240,7 +240,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
           notaFinal.toString(),
           resultado,
           motivo,
-          'APROVADO',
+          'APPROVED',
           JSON.stringify(signatures),
           validatedAt,
         );

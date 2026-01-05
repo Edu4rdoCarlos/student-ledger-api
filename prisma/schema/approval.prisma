@@ -1,9 +1,9 @@
 model Approval {
   id            String         @id @default(uuid())
   role          ApprovalRole
-  status        ApprovalStatus @default(PENDENTE)
-  justificativa String? // Obrigatorio se rejeitado
-  code          String?        @db.VarChar(6) // Codigo de verificacao
+  status        ApprovalStatus @default(PENDING)
+  justification String? // Required if rejected
+  code          String?        @db.VarChar(6) // Verification code
   codeExpiresAt DateTime?
   approvedAt    DateTime?
   createdAt     DateTime       @default(now())
@@ -21,13 +21,13 @@ model Approval {
 }
 
 enum ApprovalRole {
-  COORDENADOR
-  ORIENTADOR
-  ALUNO
+  COORDINATOR
+  ADVISOR
+  STUDENT
 }
 
 enum ApprovalStatus {
-  PENDENTE
-  APROVADO
-  REJEITADO
+  PENDING
+  APPROVED
+  REJECTED
 }

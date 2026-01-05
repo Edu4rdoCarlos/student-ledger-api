@@ -14,10 +14,10 @@ export interface FindAllResult {
 export interface ICourseRepository {
   create(course: Course): Promise<Course>;
   findById(id: string): Promise<Course | null>;
-  findByCodigo(codigo: string): Promise<Course | null>;
+  findByCode(code: string): Promise<Course | null>;
   findAll(options?: FindAllOptions): Promise<FindAllResult>;
   update(course: Course): Promise<Course>;
-  existsByCodigo(codigo: string): Promise<boolean>;
+  existsByCode(code: string): Promise<boolean>;
 }
 
 export const COURSE_REPOSITORY = Symbol('ICourseRepository');

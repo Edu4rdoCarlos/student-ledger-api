@@ -34,8 +34,8 @@ export class DocumentSchema {
 
   @ApiProperty({
     description: 'Status do documento',
-    enum: ['PENDENTE', 'APROVADO', 'INATIVO'],
-    example: 'PENDENTE',
+    enum: ['PENDING', 'APPROVED', 'INACTIVE'],
+    example: 'PENDING',
   })
   status: string;
 

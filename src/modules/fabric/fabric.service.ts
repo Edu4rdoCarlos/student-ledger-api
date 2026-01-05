@@ -9,7 +9,7 @@ import {
   VerifyDocumentResult,
   OrgName,
   UserRole,
-  ResultadoDefesa,
+  DefenseResult,
 } from './application/ports';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class FabricService implements OnModuleInit {
     matricula: string,
     defenseDate: string,
     notaFinal: number,
-    resultado: ResultadoDefesa,
+    resultado: DefenseResult,
     motivo: string,
     signatures: DocumentSignature[],
     validatedAt: string,

@@ -5,10 +5,10 @@ export class CourseMapper {
   static toDomain(prisma: PrismaCourse): Course {
     return Course.create(
       {
-        codigo: prisma.codigo,
-        nome: prisma.nome,
+        code: prisma.code,
+        name: prisma.name,
         departmentId: prisma.departmentId || undefined,
-        ativo: prisma.ativo,
+        active: prisma.active,
         coordinatorId: prisma.coordinatorId || undefined,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
@@ -20,10 +20,10 @@ export class CourseMapper {
   static toPrisma(course: Course) {
     return {
       id: course.id,
-      codigo: course.codigo,
-      nome: course.nome,
+      code: course.code,
+      name: course.name,
       departmentId: course.departmentId || null,
-      ativo: course.ativo,
+      active: course.active,
       coordinatorId: course.coordinatorId || null,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,

@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "ApprovalRole" AS ENUM ('COORDENADOR', 'ORIENTADOR', 'ALUNO');
+CREATE TYPE "ApprovalRole" AS ENUM ('COORDINATOR', 'ADVISOR', 'STUDENT');
 
 -- CreateEnum
-CREATE TYPE "ApprovalStatus" AS ENUM ('PENDENTE', 'APROVADO', 'REJEITADO');
+CREATE TYPE "ApprovalStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
 CREATE TYPE "DefenseResult" AS ENUM ('PENDING', 'APPROVED', 'FAILED');
@@ -11,7 +11,7 @@ CREATE TYPE "DefenseResult" AS ENUM ('PENDING', 'APPROVED', 'FAILED');
 CREATE TYPE "DocumentType" AS ENUM ('ATA', 'FICHA');
 
 -- CreateEnum
-CREATE TYPE "DocumentStatus" AS ENUM ('PENDENTE', 'APROVADO', 'INATIVO');
+CREATE TYPE "DocumentStatus" AS ENUM ('PENDING', 'APPROVED', 'INACTIVE');
 
 -- CreateEnum
 CREATE TYPE "NotificationChannel" AS ENUM ('EMAIL');
@@ -31,11 +31,10 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT');
 -- CreateTable
 CREATE TABLE "Advisor" (
     "id" TEXT NOT NULL,
-    "department" TEXT,
     "specialization" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT NOT NULL,
+    "departmentId" TEXT,
     "courseId" TEXT,
 
     CONSTRAINT "Advisor_pkey" PRIMARY KEY ("id")
@@ -45,8 +44,8 @@ CREATE TABLE "Advisor" (
 CREATE TABLE "Approval" (
     "id" TEXT NOT NULL,
     "role" "ApprovalRole" NOT NULL,
-    "status" "ApprovalStatus" NOT NULL DEFAULT 'PENDENTE',
-    "justificativa" TEXT,
+    "status" "ApprovalStatus" NOT NULL DEFAULT 'PENDING',
+    "justification" TEXT,
     "code" VARCHAR(6),
     "codeExpiresAt" TIMESTAMP(3),
     "approvedAt" TIMESTAMP(3),
@@ -84,13 +83,12 @@ CREATE TABLE "Coordinator" (
 -- CreateTable
 CREATE TABLE "Course" (
     "id" TEXT NOT NULL,
-    "codigo" TEXT NOT NULL,
-    "nome" TEXT NOT NULL,
-    "departamento" TEXT,
-    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "departmentId" TEXT,
     "coordinatorId" TEXT,
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
@@ -121,16 +119,26 @@ CREATE TABLE "DefenseStudent" (
 );
 
 -- CreateTable
+CREATE TABLE "Department" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Department_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Document" (
     "id" TEXT NOT NULL,
-    "tipo" "DocumentType" NOT NULL,
-    "versao" INTEGER NOT NULL DEFAULT 1,
-    "documentoHash" VARCHAR(64) NOT NULL,
-    "arquivoPath" TEXT,
-    "status" "DocumentStatus" NOT NULL DEFAULT 'PENDENTE',
-    "motivoAlteracao" TEXT,
-    "motivoInativacao" TEXT,
-    "dataInativacao" TIMESTAMP(3),
+    "type" "DocumentType" NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "documentHash" VARCHAR(64),
+    "mongoFileId" TEXT,
+    "status" "DocumentStatus" NOT NULL DEFAULT 'PENDING',
+    "changeReason" TEXT,
+    "inactivationReason" TEXT,
+    "inactivatedAt" TIMESTAMP(3),
     "blockchainTxId" TEXT,
     "blockchainRegisteredAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -195,7 +203,6 @@ CREATE TABLE "Student" (
     "registration" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
@@ -217,7 +224,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Advisor_userId_key" ON "Advisor"("userId");
+CREATE INDEX "Advisor_departmentId_idx" ON "Advisor"("departmentId");
 
 -- CreateIndex
 CREATE INDEX "Advisor_courseId_idx" ON "Advisor"("courseId");
@@ -247,10 +254,10 @@ CREATE INDEX "AuditLog_performedBy_idx" ON "AuditLog"("performedBy");
 CREATE UNIQUE INDEX "Coordinator_userId_key" ON "Coordinator"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Course_codigo_key" ON "Course"("codigo");
+CREATE UNIQUE INDEX "Course_code_key" ON "Course"("code");
 
 -- CreateIndex
-CREATE INDEX "Course_organizationId_idx" ON "Course"("organizationId");
+CREATE INDEX "Course_departmentId_idx" ON "Course"("departmentId");
 
 -- CreateIndex
 CREATE INDEX "Course_coordinatorId_idx" ON "Course"("coordinatorId");
@@ -271,19 +278,22 @@ CREATE INDEX "DefenseStudent_studentId_idx" ON "DefenseStudent"("studentId");
 CREATE UNIQUE INDEX "DefenseStudent_defenseId_studentId_key" ON "DefenseStudent"("defenseId", "studentId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Department_name_key" ON "Department"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Document_previousVersionId_key" ON "Document"("previousVersionId");
 
 -- CreateIndex
 CREATE INDEX "Document_defenseId_idx" ON "Document"("defenseId");
 
 -- CreateIndex
-CREATE INDEX "Document_documentoHash_idx" ON "Document"("documentoHash");
+CREATE INDEX "Document_documentHash_idx" ON "Document"("documentHash");
 
 -- CreateIndex
 CREATE INDEX "Document_status_idx" ON "Document"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Document_defenseId_tipo_versao_key" ON "Document"("defenseId", "tipo", "versao");
+CREATE UNIQUE INDEX "Document_defenseId_type_version_key" ON "Document"("defenseId", "type", "version");
 
 -- CreateIndex
 CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
@@ -316,9 +326,6 @@ CREATE INDEX "RefreshToken_token_idx" ON "RefreshToken"("token");
 CREATE UNIQUE INDEX "Student_registration_key" ON "Student"("registration");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Student_userId_key" ON "Student"("userId");
-
--- CreateIndex
 CREATE INDEX "Student_courseId_idx" ON "Student"("courseId");
 
 -- CreateIndex
@@ -328,7 +335,10 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE INDEX "User_organizationId_idx" ON "User"("organizationId");
 
 -- AddForeignKey
-ALTER TABLE "Advisor" ADD CONSTRAINT "Advisor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Advisor" ADD CONSTRAINT "Advisor_id_fkey" FOREIGN KEY ("id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Advisor" ADD CONSTRAINT "Advisor_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Advisor" ADD CONSTRAINT "Advisor_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -343,7 +353,7 @@ ALTER TABLE "Approval" ADD CONSTRAINT "Approval_approverId_fkey" FOREIGN KEY ("a
 ALTER TABLE "Coordinator" ADD CONSTRAINT "Coordinator_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Course" ADD CONSTRAINT "Course_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Course" ADD CONSTRAINT "Course_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Course" ADD CONSTRAINT "Course_coordinatorId_fkey" FOREIGN KEY ("coordinatorId") REFERENCES "Coordinator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -370,7 +380,7 @@ ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY
 ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Student" ADD CONSTRAINT "Student_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Student" ADD CONSTRAINT "Student_id_fkey" FOREIGN KEY ("id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Student" ADD CONSTRAINT "Student_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

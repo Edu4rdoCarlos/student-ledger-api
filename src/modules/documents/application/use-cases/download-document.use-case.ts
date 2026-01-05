@@ -75,16 +75,20 @@ export class DownloadDocumentUseCase {
     }
 
     // Fallback to IPFS using documentHash (CID)
-    try {
-      const buffer = await this.ipfsService.downloadFile(document.documentHash);
+    if (document.documentHash) {
+      try {
+        const buffer = await this.ipfsService.downloadFile(document.documentHash);
 
-      return {
-        buffer,
-        filename,
-        mimeType: 'application/pdf',
-      };
-    } catch (ipfsError) {
-      throw new NotFoundException('Documento não disponível no MongoDB nem no IPFS');
+        return {
+          buffer,
+          filename,
+          mimeType: 'application/pdf',
+        };
+      } catch (ipfsError) {
+        throw new NotFoundException('Documento não disponível no MongoDB nem no IPFS');
+      }
     }
+
+    throw new NotFoundException('Documento não possui hash IPFS nem arquivo no MongoDB');
   }
 }

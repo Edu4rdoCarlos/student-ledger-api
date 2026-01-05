@@ -6,8 +6,8 @@ export class CourseNotFoundError extends NotFoundException {
   }
 }
 
-export class CourseCodigoAlreadyExistsError extends ConflictException {
-  constructor(codigo: string) {
-    super(`Código de curso já cadastrado: ${codigo}`);
+export class CourseCodeAlreadyExistsError extends ConflictException {
+  constructor(code: string) {
+    super(`Código de curso já cadastrado: ${code}`);
   }
 }

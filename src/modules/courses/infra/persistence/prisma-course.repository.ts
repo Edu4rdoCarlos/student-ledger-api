@@ -19,8 +19,8 @@ export class PrismaCourseRepository implements ICourseRepository {
     return found ? CourseMapper.toDomain(found) : null;
   }
 
-  async findByCodigo(codigo: string): Promise<Course | null> {
-    const found = await this.prisma.course.findUnique({ where: { codigo } });
+  async findByCode(code: string): Promise<Course | null> {
+    const found = await this.prisma.course.findUnique({ where: { code } });
     return found ? CourseMapper.toDomain(found) : null;
   }
 
@@ -52,8 +52,8 @@ export class PrismaCourseRepository implements ICourseRepository {
     return CourseMapper.toDomain(updated);
   }
 
-  async existsByCodigo(codigo: string): Promise<boolean> {
-    const count = await this.prisma.course.count({ where: { codigo } });
+  async existsByCode(code: string): Promise<boolean> {
+    const count = await this.prisma.course.count({ where: { code } });
     return count > 0;
   }
 }

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Course } from '../../domain/entities';
 import { ICourseRepository, COURSE_REPOSITORY } from '../ports';
-import { CourseCodigoAlreadyExistsError } from '../../domain/errors';
+import { CourseCodeAlreadyExistsError } from '../../domain/errors';
 import { CreateCourseDto, CourseResponseDto } from '../../presentation/dtos';
 
 @Injectable()
@@ -12,16 +12,16 @@ export class CreateCourseUseCase {
   ) {}
 
   async execute(dto: CreateCourseDto): Promise<CourseResponseDto> {
-    const codigoExists = await this.courseRepository.existsByCodigo(dto.code);
-    if (codigoExists) {
-      throw new CourseCodigoAlreadyExistsError(dto.code);
+    const codeExists = await this.courseRepository.existsByCode(dto.code);
+    if (codeExists) {
+      throw new CourseCodeAlreadyExistsError(dto.code);
     }
 
     const course = Course.create({
-      codigo: dto.code,
-      nome: dto.name,
+      code: dto.code,
+      name: dto.name,
       departmentId: dto.departmentId,
-      ativo: dto.active ?? true,
+      active: dto.active ?? true,
       coordinatorId: dto.coordinatorId,
     });
 

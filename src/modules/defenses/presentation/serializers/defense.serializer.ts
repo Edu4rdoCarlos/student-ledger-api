@@ -52,7 +52,7 @@ export class DefenseSerializer {
             type: d.type,
             version: d.version,
             documentHash: d.documentHash,
-            filePath: d.filePath,
+            mongoFileId: d.mongoFileId,
             status: d.status,
             blockchainTxId: d.blockchainTxId,
             blockchainRegisteredAt: d.blockchainRegisteredAt,

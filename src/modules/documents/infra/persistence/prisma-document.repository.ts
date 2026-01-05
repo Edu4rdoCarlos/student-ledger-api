@@ -88,7 +88,7 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   async existsByHash(hash: string): Promise<boolean> {
     const count = await this.prisma.document.count({
-      where: { documentoHash: hash },
+      where: { documentHash: hash },
     });
     return count > 0;
   }

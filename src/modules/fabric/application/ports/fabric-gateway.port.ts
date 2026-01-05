@@ -2,7 +2,7 @@ export type OrgName = 'coordenacao' | 'orientador' | 'aluno';
 
 export type UserRole = 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
 
-export type ResultadoDefesa = 'APROVADO' | 'REPROVADO';
+export type DefenseResult = 'APPROVED' | 'FAILED';
 
 export interface FabricUser {
   id: string;
@@ -23,11 +23,11 @@ export interface DocumentRecord {
   matricula: string;
   defenseDate: string;
   notaFinal: number;
-  resultado: ResultadoDefesa;
+  resultado: DefenseResult;
   versao: number;
   motivo: string;
   registeredBy: string;
-  status: 'APROVADO';
+  status: 'APPROVED';
   signatures: DocumentSignature[];
   validatedAt: string;
 }
@@ -54,7 +54,7 @@ export interface IFabricGateway {
     matricula: string,
     defenseDate: string,
     notaFinal: number,
-    resultado: ResultadoDefesa,
+    resultado: DefenseResult,
     motivo: string,
     signatures: DocumentSignature[],
     validatedAt: string,

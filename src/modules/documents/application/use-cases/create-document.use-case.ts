@@ -12,9 +12,11 @@ export class CreateDocumentUseCase {
   ) {}
 
   async execute(dto: CreateDocumentDto): Promise<DocumentResponseDto> {
-    const hashExists = await this.documentRepository.existsByHash(dto.documentHash);
-    if (hashExists) {
-      throw new DocumentHashAlreadyExistsError();
+    if (dto.documentHash) {
+      const hashExists = await this.documentRepository.existsByHash(dto.documentHash);
+      if (hashExists) {
+        throw new DocumentHashAlreadyExistsError();
+      }
     }
 
     const document = Document.create({

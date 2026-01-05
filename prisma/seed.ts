@@ -153,43 +153,43 @@ async function main() {
   console.log('\n📚 Creating Courses...');
 
   const courseCC = await prisma.course.upsert({
-    where: { codigo: 'CC-UFRGS' },
+    where: { code: 'CC-UFRGS' },
     update: {},
     create: {
-      nome: 'Ciência da Computação',
-      codigo: 'CC-UFRGS',
+      name: 'Ciência da Computação',
+      code: 'CC-UFRGS',
       departmentId: deptInformatica.id,
-      ativo: true,
+      active: true,
       coordinatorId: coordinator1.id,
     },
   });
 
   const courseSI = await prisma.course.upsert({
-    where: { codigo: 'SI-UFRGS' },
+    where: { code: 'SI-UFRGS' },
     update: {},
     create: {
-      nome: 'Sistemas de Informação',
-      codigo: 'SI-UFRGS',
+      name: 'Sistemas de Informação',
+      code: 'SI-UFRGS',
       departmentId: deptInformatica.id,
-      ativo: true,
+      active: true,
       coordinatorId: coordinator2.id,
     },
   });
 
   const courseInativo = await prisma.course.upsert({
-    where: { codigo: 'EC-UFRGS' },
+    where: { code: 'EC-UFRGS' },
     update: {},
     create: {
-      nome: 'Engenharia de Computação',
-      codigo: 'EC-UFRGS',
+      name: 'Engenharia de Computação',
+      code: 'EC-UFRGS',
       departmentId: deptEngenharia.id,
-      ativo: false,
+      active: false,
     },
   });
 
-  console.log(`  ✓ ${courseCC.nome} (ativo)`);
-  console.log(`  ✓ ${courseSI.nome} (ativo)`);
-  console.log(`  ✓ ${courseInativo.nome} (inativo)`);
+  console.log(`  ✓ ${courseCC.name} (ativo)`);
+  console.log(`  ✓ ${courseSI.name} (ativo)`);
+  console.log(`  ✓ ${courseInativo.name} (inativo)`);
 
   console.log('\n👨‍🏫 Creating Advisors...');
 
@@ -445,88 +445,88 @@ async function main() {
   console.log('\n✅ Creating Approvals...');
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.ORIENTADOR } },
+    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.ADVISOR } },
     update: {},
     create: {
       documentId: docAta.id,
-      role: ApprovalRole.ORIENTADOR,
-      status: ApprovalStatus.APROVADO,
+      role: ApprovalRole.ADVISOR,
+      status: ApprovalStatus.APPROVED,
       approverId: advisorUser1.id,
       approvedAt: new Date('2024-12-15T16:00:00Z'),
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.COORDENADOR } },
+    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.COORDINATOR } },
     update: {},
     create: {
       documentId: docAta.id,
-      role: ApprovalRole.COORDENADOR,
-      status: ApprovalStatus.APROVADO,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.APPROVED,
       approverId: coordUser1.id,
       approvedAt: new Date('2024-12-16T09:00:00Z'),
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.ALUNO } },
+    where: { documentId_role: { documentId: docAta.id, role: ApprovalRole.STUDENT } },
     update: {},
     create: {
       documentId: docAta.id,
-      role: ApprovalRole.ALUNO,
-      status: ApprovalStatus.APROVADO,
+      role: ApprovalRole.STUDENT,
+      status: ApprovalStatus.APPROVED,
       approverId: studentUser1.id,
       approvedAt: new Date('2024-12-15T17:00:00Z'),
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.ORIENTADOR } },
+    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.ADVISOR } },
     update: {},
     create: {
       documentId: docPendente.id,
-      role: ApprovalRole.ORIENTADOR,
-      status: ApprovalStatus.PENDENTE,
+      role: ApprovalRole.ADVISOR,
+      status: ApprovalStatus.PENDING,
       code: '123456',
       codeExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.COORDENADOR } },
+    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.COORDINATOR } },
     update: {},
     create: {
       documentId: docPendente.id,
-      role: ApprovalRole.COORDENADOR,
-      status: ApprovalStatus.PENDENTE,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.PENDING,
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.ALUNO } },
+    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.STUDENT } },
     update: {},
     create: {
       documentId: docPendente.id,
-      role: ApprovalRole.ALUNO,
-      status: ApprovalStatus.PENDENTE,
+      role: ApprovalRole.STUDENT,
+      status: ApprovalStatus.PENDING,
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docInativo.id, role: ApprovalRole.COORDENADOR } },
+    where: { documentId_role: { documentId: docInativo.id, role: ApprovalRole.COORDINATOR } },
     update: {},
     create: {
       documentId: docInativo.id,
-      role: ApprovalRole.COORDENADOR,
-      status: ApprovalStatus.REJEITADO,
-      justificativa: 'Documento contém erros de formatação e informações incorretas',
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.REJECTED,
+      justification: 'Documento contém erros de formatação e informações incorretas',
       approverId: coordUser2.id,
     },
   });
 
-  console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APROVADO)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense 3 (todas PENDENTE)`);
-  console.log(`  ✓ 1 aprovação para ATA Defense 2 (REJEITADO)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense 3 (todas PENDING)`);
+  console.log(`  ✓ 1 aprovação para ATA Defense 2 (REJECTED)`);
 
   console.log('\n' + '='.repeat(50));
   console.log('🎉 Seed completed successfully!');

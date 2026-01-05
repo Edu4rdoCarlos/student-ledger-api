@@ -10,10 +10,10 @@ export class GetCourseUseCase {
     private readonly courseRepository: ICourseRepository,
   ) {}
 
-  async execute(codigo: string): Promise<CourseResponseDto> {
-    const course = await this.courseRepository.findByCodigo(codigo);
+  async execute(code: string): Promise<CourseResponseDto> {
+    const course = await this.courseRepository.findByCode(code);
     if (!course) {
-      throw new CourseNotFoundError(codigo);
+      throw new CourseNotFoundError(code);
     }
     return CourseResponseDto.fromEntity(course);
   }

@@ -29,10 +29,10 @@ export class CourseResponseDto {
   static fromEntity(course: Course): CourseResponseDto {
     const dto = new CourseResponseDto();
     dto.id = course.id;
-    dto.code = course.codigo;
-    dto.name = course.nome;
+    dto.code = course.code;
+    dto.name = course.name;
     dto.departmentId = course.departmentId;
-    dto.active = course.ativo;
+    dto.active = course.active;
     dto.coordinatorId = course.coordinatorId;
     dto.createdAt = course.createdAt;
     dto.updatedAt = course.updatedAt;

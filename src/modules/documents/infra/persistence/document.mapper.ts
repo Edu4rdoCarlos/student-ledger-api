@@ -7,7 +7,7 @@ export class DocumentMapper {
       {
         type: prisma.type as DocumentType,
         version: prisma.version,
-        documentHash: prisma.documentHash,
+        documentHash: prisma.documentHash ?? undefined,
         mongoFileId: prisma.mongoFileId ?? undefined,
         status: prisma.status as DocumentStatus,
         changeReason: prisma.changeReason ?? undefined,
