@@ -13,11 +13,14 @@ import {
   UploadedFile,
   ParseFilePipeBuilder,
   BadRequestException,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
+import { PdfContentValidator } from '../../../../shared/validators';
+import { sanitizeFilename } from '../../../../shared/utils';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
@@ -154,8 +157,8 @@ export class DefenseController {
     @Body('finalGrade') finalGrade: string,
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addFileTypeValidator({ fileType: 'pdf' })
-        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 }) // 10MB
+        .addValidator(new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }))
+        .addValidator(new PdfContentValidator({}))
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
     )
     file: Express.Multer.File,
@@ -166,11 +169,13 @@ export class DefenseController {
       throw new BadRequestException('Nota final inválida. Deve ser um número entre 0 e 10.');
     }
 
+    const safeFilename = sanitizeFilename(file.originalname);
+
     const { defense, document } = await this.submitDefenseResultUseCase.execute({
       id,
       finalGrade: grade,
       documentFile: file.buffer,
-      documentFilename: file.originalname,
+      documentFilename: safeFilename,
     });
 
     return {
