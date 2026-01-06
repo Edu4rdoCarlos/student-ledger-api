@@ -42,26 +42,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
   private readonly channelName: string;
   private readonly chaincodeName: string;
 
-  private readonly organizations: Record<OrgName, OrgConfig> = {
-    coordenacao: {
-      name: 'coordenacao',
-      mspId: 'CoordenacaoMSP',
-      peerEndpoint: 'localhost:7051',
-      peerName: 'peer0.coordenacao.ifal.local',
-    },
-    orientador: {
-      name: 'orientador',
-      mspId: 'OrientadorMSP',
-      peerEndpoint: 'localhost:8051',
-      peerName: 'peer0.orientador.ifal.local',
-    },
-    aluno: {
-      name: 'aluno',
-      mspId: 'AlunoMSP',
-      peerEndpoint: 'localhost:9051',
-      peerName: 'peer0.aluno.ifal.local',
-    },
-  };
+  private readonly organizations: Record<OrgName, OrgConfig>;
 
   private readonly roleToOrgMap: Record<UserRole, OrgName> = {
     ADMIN: 'coordenacao',
@@ -73,6 +54,33 @@ export class FabricGrpcAdapter implements IFabricGateway {
   constructor(private configService: ConfigService) {
     this.channelName = this.configService.get<string>('FABRIC_CHANNEL', 'studentchannel');
     this.chaincodeName = this.configService.get<string>('FABRIC_CHAINCODE', 'student-ledger');
+
+    this.organizations = {
+      coordenacao: {
+        name: 'coordenacao',
+        mspId: this.configService.get<string>('FABRIC_COORDENACAO_MSP_ID', 'CoordenacaoMSP'),
+        peerEndpoint: this.configService.get<string>('FABRIC_COORDENACAO_PEER_ENDPOINT', 'localhost:7051'),
+        peerName: this.configService.get<string>(
+          'FABRIC_COORDENACAO_PEER_NAME',
+          'peer0.coordenacao.ifal.local',
+        ),
+      },
+      orientador: {
+        name: 'orientador',
+        mspId: this.configService.get<string>('FABRIC_ORIENTADOR_MSP_ID', 'OrientadorMSP'),
+        peerEndpoint: this.configService.get<string>('FABRIC_ORIENTADOR_PEER_ENDPOINT', 'localhost:8051'),
+        peerName: this.configService.get<string>(
+          'FABRIC_ORIENTADOR_PEER_NAME',
+          'peer0.orientador.ifal.local',
+        ),
+      },
+      aluno: {
+        name: 'aluno',
+        mspId: this.configService.get<string>('FABRIC_ALUNO_MSP_ID', 'AlunoMSP'),
+        peerEndpoint: this.configService.get<string>('FABRIC_ALUNO_PEER_ENDPOINT', 'localhost:9051'),
+        peerName: this.configService.get<string>('FABRIC_ALUNO_PEER_NAME', 'peer0.aluno.ifal.local'),
+      },
+    };
   }
 
   async healthCheck(): Promise<FabricHealthStatus> {
