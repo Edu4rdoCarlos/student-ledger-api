@@ -4,6 +4,7 @@ import { IpfsService } from './ipfs.service';
 import { IPFS_STORAGE, IPFS_UPLOAD_QUEUE } from './application';
 import { IpfsHttpAdapter } from './infra/adapters';
 import { IpfsUploadProcessor } from './infra/processors';
+import { EncryptionUtil } from '../documents/infra/utils/encryption.util';
 
 @Global()
 @Module({
@@ -17,6 +18,7 @@ import { IpfsUploadProcessor } from './infra/processors';
       provide: IPFS_STORAGE,
       useClass: IpfsHttpAdapter,
     },
+    EncryptionUtil,
     IpfsService,
     IpfsUploadProcessor,
   ],

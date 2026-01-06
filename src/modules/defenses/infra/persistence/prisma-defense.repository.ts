@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { DocumentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../database/prisma';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, FindAllOptions, FindAllResult } from '../../application/ports';
@@ -23,7 +24,17 @@ export class PrismaDefenseRepository implements IDefenseRepository {
         user: true,
       },
     },
-    documents: true,
+    documents: {
+      where: {
+        status: {
+          not: DocumentStatus.INACTIVE,
+        },
+      },
+      orderBy: {
+        version: Prisma.SortOrder.desc,
+      },
+      take: 1,
+    },
   };
 
   async create(defense: Defense): Promise<Defense> {

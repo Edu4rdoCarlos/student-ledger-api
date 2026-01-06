@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import {
@@ -11,10 +11,14 @@ import {
   ApiProduces,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { Roles, Public, CurrentUser } from '../../../../shared/decorators';
-import { ValidateDocumentUseCase, DownloadDocumentUseCase } from '../../application/use-cases';
-import { ValidateDocumentResponseDto } from '../dtos/response/document-response.dto';
+import { Roles, CurrentUser } from '../../../../shared/decorators';
+import { ICurrentUser } from '../../../../shared/types';
+import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase } from '../../application/use-cases';
+import { ValidateDocumentResponseDto, CreateDocumentVersionResponseDto } from '../dtos/response';
+import { CreateDocumentVersionDto } from '../dtos/request';
 import { ValidateDocumentSerializer } from '../serializers';
+import { PdfContentValidator } from '../../../../shared/validators';
+import { sanitizeFilename } from '../../../../shared/utils';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
@@ -23,6 +27,7 @@ export class DocumentsController {
   constructor(
     private readonly validateDocument: ValidateDocumentUseCase,
     private readonly downloadDocument: DownloadDocumentUseCase,
+    private readonly createDocumentVersion: CreateDocumentVersionUseCase,
   ) {}
 
   @Get(':id/download')
@@ -55,11 +60,11 @@ export class DocumentsController {
   }
 
   @Post('validate')
-  @Public()
-  @Throttle({ default: { limit: 5, ttl: 3600000 } })
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Validate document authenticity via file upload (public endpoint)' })
+  @ApiOperation({ summary: 'Validate document authenticity via file upload' })
   @ApiOkResponse({
     description: 'Document validation result',
     type: ValidateDocumentResponseDto,
@@ -79,9 +84,85 @@ export class DocumentsController {
   })
   async validate(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user?: { role?: string },
+    @CurrentUser() currentUser: ICurrentUser,
   ) {
-    const result = await this.validateDocument.execute(file.buffer);
-    return ValidateDocumentSerializer.serialize(result, user);
+    const result = await this.validateDocument.execute(file.buffer, currentUser);
+    return ValidateDocumentSerializer.serialize(result, currentUser);
+  }
+
+  @Post(':id/versions')
+  @Roles('ADMIN', 'COORDINATOR')
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
+  @UseInterceptors(FileInterceptor('document'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Create a new version of an approved document',
+    description: 'Only APPROVED documents that are already on blockchain can be versioned. The previous version will be inactivated and a new version will go through the approval process again.'
+  })
+  @ApiOkResponse({
+    description: 'New version created successfully',
+    type: CreateDocumentVersionResponseDto,
+  })
+  @ApiBody({
+    description: 'New document version with updated grade and file',
+    schema: {
+      type: 'object',
+      required: ['finalGrade', 'changeReason', 'document'],
+      properties: {
+        finalGrade: {
+          type: 'number',
+          minimum: 0,
+          maximum: 10,
+          example: 8.5,
+          description: 'Updated final grade (0 to 10)'
+        },
+        changeReason: {
+          type: 'string',
+          example: 'Correção de nota final após revisão',
+          description: 'Reason for creating a new version'
+        },
+        document: {
+          type: 'string',
+          format: 'binary',
+          description: 'New document file (PDF)'
+        }
+      }
+    }
+  })
+  async createVersion(
+    @Param('id') id: string,
+    @Body() dto: CreateDocumentVersionDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addValidator(new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }))
+        .addValidator(new PdfContentValidator({}))
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
+    )
+    file: Express.Multer.File,
+  ): Promise<CreateDocumentVersionResponseDto> {
+    const safeFilename = sanitizeFilename(file.originalname);
+
+    const { previousVersion, newVersion } = await this.createDocumentVersion.execute({
+      documentId: id,
+      finalGrade: dto.finalGrade,
+      documentFile: file.buffer,
+      documentFilename: safeFilename,
+      changeReason: dto.changeReason,
+    });
+
+    return {
+      message: `Nova versão criada com sucesso. Versão ${previousVersion.version} inativada, versão ${newVersion.version} aguardando aprovação.`,
+      previousVersion: {
+        id: previousVersion.id,
+        version: previousVersion.version,
+        status: previousVersion.status,
+      },
+      newVersion: {
+        id: newVersion.id,
+        version: newVersion.version,
+        status: newVersion.status,
+        changeReason: newVersion.changeReason,
+      },
+    };
   }
 }

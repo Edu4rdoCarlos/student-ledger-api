@@ -42,8 +42,6 @@ export class ApproveDocumentUseCase {
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
-    this.logger.log(`Aprovação ${approval.id} processada por ${request.userId}`);
-
     this.registerOnBlockchainUseCase.execute({ documentId: approval.documentId }).catch((error) => {
       this.logger.error(`Failed to register on blockchain: ${error.message}`);
     });

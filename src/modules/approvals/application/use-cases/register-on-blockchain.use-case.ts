@@ -44,7 +44,6 @@ export class RegisterOnBlockchainUseCase {
     }
 
     if (!allApproved) {
-      this.logger.log(`Document ${request.documentId} does not have all approvals yet`);
       return { registered: false };
     }
 
@@ -182,8 +181,6 @@ export class RegisterOnBlockchainUseCase {
       document.approve();
 
       await this.documentRepository.update(document);
-
-      this.logger.log(`Document ${request.documentId} registered on blockchain successfully`);
 
       return {
         registered: true,

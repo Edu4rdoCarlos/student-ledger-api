@@ -1,7 +1,8 @@
-import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { ICurrentUser } from '../../../../shared/types';
 
 interface DownloadDocumentResponse {
   buffer: Buffer;
@@ -9,13 +10,10 @@ interface DownloadDocumentResponse {
   mimeType: string;
 }
 
-interface CurrentUser {
-  id: string;
-  role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
-}
-
 @Injectable()
 export class DownloadDocumentUseCase {
+  private readonly logger = new Logger(DownloadDocumentUseCase.name);
+
   constructor(
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
@@ -24,7 +22,7 @@ export class DownloadDocumentUseCase {
     private readonly ipfsService: IpfsService,
   ) {}
 
-  async execute(documentId: string, currentUser: CurrentUser): Promise<DownloadDocumentResponse> {
+  async execute(documentId: string, currentUser: ICurrentUser): Promise<DownloadDocumentResponse> {
     const document = await this.documentRepository.findById(documentId);
 
     if (!document) {
@@ -64,6 +62,7 @@ export class DownloadDocumentUseCase {
 
     try {
       const buffer = await this.ipfsService.downloadFile(document.documentCid);
+      this.logger.log(`Arquivo baixado do IPFS: ${document.documentCid}`);
 
       return {
         buffer,
@@ -71,6 +70,7 @@ export class DownloadDocumentUseCase {
         mimeType: 'application/pdf',
       };
     } catch (error) {
+      this.logger.error(`Falha ao baixar arquivo: ${error.message}`);
       throw new NotFoundException('Documento não disponível no IPFS');
     }
   }

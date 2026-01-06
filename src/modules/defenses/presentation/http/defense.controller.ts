@@ -36,6 +36,7 @@ import {
 } from '../dtos/request';
 import { DefenseResponseDto, SubmitDefenseResultResponseDto, ListDefensesResponseDto } from '../dtos/response';
 import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
+import { ListDocumentVersionsUseCase } from '../../../documents/application/use-cases';
 import { PaginationMetadata, HttpResponse, PaginationDto } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiDefenseListResponse, ApiDefenseCreatedResponse, ApiDefenseOkResponse } from '../docs';
@@ -52,6 +53,7 @@ export class DefenseController {
     private readonly listDefensesUseCase: ListDefensesUseCase,
     private readonly updateDefenseUseCase: UpdateDefenseUseCase,
     private readonly submitDefenseResultUseCase: SubmitDefenseResultUseCase,
+    private readonly listDocumentVersionsUseCase: ListDocumentVersionsUseCase,
   ) {}
 
   @Post()
@@ -183,6 +185,21 @@ export class DefenseController {
     return {
       defense: DefenseResponseDto.fromEntity(defense),
       document: DocumentResponseDto.fromEntity(document),
+    };
+  }
+
+  @Get(':id/documents/history')
+  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @ApiOperation({
+    summary: 'List all document versions for a defense',
+    description: 'Returns all versions of the defense document, ordered by version number (newest first)'
+  })
+  async getDocumentHistory(@Param('id') id: string) {
+    const versions = await this.listDocumentVersionsUseCase.execute(id);
+
+    return {
+      data: versions.map(doc => DocumentResponseDto.fromEntity(doc)),
+      total: versions.length,
     };
   }
 }

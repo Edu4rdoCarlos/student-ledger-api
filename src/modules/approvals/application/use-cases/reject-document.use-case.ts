@@ -45,8 +45,6 @@ export class RejectDocumentUseCase {
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
-    this.logger.log(`Aprovação ${approval.id} rejeitada por ${request.userId}: ${request.justification}`);
-
     return { approval: updatedApproval };
   }
 }

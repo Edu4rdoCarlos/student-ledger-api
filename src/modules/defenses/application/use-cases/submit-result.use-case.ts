@@ -49,7 +49,6 @@ export class SubmitDefenseResultUseCase {
     }
 
     const documentHash = this.hashUtil.calculateSha256(request.documentFile);
-    this.logger.log(`Calculated SHA-256 hash: ${documentHash}`);
 
     let documentCid: string;
     try {
@@ -59,14 +58,13 @@ export class SubmitDefenseResultUseCase {
       );
 
       if ('queued' in ipfsResult) {
-        this.logger.warn('IPFS upload queued - will be processed later');
+        this.logger.warn('Upload IPFS enfileirado - será processado em breve');
         throw new InternalServerErrorException('Sistema de armazenamento temporariamente indisponível. Tente novamente em alguns minutos.');
       }
 
       documentCid = ipfsResult.cid;
-      this.logger.log(`File uploaded to IPFS with CID: ${documentCid}`);
     } catch (error) {
-      this.logger.error(`Failed to upload file to IPFS: ${error.message}`, error.stack);
+      this.logger.error(`Falha ao fazer upload para IPFS: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Falha ao fazer upload do arquivo. Tente novamente.');
     }
 
@@ -84,11 +82,11 @@ export class SubmitDefenseResultUseCase {
       const updatedDefense = await this.defenseRepository.update(defense);
 
       this.notifyDefenseResultUseCase.execute(request.id).catch((error) => {
-        this.logger.error(`Failed to send notification: ${error.message}`);
+        this.logger.error(`Falha ao enviar notificação: ${error.message}`);
       });
 
       this.createApprovalsUseCase.execute({ documentId: createdDocument.id }).catch((error) => {
-        this.logger.error(`Failed to create approvals: ${error.message}`);
+        this.logger.error(`Falha ao criar aprovações: ${error.message}`);
       });
 
       return {
@@ -96,7 +94,7 @@ export class SubmitDefenseResultUseCase {
         document: createdDocument,
       };
     } catch (error) {
-      this.logger.error(`Failed to create document/update defense: ${error.message}`, error.stack);
+      this.logger.error(`Falha ao criar documento/atualizar defesa: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Falha ao processar resultado da defesa. Tente novamente.');
     }
   }
