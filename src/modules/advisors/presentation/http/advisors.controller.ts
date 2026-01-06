@@ -30,21 +30,21 @@ export class AdvisorsController {
   @HttpCode(HttpStatus.CREATED)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Cadastrar novo orientador',
-    description: 'Cria um novo usuário com role ADVISOR e vincula ao registro de orientador. A operação é atômica: ou cria ambos ou nenhum.'
+    summary: 'Register new advisor',
+    description: 'Creates a new user with ADVISOR role and links to advisor record. The operation is atomic: creates both or neither.'
   })
   @ApiAdvisorCreatedResponse()
   @ApiResponse({
     status: 409,
-    description: 'Email já cadastrado'
+    description: 'Email already registered'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar orientadores.'
+    description: 'No permission. Only coordinators and admins can register advisors.'
   })
   async create(@Body() dto: CreateAdvisorDto): Promise<HttpResponse<AdvisorResponseDto>> {
     const advisor = await this.createAdvisor.execute(dto);
@@ -53,11 +53,11 @@ export class AdvisorsController {
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Listar orientadores' })
+  @ApiOperation({ summary: 'List advisors' })
   @ApiAdvisorListResponse()
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   async findAll(@Query() query: ListAdvisorsDto): Promise<ListAdvisorsResponse> {
     return this.listAdvisors.execute(query);
@@ -65,15 +65,15 @@ export class AdvisorsController {
 
   @Get(':id')
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Buscar orientador por ID' })
+  @ApiOperation({ summary: 'Find advisor by ID' })
   @ApiAdvisorOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Orientador não encontrado'
+    description: 'Advisor not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   async findOne(@Param('id') id: string): Promise<HttpResponse<AdvisorResponseDto>> {
     const advisor = await this.getAdvisor.execute(id);
@@ -84,21 +84,21 @@ export class AdvisorsController {
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Atualizar dados do orientador',
-    description: 'Atualiza nome, departamento e/ou curso do orientador. Apenas administradores e coordenadores podem atualizar.'
+    summary: 'Update advisor data',
+    description: 'Updates name, department and/or advisor course. Only administrators and coordinators can update.'
   })
   @ApiAdvisorOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Orientador não encontrado'
+    description: 'Advisor not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão'
+    description: 'No permission'
   })
   async update(@Param('id') id: string, @Body() dto: UpdateAdvisorDto): Promise<HttpResponse<AdvisorResponseDto>> {
     const advisor = await this.updateAdvisor.execute(id, dto);
@@ -109,24 +109,24 @@ export class AdvisorsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('ADVISOR')
   @ApiOperation({
-    summary: 'Alterar senha do orientador',
-    description: 'Permite que o orientador altere sua própria senha.'
+    summary: 'Change advisor password',
+    description: 'Allows advisor to change their own password.'
   })
   @ApiResponse({
     status: 204,
-    description: 'Senha alterada com sucesso.'
+    description: 'Password changed successfully.'
   })
   @ApiResponse({
     status: 401,
-    description: 'Senha atual incorreta ou não autenticado'
+    description: 'Current password incorrect or not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão'
+    description: 'No permission'
   })
   @ApiResponse({
     status: 404,
-    description: 'Orientador não encontrado'
+    description: 'Advisor not found'
   })
   async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
     await this.changePassword.execute(currentUser.id, dto);

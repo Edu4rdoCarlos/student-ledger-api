@@ -21,15 +21,54 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Student Ledger API')
-    .setDescription('API para gerenciamento de documentos acadêmicos com Hyperledger Fabric')
+    .setDescription(`
+## Academic Document Management API with Hyperledger Fabric
+
+### Key Features
+- Thesis defense management
+- Multi-stage approval workflow (Coordinator, Advisor, Student)
+- Immutable blockchain registration (Hyperledger Fabric)
+- Distributed storage via IPFS
+- AES-256-GCM file encryption
+- Approved document versioning
+- Document authenticity validation
+
+### Architecture
+- **Validation**: Postgres (cache) with fallback to Hyperledger Fabric (source of truth)
+- **Storage**: IPFS with end-to-end encryption
+- **Queues**: Bull/Redis for asynchronous processing
+- **Authentication**: JWT + Refresh Token (HTTP-only cookie)
+
+### Approval Workflow
+1. Coordinator submits defense result (ATA + FICHA documents)
+2. System creates approvals for COORDINATOR, ADVISOR and STUDENT
+3. Each party approves or rejects the document
+4. After all approvals, document is registered on blockchain
+5. Approved documents can be versioned (with new approval workflow)
+    `)
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'Authorization',
+      description: 'JWT token obtained from login (valid for 15 minutes)',
+      in: 'header',
+    })
     .addCookieAuth('refresh_token', {
       type: 'apiKey',
       in: 'cookie',
       name: 'refresh_token',
-      description: 'Refresh token HTTP-only cookie para renovacao de tokens',
+      description: 'HTTP-only refresh token cookie for automatic token renewal (valid for 7 days)',
     })
+    .addTag('Auth', 'Authentication and session management (login, logout, refresh token)')
+    .addTag('Defenses', 'Thesis defense management')
+    .addTag('Documents', 'Document management and validation')
+    .addTag('Approvals', 'Document approval workflow')
+    .addTag('Students', 'Student management')
+    .addTag('Advisors', 'Advisor management')
+    .addTag('Departments', 'Department management')
+    .addTag('Courses', 'Course management')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

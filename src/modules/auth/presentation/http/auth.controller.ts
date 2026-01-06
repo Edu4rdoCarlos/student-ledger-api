@@ -10,7 +10,7 @@ import { HttpResponse, HttpResponseSerializer } from '../../../../shared';
 
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
-@ApiTags('Autenticação')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -26,11 +26,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
-    summary: 'Realizar login',
-    description: 'Autentica o usuario e retorna um access token. O refresh token e enviado via cookie HTTP-only.',
+    summary: 'Perform login',
+    description: 'Authenticates the user and returns an access token. The refresh token is sent via HTTP-only cookie.',
   })
-  @ApiResponse({ status: 200, description: 'Login realizado com sucesso. Refresh token enviado via cookie HTTP-only.', type: LoginHttpResponseDto })
-  @ApiResponse({ status: 401, description: 'Credenciais invalidas' })
+  @ApiResponse({ status: 200, description: 'Login successful. Refresh token sent via HTTP-only cookie.', type: LoginHttpResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -47,11 +47,11 @@ export class AuthController {
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiCookieAuth('refresh_token')
   @ApiOperation({
-    summary: 'Renovar tokens',
-    description: 'Renova o access token usando o refresh token do cookie. Implementa rotacao de tokens: o refresh token atual e revogado e um novo e gerado.',
+    summary: 'Renew tokens',
+    description: 'Renews the access token using the refresh token from the cookie. Implements token rotation: the current refresh token is revoked and a new one is generated.',
   })
-  @ApiResponse({ status: 200, description: 'Tokens renovados com sucesso. Novo refresh token enviado via cookie HTTP-only.', type: LoginHttpResponseDto })
-  @ApiResponse({ status: 401, description: 'Refresh token invalido, expirado ou revogado' })
+  @ApiResponse({ status: 200, description: 'Tokens renewed successfully. New refresh token sent via HTTP-only cookie.', type: LoginHttpResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid, expired, or revoked refresh token' })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -59,7 +59,7 @@ export class AuthController {
     const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token nao encontrado');
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     const { accessToken, refreshToken: newRefreshToken, expiresIn, isFirstAccess } =
@@ -75,10 +75,10 @@ export class AuthController {
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiCookieAuth('refresh_token')
   @ApiOperation({
-    summary: 'Realizar logout',
-    description: 'Revoga o refresh token no banco de dados e limpa o cookie. Tokens existentes sao invalidados.',
+    summary: 'Perform logout',
+    description: 'Revokes the refresh token in the database and clears the cookie. Existing tokens are invalidated.',
   })
-  @ApiResponse({ status: 204, description: 'Logout realizado com sucesso' })
+  @ApiResponse({ status: 204, description: 'Logout successful' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

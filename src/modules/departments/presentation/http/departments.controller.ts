@@ -24,9 +24,9 @@ export class DepartmentsController {
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Listar departamentos' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
+  @ApiOperation({ summary: 'List departments' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
   @ApiDepartmentListResponse()
   async findAll(@Query() query: ListDepartmentsQuery) {
     return this.listDepartments.execute(query);
@@ -34,7 +34,7 @@ export class DepartmentsController {
 
   @Get(':id')
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Buscar departamento por ID' })
+  @ApiOperation({ summary: 'Find department by ID' })
   @ApiDepartmentOkResponse()
   async findOne(@Param('id') id: string): Promise<HttpResponse<DepartmentResponseDto>> {
     const department = await this.getDepartment.execute(id);
@@ -43,7 +43,7 @@ export class DepartmentsController {
 
   @Put(':id')
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Atualizar departamento' })
+  @ApiOperation({ summary: 'Update department' })
   @ApiDepartmentOkResponse()
   async update(
     @Param('id') id: string,

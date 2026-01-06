@@ -29,25 +29,25 @@ export class CoursesController {
   @HttpCode(HttpStatus.CREATED)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Cadastrar novo curso',
-    description: 'Cria um novo curso no sistema. Apenas coordenadores e admins podem cadastrar.'
+    summary: 'Register new course',
+    description: 'Creates a new course in the system. Only coordinators and admins can register.'
   })
   @ApiCourseCreatedResponse()
   @ApiResponse({
     status: 409,
-    description: 'Código de curso já cadastrado'
+    description: 'Course code already registered'
   })
   @ApiResponse({
     status: 404,
-    description: 'Organização ou coordenador não encontrado'
+    description: 'Organization or coordinator not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar cursos.'
+    description: 'No permission. Only coordinators and admins can register courses.'
   })
   async create(@Body() dto: CreateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
     const course = await this.createCourse.execute(dto);
@@ -56,14 +56,14 @@ export class CoursesController {
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
-  @ApiOperation({ summary: 'Listar cursos' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Quantidade de itens por página' })
-  @ApiQuery({ name: 'departmentId', required: false, type: String, description: 'Filtrar por ID do departamento' })
+  @ApiOperation({ summary: 'List courses' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
+  @ApiQuery({ name: 'departmentId', required: false, type: String, description: 'Filter by department ID' })
   @ApiCourseListResponse()
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   async findAll(@Query() query: ListCoursesQuery): Promise<ListCoursesResponse> {
     return this.listCourses.execute(query);
@@ -71,15 +71,15 @@ export class CoursesController {
 
   @Get(':code')
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
-  @ApiOperation({ summary: 'Buscar curso por código' })
+  @ApiOperation({ summary: 'Find course by code' })
   @ApiCourseOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Curso não encontrado'
+    description: 'Course not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   async findOne(@Param('code') code: string): Promise<HttpResponse<CourseResponseDto>> {
     const course = await this.getCourse.execute(code);
@@ -90,21 +90,21 @@ export class CoursesController {
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Atualizar dados do curso',
-    description: 'Atualiza nome, departamento, status ativo e/ou coordenador do curso. Apenas coordenadores e admins podem atualizar.'
+    summary: 'Update course data',
+    description: 'Updates name, department, active status and/or course coordinator. Only coordinators and admins can update.'
   })
   @ApiCourseOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Curso ou coordenador não encontrado'
+    description: 'Course or coordinator not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão. Apenas coordenadores e admins podem atualizar cursos.'
+    description: 'No permission. Only coordinators and admins can update courses.'
   })
   async update(@Param('code') code: string, @Body() dto: UpdateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
     const course = await this.updateCourse.execute(code, dto);

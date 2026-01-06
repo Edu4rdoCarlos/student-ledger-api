@@ -30,25 +30,25 @@ export class StudentsController {
   @HttpCode(HttpStatus.CREATED)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Cadastrar novo aluno',
-    description: 'Cria um novo usuário com role STUDENT e vincula ao registro de aluno. A operação é atômica: ou cria ambos ou nenhum.'
+    summary: 'Register new student',
+    description: 'Creates a new user with STUDENT role and links to student record. The operation is atomic: creates both or neither.'
   })
   @ApiStudentCreatedResponse()
   @ApiResponse({
     status: 409,
-    description: 'Matrícula ou email já cadastrados'
+    description: 'Registration number or email already registered'
   })
   @ApiResponse({
     status: 404,
-    description: 'Curso não encontrado'
+    description: 'Course not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão. Apenas coordenadores e admins podem cadastrar alunos.'
+    description: 'No permission. Only coordinators and admins can register students.'
   })
   async create(@Body() dto: CreateStudentDto): Promise<HttpResponse<StudentResponseDto>> {
     const student = await this.createStudent.execute(dto);
@@ -57,7 +57,7 @@ export class StudentsController {
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Listar alunos' })
+  @ApiOperation({ summary: 'List students' })
   @ApiStudentListResponse()
   async findAll(@Query() query: ListStudentsDto): Promise<ListStudentsResponse> {
     return this.listStudents.execute(query);
@@ -65,15 +65,15 @@ export class StudentsController {
 
   @Get(':registration')
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Buscar aluno por matrícula com histórico de defesas do blockchain' })
+  @ApiOperation({ summary: 'Find student by registration number with blockchain defense history' })
   @ApiStudentOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Aluno não encontrado'
+    description: 'Student not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   async findOne(
     @Param('registration') registration: string,
@@ -90,21 +90,21 @@ export class StudentsController {
   @HttpCode(HttpStatus.OK)
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({
-    summary: 'Atualizar dados do aluno',
-    description: 'Atualiza o nome do usuário e/ou curso do aluno. Apenas administradores e coordenadores podem atualizar.'
+    summary: 'Update student data',
+    description: 'Updates user name and/or student course. Only administrators and coordinators can update.'
   })
   @ApiStudentOkResponse()
   @ApiResponse({
     status: 404,
-    description: 'Aluno ou curso não encontrado'
+    description: 'Student or course not found'
   })
   @ApiResponse({
     status: 401,
-    description: 'Não autenticado'
+    description: 'Not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão'
+    description: 'No permission'
   })
   async update(@Param('registration') registration: string, @Body() dto: UpdateStudentDto): Promise<HttpResponse<StudentResponseDto>> {
     const student = await this.updateStudent.execute(registration, dto);
@@ -115,24 +115,24 @@ export class StudentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('STUDENT')
   @ApiOperation({
-    summary: 'Alterar senha do aluno',
-    description: 'Permite que o aluno altere sua própria senha.'
+    summary: 'Change student password',
+    description: 'Allows student to change their own password.'
   })
   @ApiResponse({
     status: 204,
-    description: 'Senha alterada com sucesso.'
+    description: 'Password changed successfully.'
   })
   @ApiResponse({
     status: 401,
-    description: 'Senha atual incorreta ou não autenticado'
+    description: 'Current password incorrect or not authenticated'
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissão'
+    description: 'No permission'
   })
   @ApiResponse({
     status: 404,
-    description: 'Aluno não encontrado'
+    description: 'Student not found'
   })
   async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
     await this.changePassword.execute(currentUser.id, dto);
