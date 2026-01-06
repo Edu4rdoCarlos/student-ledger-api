@@ -1,0 +1,38 @@
+export const STUDENT_RESPONSE_EXAMPLE = {
+  documentId: 'DOC_202301_1_1704459600000',
+  ipfsCid: 'QmX1234567890abcdefghijklmnop',
+  studentRegistration: '202301',
+  title: 'Sistema de Gerenciamento de TCC com Blockchain',
+  defenseDate: '2024-01-05T10:00:00.000Z',
+  finalGrade: 8.5,
+  result: 'APPROVED',
+  version: 1,
+  reason: '',
+  registeredBy: 'coordinator@ifal.local',
+  status: 'APPROVED',
+  signatures: [
+    {
+      role: 'coordinator',
+      email: 'coordinator@ifal.local',
+      mspId: 'CoordenacaoMSP',
+      timestamp: '2024-01-05T10:30:00.000Z',
+      status: 'APPROVED',
+    },
+    {
+      role: 'advisor',
+      email: 'advisor@ifal.local',
+      mspId: 'OrientadorMSP',
+      timestamp: '2024-01-05T10:15:00.000Z',
+      status: 'REJECTED',
+      justification: 'Document does not meet minimum formatting requirements',
+    },
+    {
+      role: 'student',
+      email: 'student@ifal.local',
+      mspId: 'AlunoMSP',
+      timestamp: '2024-01-05T10:05:00.000Z',
+      status: 'APPROVED',
+    },
+  ],
+  validatedAt: '2024-01-05T10:30:00.000Z',
+};

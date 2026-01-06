@@ -15,6 +15,8 @@ export interface DocumentSignature {
   email: string;
   mspId: string;
   timestamp: string;
+  status: 'APPROVED' | 'REJECTED' | 'PENDING';
+  justification?: string;
 }
 
 export interface DocumentRecord {

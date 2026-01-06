@@ -33,7 +33,7 @@ export class ListStudentsUseCase {
     });
 
     return {
-      data: items.map(StudentResponseDto.fromEntity),
+      data: items.map(student => StudentResponseDto.fromEntity(student)),
       metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }

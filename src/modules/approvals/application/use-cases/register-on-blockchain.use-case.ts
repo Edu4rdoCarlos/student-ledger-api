@@ -89,32 +89,90 @@ export class RegisterOnBlockchainUseCase {
     };
 
     const signatures: DocumentSignature[] = approvals.map(approval => {
-      const user = approval.approverId ? userMap.get(approval.approverId) : null;
+      if (!approval.approverId) {
+        this.logger.error(`Aprovação ${approval.id} não possui aprovador identificado`);
+        throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
+      }
+
+      const user = userMap.get(approval.approverId);
+      if (!user) {
+        this.logger.error(`Usuário aprovador não encontrado: ${approval.approverId}`);
+        throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
+      }
+
+      if (!approval.approvedAt) {
+        this.logger.error(`Aprovação ${approval.id} não possui data de aprovação`);
+        throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
+      }
+
       const fabricRole = roleToFabricRole(approval.role);
 
-      return {
+      const signature: DocumentSignature = {
         role: fabricRole,
-        email: user?.email || 'system@ifal.local',
+        email: user.email,
         mspId: fabricRole === 'coordenador' ? 'CoordenacaoMSP' :
                fabricRole === 'orientador' ? 'OrientadorMSP' : 'AlunoMSP',
-        timestamp: approval.approvedAt?.toISOString() || new Date().toISOString(),
+        timestamp: approval.approvedAt.toISOString(),
+        status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
       };
+
+      if (approval.justification) {
+        signature.justification = approval.justification;
+      }
+
+      return signature;
     });
 
     try {
+      const coordinatorApproval = approvals.find(
+        approval => approval.role === ApprovalRole.COORDINATOR
+      );
+
+      if (!coordinatorApproval?.approverId) {
+        this.logger.error(`Aprovação do coordenador não encontrada para documento ${request.documentId}`);
+        throw new Error('Aprovação do coordenador não encontrada');
+      }
+
+      const coordinator = userMap.get(coordinatorApproval.approverId);
+      if (!coordinator) {
+        this.logger.error(`Coordenador não encontrado: ${coordinatorApproval.approverId}`);
+        throw new Error('Coordenador não encontrado');
+      }
+
       const fabricUser = {
-        id: 'system',
-        email: 'system@ifal.local',
-        role: 'ADMIN' as any,
+        id: coordinator.id,
+        email: coordinator.email,
+        role: coordinator.role as 'COORDINATOR',
       };
+
+      // Valida dados obrigatórios da defesa
+      if (!defense.studentIds || defense.studentIds.length === 0) {
+        this.logger.error(`Defesa ${defense.id} não possui alunos vinculados`);
+        throw new Error('Defesa não possui alunos vinculados');
+      }
+
+      if (defense.finalGrade === null || defense.finalGrade === undefined) {
+        this.logger.error(`Defesa ${defense.id} não possui nota final`);
+        throw new Error('Defesa não possui nota final');
+      }
+
+      if (!defense.result) {
+        this.logger.error(`Defesa ${defense.id} não possui resultado`);
+        throw new Error('Defesa não possui resultado');
+      }
+
+      if (defense.result !== 'APPROVED' && defense.result !== 'FAILED') {
+        this.logger.error(`Defesa ${defense.id} possui resultado inválido: ${defense.result}`);
+        throw new Error(`Defesa possui resultado inválido para registro no blockchain: ${defense.result}`);
+      }
 
       const result = await this.fabricGateway.registerDocument(
         fabricUser,
         document.documentHash,
-        defense.studentIds[0] || 'UNKNOWN',
+        defense.studentIds[0],
         defense.defenseDate.toISOString(),
-        defense.finalGrade || 0,
-        defense.result as any,
+        defense.finalGrade,
+        defense.result,
         '',
         signatures,
         new Date().toISOString(),

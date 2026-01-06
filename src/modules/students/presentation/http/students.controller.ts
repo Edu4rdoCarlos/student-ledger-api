@@ -65,7 +65,7 @@ export class StudentsController {
 
   @Get(':registration')
   @Roles('ADMIN', 'COORDINATOR')
-  @ApiOperation({ summary: 'Buscar aluno por matrícula' })
+  @ApiOperation({ summary: 'Buscar aluno por matrícula com histórico de defesas do blockchain' })
   @ApiStudentOkResponse()
   @ApiResponse({
     status: 404,
@@ -75,8 +75,14 @@ export class StudentsController {
     status: 401,
     description: 'Não autenticado'
   })
-  async findOne(@Param('registration') registration: string): Promise<HttpResponse<StudentResponseDto>> {
-    const student = await this.getStudent.execute(registration);
+  async findOne(
+    @Param('registration') registration: string,
+    @CurrentUser() currentUser: { id: string; email: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+  ): Promise<HttpResponse<StudentResponseDto>> {
+    const student = await this.getStudent.execute({
+      matricula: registration,
+      currentUser,
+    });
     return HttpResponseSerializer.serialize(student);
   }
 
