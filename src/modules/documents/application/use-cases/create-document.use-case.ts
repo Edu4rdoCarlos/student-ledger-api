@@ -22,7 +22,7 @@ export class CreateDocumentUseCase {
     const document = Document.create({
       type: dto.type,
       documentHash: dto.documentHash,
-      mongoFileId: dto.mongoFileId,
+      documentCid: dto.documentCid,
       defenseId: dto.defenseId,
     });
 

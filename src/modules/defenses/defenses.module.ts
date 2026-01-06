@@ -6,7 +6,7 @@ import { DocumentsModule } from '../documents/documents.module';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthModule } from '../auth/auth.module';
-import { MongoStorageService } from '../../database/mongo';
+import { HashUtil } from '../documents/infra/utils/hash.util';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
@@ -38,7 +38,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
       provide: DEFENSE_REPOSITORY,
       useClass: PrismaDefenseRepository,
     },
-    MongoStorageService,
+    HashUtil,
     CreateDefenseUseCase,
     GetDefenseUseCase,
     ListDefensesUseCase,

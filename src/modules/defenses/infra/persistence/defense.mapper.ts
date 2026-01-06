@@ -40,7 +40,7 @@ export class DefenseMapper {
           type: d.type,
           version: d.version,
           documentHash: d.documentHash ?? '',
-          mongoFileId: d.mongoFileId ?? undefined,
+          documentCid: d.documentCid ?? undefined,
           status: d.status,
           blockchainTxId: d.blockchainTxId ?? undefined,
           blockchainRegisteredAt: d.blockchainRegisteredAt ?? undefined,

@@ -1,7 +1,6 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
-import { MongoStorageService } from '../../../../database/mongo';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 
 interface DownloadDocumentResponse {
@@ -22,7 +21,6 @@ export class DownloadDocumentUseCase {
     private readonly documentRepository: IDocumentRepository,
     @Inject(DEFENSE_REPOSITORY)
     private readonly defenseRepository: IDefenseRepository,
-    private readonly mongoStorage: MongoStorageService,
     private readonly ipfsService: IpfsService,
   ) {}
 
@@ -60,35 +58,20 @@ export class DownloadDocumentUseCase {
 
     const filename = `documento-${document.type}-${document.id}.pdf`;
 
-    // Try MongoDB first (GridFS) if mongoFileId exists
-    if (document.mongoFileId) {
-      try {
-        const buffer = await this.mongoStorage.downloadFile(document.mongoFileId);
-        return {
-          buffer,
-          filename,
-          mimeType: 'application/pdf',
-        };
-      } catch (mongoError) {
-        // Continue to IPFS fallback
-      }
+    if (!document.documentCid) {
+      throw new NotFoundException('Documento não possui CID do IPFS');
     }
 
-    // Fallback to IPFS using documentHash (CID)
-    if (document.documentHash) {
-      try {
-        const buffer = await this.ipfsService.downloadFile(document.documentHash);
+    try {
+      const buffer = await this.ipfsService.downloadFile(document.documentCid);
 
-        return {
-          buffer,
-          filename,
-          mimeType: 'application/pdf',
-        };
-      } catch (ipfsError) {
-        throw new NotFoundException('Documento não disponível no MongoDB nem no IPFS');
-      }
+      return {
+        buffer,
+        filename,
+        mimeType: 'application/pdf',
+      };
+    } catch (error) {
+      throw new NotFoundException('Documento não disponível no IPFS');
     }
-
-    throw new NotFoundException('Documento não possui hash IPFS nem arquivo no MongoDB');
   }
 }

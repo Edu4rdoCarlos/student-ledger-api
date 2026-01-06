@@ -2,10 +2,8 @@ model Document {
   id                     String         @id @default(uuid())
   type                   DocumentType
   version                Int            @default(1)
-  documentHash           String?        @db.VarChar(64) // IPFS CID (content-addressed hash) - filled when submitted to IPFS
-
-  // Storage reference
-  mongoFileId            String?        // GridFS file ID (primary storage, IPFS as fallback using documentHash)
+  documentHash           String?        @db.VarChar(64) // SHA-256 hash of the file content
+  documentCid            String?        @db.VarChar(64) // IPFS CID (content-addressed identifier)
 
   status                 DocumentStatus @default(PENDING)
   changeReason           String?        // Reason for new version

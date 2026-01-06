@@ -12,8 +12,8 @@ export enum DocumentStatus {
 export interface DocumentProps {
   type: DocumentType;
   version: number;
-  documentHash?: string; // IPFS CID - filled when submitted to IPFS
-  mongoFileId?: string;
+  documentHash?: string; // SHA-256 hash of the file content
+  documentCid?: string; // IPFS CID - filled when submitted to IPFS
   status: DocumentStatus;
   changeReason?: string;
   inactivationReason?: string;
@@ -47,7 +47,7 @@ export class Document {
         type: props.type,
         version: props.version ?? 1,
         documentHash: props.documentHash,
-        mongoFileId: props.mongoFileId,
+        documentCid: props.documentCid,
         status: props.status ?? DocumentStatus.PENDING,
         changeReason: props.changeReason,
         inactivationReason: props.inactivationReason,
@@ -79,8 +79,8 @@ export class Document {
     return this.props.documentHash;
   }
 
-  get mongoFileId(): string | undefined {
-    return this.props.mongoFileId;
+  get documentCid(): string | undefined {
+    return this.props.documentCid;
   }
 
   get status(): DocumentStatus {
@@ -153,13 +153,13 @@ export class Document {
     this.props.updatedAt = new Date();
   }
 
-  setMongoFileId(mongoFileId: string): void {
-    this.props.mongoFileId = mongoFileId;
+  setDocumentHash(documentHash: string): void {
+    this.props.documentHash = documentHash;
     this.props.updatedAt = new Date();
   }
 
-  setDocumentHash(documentHash: string): void {
-    this.props.documentHash = documentHash;
+  setDocumentCid(documentCid: string): void {
+    this.props.documentCid = documentCid;
     this.props.updatedAt = new Date();
   }
 

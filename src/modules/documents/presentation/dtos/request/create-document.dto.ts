@@ -8,15 +8,15 @@ export class CreateDocumentDto {
   @IsNotEmpty()
   type: DocumentType;
 
-  @ApiPropertyOptional({ example: 'QmXxx...', description: 'IPFS CID - filled when submitted to IPFS' })
+  @ApiPropertyOptional({ example: 'abc123...', description: 'SHA-256 hash of the file content' })
   @IsOptional()
   @IsString()
   documentHash?: string;
 
-  @ApiPropertyOptional({ description: 'MongoDB GridFS file ID' })
+  @ApiPropertyOptional({ example: 'QmXxx...', description: 'IPFS CID - filled when submitted to IPFS' })
   @IsOptional()
   @IsString()
-  mongoFileId?: string;
+  documentCid?: string;
 
   @ApiProperty({ example: 'uuid-da-defesa' })
   @IsUUID()

@@ -11,11 +11,11 @@ export class DocumentResponseDto {
   @ApiProperty()
   version: number;
 
-  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
   documentHash?: string;
 
-  @ApiPropertyOptional({ description: 'MongoDB GridFS file ID' })
-  mongoFileId?: string;
+  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  documentCid?: string;
 
   @ApiProperty({ enum: DocumentStatus })
   status: DocumentStatus;
@@ -44,7 +44,7 @@ export class DocumentResponseDto {
       type: doc.type,
       version: doc.version,
       documentHash: doc.documentHash,
-      mongoFileId: doc.mongoFileId,
+      documentCid: doc.documentCid,
       status: doc.status,
       blockchainTxId: doc.blockchainTxId,
       blockchainRegisteredAt: doc.blockchainRegisteredAt,
@@ -63,8 +63,11 @@ export class SimpleDocumentDto {
   @ApiProperty({ enum: DocumentType })
   type: DocumentType;
 
-  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
   documentHash?: string;
+
+  @ApiPropertyOptional({ description: 'IPFS CID' })
+  documentCid?: string;
 
   @ApiProperty({ enum: DocumentStatus })
   status: DocumentStatus;

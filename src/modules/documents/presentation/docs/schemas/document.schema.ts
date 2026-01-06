@@ -20,17 +20,17 @@ export class DocumentSchema {
   })
   versao: number;
 
-  @ApiProperty({
-    description: 'Hash SHA-256 do documento',
-    example: 'a1b2c3d4e5f6...',
+  @ApiPropertyOptional({
+    description: 'Hash SHA-256 do conteúdo do arquivo',
+    example: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
   })
-  documentoHash: string;
+  documentHash?: string;
 
   @ApiPropertyOptional({
-    description: 'Caminho do arquivo',
-    example: '/uploads/documents/ata-2024.pdf',
+    description: 'IPFS CID (Content Identifier)',
+    example: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
   })
-  arquivoPath?: string;
+  documentCid?: string;
 
   @ApiProperty({
     description: 'Status do documento',

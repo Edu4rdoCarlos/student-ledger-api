@@ -17,7 +17,7 @@ export interface DocumentInDefense {
   type: string;
   version: number;
   documentHash: string;
-  mongoFileId?: string;
+  documentCid?: string;
   status: string;
   blockchainTxId?: string;
   blockchainRegisteredAt?: Date;

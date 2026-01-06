@@ -10,11 +10,11 @@ export class DocumentInDefenseDto {
   @ApiProperty()
   version: number;
 
-  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
+  @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
   documentHash?: string;
 
-  @ApiPropertyOptional({ description: 'MongoDB GridFS file ID' })
-  mongoFileId?: string;
+  @ApiPropertyOptional({ description: 'IPFS CID' })
+  documentCid?: string;
 
   @ApiProperty()
   status: string;
@@ -37,6 +37,6 @@ export class DocumentInDefenseDto {
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiProperty({ required: false, description: 'Download URL (MongoDB with IPFS fallback). Only available for ADMIN, COORDINATOR, or participants when defense is APPROVED' })
+  @ApiProperty({ required: false, description: 'Download URL (IPFS). Only available for ADMIN, COORDINATOR, or participants when defense is APPROVED' })
   downloadUrl?: string;
 }

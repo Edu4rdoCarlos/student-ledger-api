@@ -10,7 +10,7 @@ import {
   ValidateDocumentUseCase,
   DownloadDocumentUseCase,
 } from './application/use-cases';
-import { MongoStorageService } from '../../database/mongo';
+import { HashUtil } from './infra/utils/hash.util';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { DefensesModule } from '../defenses/defenses.module';
 
@@ -23,8 +23,8 @@ import { DefensesModule } from '../defenses/defenses.module';
       provide: DOCUMENT_REPOSITORY,
       useClass: PrismaDocumentRepository,
     },
-    // Storage
-    MongoStorageService,
+    // Utils
+    HashUtil,
     // Use Cases
     CreateDocumentUseCase,
     GetDocumentUseCase,

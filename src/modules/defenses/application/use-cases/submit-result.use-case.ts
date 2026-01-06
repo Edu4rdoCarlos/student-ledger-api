@@ -10,7 +10,8 @@ import {
   IDocumentRepository,
   DOCUMENT_REPOSITORY
 } from '../../../documents/application/ports';
-import { MongoStorageService } from '../../../../database/mongo';
+import { HashUtil } from '../../../documents/infra/utils/hash.util';
+import { IpfsService } from '../../../ipfs/ipfs.service';
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
 
@@ -35,7 +36,8 @@ export class SubmitDefenseResultUseCase {
     private readonly defenseRepository: IDefenseRepository,
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
-    private readonly mongoStorage: MongoStorageService,
+    private readonly hashUtil: HashUtil,
+    private readonly ipfsService: IpfsService,
     private readonly notifyDefenseResultUseCase: NotifyDefenseResultUseCase,
     private readonly createApprovalsUseCase: CreateApprovalsUseCase,
   ) {}
@@ -46,27 +48,37 @@ export class SubmitDefenseResultUseCase {
       throw new DefenseNotFoundError();
     }
 
-    const document = Document.create({
-      type: DocumentType.ATA,
-      defenseId: request.id,
-    });
-    const createdDocument = await this.documentRepository.create(document);
+    const documentHash = this.hashUtil.calculateSha256(request.documentFile);
+    this.logger.log(`Calculated SHA-256 hash: ${documentHash}`);
 
+    let documentCid: string;
     try {
-      await this.mongoStorage.uploadFile(
-        createdDocument.id,
+      const ipfsResult = await this.ipfsService.uploadFile(
         request.documentFile,
         request.documentFilename
       );
+
+      if ('queued' in ipfsResult) {
+        this.logger.warn('IPFS upload queued - will be processed later');
+        throw new InternalServerErrorException('Sistema de armazenamento temporariamente indisponível. Tente novamente em alguns minutos.');
+      }
+
+      documentCid = ipfsResult.cid;
+      this.logger.log(`File uploaded to IPFS with CID: ${documentCid}`);
     } catch (error) {
-      this.logger.error(`Failed to upload file to MongoDB: ${error.message}`, error.stack);
-      await this.documentRepository.delete(createdDocument.id);
+      this.logger.error(`Failed to upload file to IPFS: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Falha ao fazer upload do arquivo. Tente novamente.');
     }
 
+    const document = Document.create({
+      type: DocumentType.ATA,
+      documentHash,
+      documentCid,
+      defenseId: request.id,
+    });
+
     try {
-      createdDocument.setMongoFileId(createdDocument.id);
-      const updatedDocument = await this.documentRepository.update(createdDocument);
+      const createdDocument = await this.documentRepository.create(document);
 
       defense.setGrade(request.finalGrade);
       const updatedDefense = await this.defenseRepository.update(defense);
@@ -75,16 +87,16 @@ export class SubmitDefenseResultUseCase {
         this.logger.error(`Failed to send notification: ${error.message}`);
       });
 
-      this.createApprovalsUseCase.execute({ documentId: updatedDocument.id }).catch((error) => {
+      this.createApprovalsUseCase.execute({ documentId: createdDocument.id }).catch((error) => {
         this.logger.error(`Failed to create approvals: ${error.message}`);
       });
 
       return {
         defense: updatedDefense,
-        document: updatedDocument,
+        document: createdDocument,
       };
     } catch (error) {
-      this.logger.error(`Failed to update defense/document: ${error.message}`, error.stack);
+      this.logger.error(`Failed to create document/update defense: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Falha ao processar resultado da defesa. Tente novamente.');
     }
   }

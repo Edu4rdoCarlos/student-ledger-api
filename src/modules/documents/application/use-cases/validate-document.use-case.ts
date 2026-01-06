@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../../presentation/dtos';
-import { IpfsService } from '../../../ipfs/ipfs.service';
+import { HashUtil } from '../../infra/utils/hash.util';
 import { Document } from '../../domain/entities';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class ValidateDocumentUseCase {
   constructor(
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
-    private readonly ipfsService: IpfsService,
+    private readonly hashUtil: HashUtil,
   ) {}
 
   private toSimpleDto(document: Document): SimpleDocumentDto {
@@ -17,13 +17,13 @@ export class ValidateDocumentUseCase {
       id: document.id,
       type: document.type,
       documentHash: document.documentHash,
+      documentCid: document.documentCid,
       status: document.status,
     };
   }
 
   async execute(fileBuffer: Buffer): Promise<ValidateDocumentResponseDto> {
-    // Calculate CID from uploaded file without storing it
-    const hash = await this.ipfsService.calculateCid(fileBuffer);
+    const hash = this.hashUtil.calculateSha256(fileBuffer);
 
     const document = await this.documentRepository.findByHash(hash);
 
