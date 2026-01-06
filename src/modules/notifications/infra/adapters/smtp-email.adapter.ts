@@ -12,14 +12,14 @@ export class SmtpEmailAdapter implements IEmailProvider {
   private readonly fromName: string;
 
   constructor(private readonly configService: ConfigService) {
-    const host = this.configService.get<string>('SMTP_HOST', 'smtp.gmail.com');
-    const port = this.configService.get<number>('SMTP_PORT', 587);
-    const secure = this.configService.get<boolean>('SMTP_SECURE', false);
-    const user = this.configService.get<string>('SMTP_USER');
-    const password = this.configService.get<string>('SMTP_PASSWORD');
+    const host = this.configService.get<string>('GOOGLE_SMTP_HOST', 'smtp.gmail.com');
+    const port = this.configService.get<number>('GOOGLE_SMTP_PORT', 587);
+    const secure = this.configService.get<boolean>('GOOGLE_SMTP_SECURE', false);
+    const user = this.configService.get<string>('GOOGLE_SMTP_USER');
+    const password = this.configService.get<string>('GOOGLE_SMTP_PASSWORD');
 
-    this.fromEmail = this.configService.get<string>('SMTP_FROM_EMAIL', user || '');
-    this.fromName = this.configService.get<string>('SMTP_FROM_NAME', 'Student Ledger');
+    this.fromEmail = this.configService.get<string>('GOOGLE_SMTP_FROM_EMAIL', user || '');
+    this.fromName = this.configService.get<string>('GOOGLE_SMTP_FROM_NAME', 'Student Ledger');
 
     if (!user || !password) {
       this.logger.warn('SMTP credentials not configured. Email sending will fail.');
