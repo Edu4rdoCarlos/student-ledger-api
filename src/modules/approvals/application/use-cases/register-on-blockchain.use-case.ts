@@ -62,9 +62,25 @@ export class RegisterOnBlockchainUseCase {
       throw new Error('Defesa não encontrada');
     }
 
+    const expectedApprovals = 2 + defense.studentIds.length;
+    if (approvals.length !== expectedApprovals) {
+      this.logger.error(
+        `Documento ${request.documentId} possui ${approvals.length} aprovações, mas esperava ${expectedApprovals} ` +
+        `(coordenador + orientador + ${defense.studentIds.length} aluno(s))`
+      );
+      throw new Error(
+        `Número inválido de aprovações: ${approvals.length}. Esperado: ${expectedApprovals}`
+      );
+    }
+
     if (!document.documentHash) {
-      this.logger.error(`Document ${request.documentId} does not have IPFS hash`);
-      throw new Error('Documento não possui hash IPFS');
+      this.logger.error(`Documento ${request.documentId} não possui hash SHA-256`);
+      throw new Error('Documento não possui hash SHA-256');
+    }
+
+    if (!document.documentCid) {
+      this.logger.error(`Documento ${request.documentId} não possui CID do IPFS`);
+      throw new Error('Documento não possui CID do IPFS');
     }
 
     const userIds = approvals
@@ -168,7 +184,8 @@ export class RegisterOnBlockchainUseCase {
       const result = await this.fabricGateway.registerDocument(
         fabricUser,
         document.documentHash,
-        defense.studentIds[0],
+        document.documentCid,
+        defense.studentIds,
         defense.defenseDate.toISOString(),
         defense.finalGrade,
         defense.result,

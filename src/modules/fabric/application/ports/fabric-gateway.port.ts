@@ -21,8 +21,9 @@ export interface DocumentSignature {
 
 export interface DocumentRecord {
   documentId: string;
+  documentHash: string;
   ipfsCid: string;
-  matricula: string;
+  matriculas: string[];
   defenseDate: string;
   notaFinal: number;
   resultado: DefenseResult;
@@ -52,8 +53,9 @@ export interface IFabricGateway {
 
   registerDocument(
     user: FabricUser,
+    documentHash: string,
     ipfsCid: string,
-    matricula: string,
+    matriculas: string[],
     defenseDate: string,
     notaFinal: number,
     resultado: DefenseResult,
