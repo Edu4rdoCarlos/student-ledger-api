@@ -59,8 +59,11 @@ export class AdvisorsController {
     status: 401,
     description: 'Not authenticated'
   })
-  async findAll(@Query() query: ListAdvisorsDto): Promise<ListAdvisorsResponse> {
-    return this.listAdvisors.execute(query);
+  async findAll(
+    @Query() query: ListAdvisorsDto,
+    @CurrentUser() currentUser: any,
+  ): Promise<ListAdvisorsResponse> {
+    return this.listAdvisors.execute(query, currentUser);
   }
 
   @Get(':id')

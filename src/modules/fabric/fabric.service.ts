@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject, Logger } from '@nestjs/common';
 import {
   IFabricGateway,
   FABRIC_GATEWAY,
@@ -14,13 +14,21 @@ import {
 
 @Injectable()
 export class FabricService implements OnModuleInit {
+  private readonly logger = new Logger(FabricService.name);
+
   constructor(
     @Inject(FABRIC_GATEWAY)
     private readonly fabricGateway: IFabricGateway,
   ) {}
 
   async onModuleInit() {
-    await this.healthCheck();
+    try {
+      await this.healthCheck();
+      this.logger.log('Hyperledger Fabric conectado com sucesso');
+    } catch (error) {
+      this.logger.warn('Hyperledger Fabric offline no init - transações blockchain serão bloqueadas');
+      this.logger.error(`Falha ao conectar ao Fabric: ${error.message}`);
+    }
   }
 
   async healthCheck(): Promise<FabricHealthStatus> {

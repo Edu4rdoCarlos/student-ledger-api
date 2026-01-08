@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConflictException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Student } from '../../domain/entities';
@@ -7,6 +7,7 @@ import { StudentMatriculaAlreadyExistsError } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
+import { ICurrentUser } from '../../../../shared/types';
 
 @Injectable()
 export class CreateStudentUseCase {
@@ -17,7 +18,16 @@ export class CreateStudentUseCase {
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(dto: CreateStudentDto): Promise<StudentResponseDto> {
+  async execute(dto: CreateStudentDto, currentUser?: ICurrentUser): Promise<StudentResponseDto> {
+    if (currentUser?.role === 'COORDINATOR') {
+      if (!currentUser.courseId) {
+        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+      }
+      if (dto.courseId !== currentUser.courseId) {
+        throw new ForbiddenException('Coordenador só pode cadastrar alunos do seu próprio curso');
+      }
+    }
+
     const [emailExists, matriculaExists] = await Promise.all([
       this.userRepository.existsByEmail(dto.email),
       this.studentRepository.existsByMatricula(dto.registration),

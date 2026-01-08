@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../database/prisma';
 import { COURSE_REPOSITORY } from './application/ports';
 import { PrismaCourseRepository } from './infra/persistence';
@@ -10,10 +10,10 @@ import {
   UpdateCourseUseCase,
 } from './application/use-cases';
 import { DepartmentsModule } from '../departments/departments.module';
-import { AdvisorsModule } from '../advisors/advisors.module';
+import { CoordinatorsModule } from '../coordinators/coordinators.module';
 
 @Module({
-  imports: [PrismaModule, DepartmentsModule, AdvisorsModule],
+  imports: [PrismaModule, DepartmentsModule, forwardRef(() => CoordinatorsModule)],
   controllers: [CoursesController],
   providers: [
     {

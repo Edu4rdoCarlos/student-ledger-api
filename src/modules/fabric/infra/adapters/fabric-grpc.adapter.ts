@@ -116,7 +116,11 @@ export class FabricGrpcAdapter implements IFabricGateway {
         evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
       });
 
-      gateway.getNetwork(this.channelName);
+      const network = gateway.getNetwork(this.channelName);
+      const contract = network.getContract(this.chaincodeName);
+
+      // Fazer uma chamada real ao chaincode para verificar conectividade
+      await contract.evaluateTransaction('HealthCheck');
 
       gateway.close();
       client.close();

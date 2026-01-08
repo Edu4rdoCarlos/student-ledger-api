@@ -30,6 +30,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         name: true,
         role: true,
+        coordinator: {
+          select: {
+            id: true,
+            courses: {
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
+          },
+        },
       },
     });
 
@@ -37,6 +48,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    return user;
+    const courseId = user.coordinator?.courses?.[0]?.id;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      courseId,
+    };
   }
 }

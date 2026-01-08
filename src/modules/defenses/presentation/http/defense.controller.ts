@@ -23,6 +23,7 @@ import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { PdfContentValidator } from '../../../../shared/validators';
 import { sanitizeFilename } from '../../../../shared/utils';
+import { ICurrentUser } from '../../../../shared/types';
 import {
   CreateDefenseUseCase,
   GetDefenseUseCase,
@@ -75,6 +76,7 @@ export class DefenseController {
   @ApiDefenseCreatedResponse()
   async create(
     @Body() createDefenseDto: CreateDefenseDto,
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.createDefenseUseCase.execute({
       title: createDefenseDto.title,
@@ -83,6 +85,7 @@ export class DefenseController {
       advisorId: createDefenseDto.advisorId,
       studentIds: createDefenseDto.studentIds,
       examBoard: createDefenseDto.examBoard,
+      currentUser,
     });
     return DefenseSerializer.serializeToHttpResponse(defense);
   }
@@ -92,7 +95,7 @@ export class DefenseController {
   @ApiOperation({ summary: 'List all defenses' })
   @ApiDefenseListResponse()
   async findAll(
-    @CurrentUser() user: { id: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+    @CurrentUser() user: ICurrentUser,
     @Query() pagination: PaginationDto,
     @Query('advisorId') advisorId?: string,
     @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
@@ -103,7 +106,7 @@ export class DefenseController {
       result,
       skip: (page - 1) * limit,
       take: limit,
-    });
+    }, user);
 
     return DefenseSerializer.serializeListToResponse(items, user, page, limit, total);
   }
@@ -127,6 +130,7 @@ export class DefenseController {
   async update(
     @Param('id') id: string,
     @Body() updateDefenseDto: UpdateDefenseDto,
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.updateDefenseUseCase.execute({
       id,
@@ -136,6 +140,7 @@ export class DefenseController {
         : undefined,
       location: updateDefenseDto.location,
       examBoard: updateDefenseDto.examBoard,
+      currentUser,
     });
     return DefenseSerializer.serializeToHttpResponse(defense);
   }
@@ -149,6 +154,7 @@ export class DefenseController {
   async submitResult(
     @Param('id') id: string,
     @Body('finalGrade') finalGrade: string,
+    @CurrentUser() currentUser: ICurrentUser,
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addValidator(new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }))
@@ -170,6 +176,7 @@ export class DefenseController {
       finalGrade: grade,
       documentFile: file.buffer,
       documentFilename: safeFilename,
+      currentUser,
     });
 
     return {

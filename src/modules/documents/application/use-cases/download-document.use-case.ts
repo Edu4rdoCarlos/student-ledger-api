@@ -29,12 +29,19 @@ export class DownloadDocumentUseCase {
       throw new NotFoundException('Documento não encontrado');
     }
 
-    // Check permissions
     const isAdmin = currentUser.role === 'ADMIN';
     const isCoordinator = currentUser.role === 'COORDINATOR';
 
-    if (!isAdmin && !isCoordinator) {
-      // Need to check if user is a participant in the defense
+    if (isCoordinator) {
+      if (!currentUser.courseId) {
+        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+      }
+
+      const defenseCourseId = await this.defenseRepository.getDefenseCourseId(document.defenseId);
+      if (defenseCourseId !== currentUser.courseId) {
+        throw new ForbiddenException('Coordenador só pode baixar documentos de defesas do seu curso');
+      }
+    } else if (!isAdmin) {
       const defense = await this.defenseRepository.findById(document.defenseId);
 
       if (!defense) {
@@ -48,7 +55,6 @@ export class DownloadDocumentUseCase {
         throw new ForbiddenException('Você não tem permissão para baixar este documento');
       }
 
-      // Also check if defense is approved
       if (defense.result !== 'APPROVED') {
         throw new ForbiddenException('O documento só pode ser baixado quando a defesa estiver aprovada');
       }

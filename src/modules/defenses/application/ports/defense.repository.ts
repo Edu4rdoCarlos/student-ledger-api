@@ -5,6 +5,7 @@ export interface FindAllOptions {
   take?: number;
   advisorId?: string;
   result?: 'PENDING' | 'APPROVED' | 'FAILED';
+  courseId?: string;
 }
 
 export interface FindAllResult {
@@ -19,6 +20,7 @@ export interface IDefenseRepository {
   findAll(options?: FindAllOptions): Promise<FindAllResult>;
   update(defense: Defense): Promise<Defense>;
   hasActiveDefense(studentId: string): Promise<boolean>;
+  getDefenseCourseId(defenseId: string): Promise<string | null>;
 }
 
 export const DEFENSE_REPOSITORY = Symbol('IDefenseRepository');

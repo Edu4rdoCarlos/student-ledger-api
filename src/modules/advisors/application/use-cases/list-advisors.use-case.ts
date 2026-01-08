@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { AdvisorResponseDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
+import { ICurrentUser } from '../../../../shared/types';
 
 export interface ListAdvisorsQuery {
   courseId?: string;
@@ -21,15 +22,20 @@ export class ListAdvisorsUseCase {
     private readonly advisorRepository: IAdvisorRepository,
   ) {}
 
-  async execute(query: ListAdvisorsQuery = {}): Promise<ListAdvisorsResponse> {
+  async execute(query: ListAdvisorsQuery = {}, currentUser?: ICurrentUser): Promise<ListAdvisorsResponse> {
     const page = query?.page || 1;
     const limit = query?.limit || 10;
     const skip = (page - 1) * limit;
 
+    let courseId = query?.courseId;
+    if (currentUser?.role === 'COORDINATOR' && currentUser.courseId) {
+      courseId = currentUser.courseId;
+    }
+
     const { items, total } = await this.advisorRepository.findAll({
       skip,
       take: limit,
-      courseId: query?.courseId,
+      courseId,
     });
 
     return {

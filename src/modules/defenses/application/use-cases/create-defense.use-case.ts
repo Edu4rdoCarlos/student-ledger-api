@@ -1,9 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
 import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError, StudentAlreadyHasActiveDefenseError } from '../../domain/errors';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { ICurrentUser } from '../../../../shared/types';
 
 interface CreateDefenseRequest {
   title: string;
@@ -12,6 +13,7 @@ interface CreateDefenseRequest {
   advisorId: string;
   studentIds: string[];
   examBoard?: ExamBoardMember[];
+  currentUser?: ICurrentUser;
 }
 
 @Injectable()
@@ -31,15 +33,31 @@ export class CreateDefenseUseCase {
       throw new DefenseNotFoundError();
     }
 
+    const students = [];
     for (const studentId of request.studentIds) {
       const student = await this.studentRepository.findById(studentId);
       if (!student) {
         throw new DefenseNotFoundError();
       }
+      students.push(student);
 
       const hasActive = await this.defenseRepository.hasActiveDefense(studentId);
       if (hasActive) {
         throw new StudentAlreadyHasActiveDefenseError();
+      }
+    }
+
+    if (request.currentUser?.role === 'COORDINATOR') {
+      if (!request.currentUser.courseId) {
+        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+      }
+
+      const allStudentsFromSameCourse = students.every(
+        student => student.courseId === request.currentUser!.courseId
+      );
+
+      if (!allStudentsFromSameCourse) {
+        throw new ForbiddenException('Coordenador só pode criar defesas para alunos do seu curso');
       }
     }
 

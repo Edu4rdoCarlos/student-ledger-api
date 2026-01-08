@@ -13,6 +13,7 @@ import { CreateStudentDto, UpdateStudentDto, ListStudentsDto, StudentResponseDto
 import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiStudentListResponse, ApiStudentCreatedResponse, ApiStudentOkResponse } from '../docs';
+import { ICurrentUser } from '../../../../shared/types';
 
 @ApiTags('Students')
 @ApiBearerAuth()
@@ -50,8 +51,11 @@ export class StudentsController {
     status: 403,
     description: 'No permission. Only coordinators and admins can register students.'
   })
-  async create(@Body() dto: CreateStudentDto): Promise<HttpResponse<StudentResponseDto>> {
-    const student = await this.createStudent.execute(dto);
+  async create(
+    @Body() dto: CreateStudentDto,
+    @CurrentUser() currentUser: ICurrentUser,
+  ): Promise<HttpResponse<StudentResponseDto>> {
+    const student = await this.createStudent.execute(dto, currentUser);
     return HttpResponseSerializer.serialize(student);
   }
 
@@ -59,8 +63,11 @@ export class StudentsController {
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'List students' })
   @ApiStudentListResponse()
-  async findAll(@Query() query: ListStudentsDto): Promise<ListStudentsResponse> {
-    return this.listStudents.execute(query);
+  async findAll(
+    @Query() query: ListStudentsDto,
+    @CurrentUser() currentUser: any,
+  ): Promise<ListStudentsResponse> {
+    return this.listStudents.execute(query, currentUser);
   }
 
   @Get(':registration')

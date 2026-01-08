@@ -85,6 +85,15 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     const where: any = {};
     if (options?.advisorId) where.advisorId = options.advisorId;
     if (options?.result) where.result = options.result;
+    if (options?.courseId) {
+      where.students = {
+        some: {
+          student: {
+            courseId: options.courseId,
+          },
+        },
+      };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.defense.findMany({
@@ -139,5 +148,25 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     });
 
     return count > 0;
+  }
+
+  async getDefenseCourseId(defenseId: string): Promise<string | null> {
+    const defense = await this.prisma.defense.findUnique({
+      where: { id: defenseId },
+      select: {
+        students: {
+          select: {
+            student: {
+              select: {
+                courseId: true,
+              },
+            },
+          },
+          take: 1,
+        },
+      },
+    });
+
+    return defense?.students?.[0]?.student?.courseId || null;
   }
 }

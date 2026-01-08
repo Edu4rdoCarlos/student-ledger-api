@@ -13,6 +13,7 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './modules/auth/auth.module';
 import { StudentsModule } from './modules/students/students.module';
 import { AdvisorsModule } from './modules/advisors/advisors.module';
+import { CoordinatorsModule } from './modules/coordinators/coordinators.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { DefensesModule } from './modules/defenses/defenses.module';
@@ -51,6 +52,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     AuthModule,
     StudentsModule,
     AdvisorsModule,
+    CoordinatorsModule,
     CoursesModule,
     DepartmentsModule,
     DefensesModule,

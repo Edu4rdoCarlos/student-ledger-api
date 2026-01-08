@@ -3,7 +3,7 @@ import { ICourseRepository, COURSE_REPOSITORY } from '../ports';
 import { CourseNotFoundError } from '../../domain/errors';
 import { UpdateCourseDto, CourseResponseDto } from '../../presentation/dtos';
 import { IDepartmentRepository, DEPARTMENT_REPOSITORY } from '../../../departments/application/ports';
-import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 
 @Injectable()
 export class UpdateCourseUseCase {
@@ -12,8 +12,8 @@ export class UpdateCourseUseCase {
     private readonly courseRepository: ICourseRepository,
     @Inject(DEPARTMENT_REPOSITORY)
     private readonly departmentRepository: IDepartmentRepository,
-    @Inject(ADVISOR_REPOSITORY)
-    private readonly advisorRepository: IAdvisorRepository,
+    @Inject(COORDINATOR_REPOSITORY)
+    private readonly coordinatorRepository: ICoordinatorRepository,
   ) {}
 
   async execute(code: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
@@ -30,14 +30,21 @@ export class UpdateCourseUseCase {
     }
 
     if (dto.coordinatorId !== undefined) {
-      const coordinator = await this.advisorRepository.findById(dto.coordinatorId);
-      if (!coordinator) {
+      const newCoordinator = await this.coordinatorRepository.findById(dto.coordinatorId);
+      if (!newCoordinator) {
         throw new NotFoundException(`Coordenador não encontrado: ${dto.coordinatorId}`);
       }
 
-      const targetDepartmentId = dto.departmentId ?? course.departmentId;
-      if (coordinator.departmentId !== targetDepartmentId) {
-        throw new BadRequestException('Coordenador não pertence ao departamento especificado');
+      if (!newCoordinator.isActive) {
+        throw new BadRequestException('Coordenador está inativo');
+      }
+
+      if (course.coordinatorId && course.coordinatorId !== dto.coordinatorId) {
+        const previousCoordinator = await this.coordinatorRepository.findById(course.coordinatorId);
+        if (previousCoordinator) {
+          previousCoordinator.deactivate();
+          await this.coordinatorRepository.update(previousCoordinator);
+        }
       }
     }
 

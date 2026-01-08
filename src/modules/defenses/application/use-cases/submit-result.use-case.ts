@@ -1,4 +1,4 @@
-import { Injectable, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, Inject, InternalServerErrorException, ForbiddenException, Logger } from '@nestjs/common';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
@@ -14,12 +14,14 @@ import { HashUtil } from '../../../documents/infra/utils/hash.util';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
+import { ICurrentUser } from '../../../../shared/types';
 
 interface SubmitDefenseResultRequest {
   id: string;
   finalGrade: number;
   documentFile: Buffer;
   documentFilename: string;
+  currentUser?: ICurrentUser;
 }
 
 interface SubmitDefenseResultResponse {
@@ -46,6 +48,17 @@ export class SubmitDefenseResultUseCase {
     const defense = await this.defenseRepository.findById(request.id);
     if (!defense) {
       throw new DefenseNotFoundError();
+    }
+
+    if (request.currentUser?.role === 'COORDINATOR') {
+      if (!request.currentUser.courseId) {
+        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+      }
+
+      const defenseCourseId = await this.defenseRepository.getDefenseCourseId(request.id);
+      if (defenseCourseId !== request.currentUser.courseId) {
+        throw new ForbiddenException('Coordenador só pode submeter resultados de defesas do seu curso');
+      }
     }
 
     const documentHash = this.hashUtil.calculateSha256(request.documentFile);

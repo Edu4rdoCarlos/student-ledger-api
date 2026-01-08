@@ -1,7 +1,8 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
 import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
+import { ICurrentUser } from '../../../../shared/types';
 
 interface UpdateDefenseRequest {
   id: string;
@@ -9,6 +10,7 @@ interface UpdateDefenseRequest {
   defenseDate?: Date;
   location?: string;
   examBoard?: ExamBoardMember[];
+  currentUser?: ICurrentUser;
 }
 
 @Injectable()
@@ -22,6 +24,17 @@ export class UpdateDefenseUseCase {
     const defense = await this.defenseRepository.findById(request.id);
     if (!defense) {
       throw new DefenseNotFoundError();
+    }
+
+    if (request.currentUser?.role === 'COORDINATOR') {
+      if (!request.currentUser.courseId) {
+        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+      }
+
+      const defenseCourseId = await this.defenseRepository.getDefenseCourseId(request.id);
+      if (defenseCourseId !== request.currentUser.courseId) {
+        throw new ForbiddenException('Coordenador só pode atualizar defesas do seu curso');
+      }
     }
 
     defense.update({
