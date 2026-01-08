@@ -101,9 +101,11 @@ export class FabricGrpcAdapter implements IFabricGateway {
         throw new FabricCertificateNotFoundError('TLS CA', tlsCertPath);
       }
 
-      const tlsCredentials = grpc.credentials.createSsl(fs.readFileSync(tlsCertPath));
+      const tlsRootCert = fs.readFileSync(tlsCertPath);
+      const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
       const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
         'grpc.ssl_target_name_override': orgConfig.peerName,
+        'grpc.default_authority': orgConfig.peerName,
       });
 
       const identity = await this.createIdentity(certPath, orgConfig.mspId);
@@ -164,10 +166,12 @@ export class FabricGrpcAdapter implements IFabricGateway {
       throw new FabricCertificateNotFoundError('TLS CA', tlsCertPath);
     }
 
-    const tlsCredentials = grpc.credentials.createSsl(fs.readFileSync(tlsCertPath));
+    const tlsRootCert = fs.readFileSync(tlsCertPath);
+    const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
     const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
       'grpc.ssl_target_name_override': orgConfig.peerName,
+      'grpc.default_authority': orgConfig.peerName,
     });
 
     const identity = await this.createIdentity(certPath, orgConfig.mspId);
