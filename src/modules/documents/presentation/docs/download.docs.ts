@@ -19,8 +19,7 @@ export function DownloadDocumentDocs() {
 Downloads a document stored in the system.
 
 **Architecture:**
-- First attempts to fetch from cache (MongoDB)
-- If not found, fetches from IPFS (decrypts automatically)
+- Fetches from IPFS (decrypts automatically)
 
 **Permissions:**
 - ADMIN/COORDINATOR: can download any document
