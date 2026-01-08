@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
@@ -7,10 +7,9 @@ import {
   ListAdvisorsUseCase,
   UpdateAdvisorUseCase,
   ListAdvisorsResponse,
-  ChangePasswordUseCase,
 } from '../../application/use-cases';
 import { CreateAdvisorDto, UpdateAdvisorDto, ListAdvisorsDto, AdvisorResponseDto } from '../dtos';
-import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiAdvisorListResponse, ApiAdvisorCreatedResponse, ApiAdvisorOkResponse } from '../docs';
 
@@ -23,7 +22,6 @@ export class AdvisorsController {
     private readonly getAdvisor: GetAdvisorUseCase,
     private readonly listAdvisors: ListAdvisorsUseCase,
     private readonly updateAdvisor: UpdateAdvisorUseCase,
-    private readonly changePassword: ChangePasswordUseCase,
   ) {}
 
   @Post()
@@ -108,30 +106,4 @@ export class AdvisorsController {
     return HttpResponseSerializer.serialize(advisor);
   }
 
-  @Patch('password')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('ADVISOR')
-  @ApiOperation({
-    summary: 'Change advisor password',
-    description: 'Allows advisor to change their own password.'
-  })
-  @ApiResponse({
-    status: 204,
-    description: 'Password changed successfully.'
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Current password incorrect or not authenticated'
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'No permission'
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Advisor not found'
-  })
-  async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
-    await this.changePassword.execute(currentUser.id, dto);
-  }
 }

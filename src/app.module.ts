@@ -11,6 +11,7 @@ import { DatabaseModule } from './database';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { StudentsModule } from './modules/students/students.module';
 import { AdvisorsModule } from './modules/advisors/advisors.module';
 import { CoordinatorsModule } from './modules/coordinators/coordinators.module';
@@ -50,6 +51,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 
     // Feature Modules
     AuthModule,
+    ProfileModule,
     StudentsModule,
     AdvisorsModule,
     CoordinatorsModule,

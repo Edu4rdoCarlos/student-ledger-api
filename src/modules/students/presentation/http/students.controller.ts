@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import {
@@ -7,10 +7,9 @@ import {
   ListStudentsUseCase,
   UpdateStudentUseCase,
   ListStudentsResponse,
-  ChangePasswordUseCase,
 } from '../../application/use-cases';
 import { CreateStudentDto, UpdateStudentDto, ListStudentsDto, StudentResponseDto } from '../dtos';
-import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 import { ApiStudentListResponse, ApiStudentCreatedResponse, ApiStudentOkResponse } from '../docs';
 import { ICurrentUser } from '../../../../shared/types';
@@ -24,7 +23,6 @@ export class StudentsController {
     private readonly getStudent: GetStudentUseCase,
     private readonly listStudents: ListStudentsUseCase,
     private readonly updateStudent: UpdateStudentUseCase,
-    private readonly changePassword: ChangePasswordUseCase,
   ) {}
 
   @Post()
@@ -118,30 +116,4 @@ export class StudentsController {
     return HttpResponseSerializer.serialize(student);
   }
 
-  @Patch('password')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('STUDENT')
-  @ApiOperation({
-    summary: 'Change student password',
-    description: 'Allows student to change their own password.'
-  })
-  @ApiResponse({
-    status: 204,
-    description: 'Password changed successfully.'
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Current password incorrect or not authenticated'
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'No permission'
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Student not found'
-  })
-  async changePasswordHandler(@CurrentUser() currentUser: { id: string }, @Body() dto: ChangePasswordDto) {
-    await this.changePassword.execute(currentUser.id, dto);
-  }
 }
