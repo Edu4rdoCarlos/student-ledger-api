@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Defense } from '../../domain/entities';
+import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
 
@@ -7,6 +7,8 @@ interface UpdateDefenseRequest {
   id: string;
   title?: string;
   defenseDate?: Date;
+  location?: string;
+  examBoard?: ExamBoardMember[];
 }
 
 @Injectable()
@@ -25,7 +27,14 @@ export class UpdateDefenseUseCase {
     defense.update({
       title: request.title,
       defenseDate: request.defenseDate,
+      location: request.location,
     });
+
+    // Atualizar exam board se fornecido
+    if (request.examBoard !== undefined) {
+      (defense as any).props.examBoard = request.examBoard;
+      (defense as any).props.updatedAt = new Date();
+    }
 
     return this.defenseRepository.update(defense);
   }

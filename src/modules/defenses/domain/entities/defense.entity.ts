@@ -28,13 +28,22 @@ export interface DocumentInDefense {
   downloadUrl?: string;
 }
 
+export interface ExamBoardMember {
+  id?: string;
+  name: string;
+  email: string;
+}
+
 export interface DefenseProps {
   title: string;
   defenseDate: Date;
+  location?: string;
   finalGrade?: number;
   result: 'PENDING' | 'APPROVED' | 'FAILED';
+  status: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
   advisorId: string;
   studentIds: string[];
+  examBoard?: ExamBoardMember[];
   advisor?: AdvisorInDefense;
   students?: StudentInDefense[];
   documents?: DocumentInDefense[];
@@ -63,6 +72,7 @@ export class Defense {
       {
         ...props,
         result: props.result ?? 'PENDING',
+        status: props.status ?? 'SCHEDULED',
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
@@ -82,12 +92,24 @@ export class Defense {
     return this.props.defenseDate;
   }
 
+  get location(): string | undefined {
+    return this.props.location;
+  }
+
   get finalGrade(): number | undefined {
     return this.props.finalGrade;
   }
 
   get result(): 'PENDING' | 'APPROVED' | 'FAILED' {
     return this.props.result;
+  }
+
+  get status(): 'SCHEDULED' | 'CANCELED' | 'COMPLETED' {
+    return this.props.status;
+  }
+
+  get examBoard(): ExamBoardMember[] | undefined {
+    return this.props.examBoard;
   }
 
   get advisorId(): string {
@@ -125,12 +147,36 @@ export class Defense {
 
     this.props.finalGrade = grade;
     this.props.result = grade >= 7 ? 'APPROVED' : 'FAILED';
+    this.props.status = 'COMPLETED';
     this.props.updatedAt = new Date();
   }
 
-  update(data: Partial<Pick<DefenseProps, 'title' | 'defenseDate'>>): void {
+  update(data: Partial<Pick<DefenseProps, 'title' | 'defenseDate' | 'location'>>): void {
     if (data.title !== undefined) this.props.title = data.title;
     if (data.defenseDate !== undefined) this.props.defenseDate = data.defenseDate;
+    if (data.location !== undefined) this.props.location = data.location;
+    this.props.updatedAt = new Date();
+  }
+
+  cancel(): void {
+    if (this.props.status === 'COMPLETED') {
+      throw new Error('Não é possível cancelar uma defesa já concluída');
+    }
+    if (this.props.status === 'CANCELED') {
+      throw new Error('Defesa já está cancelada');
+    }
+    this.props.status = 'CANCELED';
+    this.props.updatedAt = new Date();
+  }
+
+  reschedule(newDate: Date): void {
+    if (this.props.status === 'COMPLETED') {
+      throw new Error('Não é possível reagendar uma defesa já concluída');
+    }
+    if (this.props.status === 'CANCELED') {
+      throw new Error('Não é possível reagendar uma defesa cancelada');
+    }
+    this.props.defenseDate = newDate;
     this.props.updatedAt = new Date();
   }
 }

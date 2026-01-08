@@ -382,7 +382,6 @@ async function main() {
       type: DocumentType.ATA,
       version: 1,
       documentHash: docHash1,
-      mongoFileId: 'mongo-ata-1',
       status: DocumentStatus.APPROVED,
       defenseId: defenseAprovada.id,
       blockchainTxId: 'tx_abc123def456',
@@ -399,7 +398,6 @@ async function main() {
       type: DocumentType.FICHA,
       version: 1,
       documentHash: docHash2,
-      mongoFileId: 'mongo-ficha-1',
       status: DocumentStatus.APPROVED,
       defenseId: defenseAprovada.id,
       blockchainTxId: 'tx_xyz789ghi012',
@@ -487,8 +485,6 @@ async function main() {
       documentId: docPendente.id,
       role: ApprovalRole.ADVISOR,
       status: ApprovalStatus.PENDING,
-      code: '123456',
-      codeExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     },
   });
 

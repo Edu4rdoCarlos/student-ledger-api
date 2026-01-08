@@ -57,20 +57,24 @@ export class NotifyDefenseScheduledUseCase {
       .filter(Boolean)
       .join(', ');
 
-    const advisorEmail = this.emailTemplateService.generateTemplate(
-      EmailTemplate.DEFENSE_SCHEDULED_ADVISOR,
-      {
-        defenseTitle: defense.title,
-        defenseDate: defense.defenseDate,
-        studentsNames,
-      }
+    const emailData = {
+      defenseTitle: defense.title,
+      defenseDate: defense.defenseDate,
+      studentsNames,
+      advisorName: advisorUser.name,
+      location: defense.location,
+    };
+
+    const email = this.emailTemplateService.generateTemplate(
+      EmailTemplate.DEFENSE_SCHEDULED,
+      emailData
     );
 
     await this.sendEmailUseCase.execute({
       userId: advisor.userId,
       to: advisorUser.email,
-      subject: advisorEmail.subject,
-      html: advisorEmail.html,
+      subject: email.subject,
+      html: email.html,
       contextType: NotificationContextType.DEFENSE_CREATED,
       contextId: defense.id,
     });
@@ -81,23 +85,26 @@ export class NotifyDefenseScheduledUseCase {
         continue;
       }
 
-      const studentEmail = this.emailTemplateService.generateTemplate(
-        EmailTemplate.DEFENSE_SCHEDULED_STUDENT,
-        {
-          defenseTitle: defense.title,
-          defenseDate: defense.defenseDate,
-          advisorName: advisorUser.name,
-        }
-      );
-
       await this.sendEmailUseCase.execute({
         userId: student.userId,
         to: studentUser.email,
-        subject: studentEmail.subject,
-        html: studentEmail.html,
+        subject: email.subject,
+        html: email.html,
         contextType: NotificationContextType.DEFENSE_CREATED,
         contextId: defense.id,
       });
+    }
+
+    if (defense.examBoard && defense.examBoard.length > 0) {
+      for (const member of defense.examBoard) {
+        await this.sendEmailUseCase.execute({
+          to: member.email,
+          subject: email.subject,
+          html: email.html,
+          contextType: NotificationContextType.DEFENSE_CREATED,
+          contextId: defense.id,
+        });
+      }
     }
   }
 }

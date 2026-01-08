@@ -2,7 +2,7 @@ model Notification {
   id String @id @default(uuid())
 
   userId      String
-  user        User   @relation(fields: [userId], references: [id])
+  user        User?   @relation(fields: [userId], references: [id])
   channel     NotificationChannel
   to          String
   subject     String?
@@ -32,6 +32,8 @@ enum NotificationContextType {
   DEFENSE_APPROVAL
   DOCUMENT_APPROVAL
   DEFENSE_CREATED
+  DEFENSE_CANCELED
+  DEFENSE_RESCHEDULED
   DEFENSE_RESULT
   GENERAL
 }

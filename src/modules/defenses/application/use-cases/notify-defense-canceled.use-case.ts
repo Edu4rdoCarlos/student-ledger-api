@@ -8,7 +8,7 @@ import { ADVISOR_REPOSITORY, IAdvisorRepository } from '../../../advisors/applic
 import { USER_REPOSITORY, IUserRepository } from '../../../auth/application/ports';
 
 @Injectable()
-export class NotifyDefenseResultUseCase {
+export class NotifyDefenseCanceledUseCase {
   constructor(
     @Inject(DEFENSE_REPOSITORY)
     private readonly defenseRepository: IDefenseRepository,
@@ -43,10 +43,8 @@ export class NotifyDefenseResultUseCase {
     );
 
     const validStudents = students.filter(s => s !== null);
-
     const studentUserIds = validStudents.map(s => s.userId);
     const studentUsers = await this.userRepository.findByIds(studentUserIds);
-
     const studentUserMap = new Map(studentUsers.map(u => [u.id, u]));
 
     const studentsNames = validStudents
@@ -60,14 +58,13 @@ export class NotifyDefenseResultUseCase {
     const emailData = {
       defenseTitle: defense.title,
       defenseDate: defense.defenseDate,
-      finalGrade: defense.finalGrade,
-      result: defense.result,
       studentsNames,
       advisorName: advisorUser.name,
+      location: defense.location,
     };
 
     const email = this.emailTemplateService.generateTemplate(
-      EmailTemplate.DEFENSE_RESULT,
+      EmailTemplate.DEFENSE_CANCELED,
       emailData
     );
 
@@ -77,7 +74,7 @@ export class NotifyDefenseResultUseCase {
       to: advisorUser.email,
       subject: email.subject,
       html: email.html,
-      contextType: NotificationContextType.DEFENSE_RESULT,
+      contextType: NotificationContextType.DEFENSE_CANCELED,
       contextId: defense.id,
     });
 
@@ -93,9 +90,22 @@ export class NotifyDefenseResultUseCase {
         to: studentUser.email,
         subject: email.subject,
         html: email.html,
-        contextType: NotificationContextType.DEFENSE_RESULT,
+        contextType: NotificationContextType.DEFENSE_CANCELED,
         contextId: defense.id,
       });
+    }
+
+    // Notificar banca examinadora
+    if (defense.examBoard && defense.examBoard.length > 0) {
+      for (const member of defense.examBoard) {
+        await this.sendEmailUseCase.execute({
+          to: member.email,
+          subject: email.subject,
+          html: email.html,
+          contextType: NotificationContextType.DEFENSE_CANCELED,
+          contextId: defense.id,
+        });
+      }
     }
   }
 }

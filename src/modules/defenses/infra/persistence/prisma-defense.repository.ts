@@ -35,6 +35,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
       },
       take: 1,
     },
+    examBoard: true,
   };
 
   async create(defense: Defense): Promise<Defense> {
@@ -48,6 +49,14 @@ export class PrismaDefenseRepository implements IDefenseRepository {
             studentId,
           })),
         },
+        examBoard: defense.examBoard
+          ? {
+              create: defense.examBoard.map((member) => ({
+                name: member.name,
+                email: member.email,
+              })),
+            }
+          : undefined,
       },
       include: this.includeRelations,
     });
@@ -99,7 +108,18 @@ export class PrismaDefenseRepository implements IDefenseRepository {
 
     const updated = await this.prisma.defense.update({
       where: { id: defense.id },
-      data,
+      data: {
+        ...data,
+        examBoard: defense.examBoard
+          ? {
+              deleteMany: {},
+              create: defense.examBoard.map((member) => ({
+                name: member.name,
+                email: member.email,
+              })),
+            }
+          : undefined,
+      },
       include: this.includeRelations,
     });
 

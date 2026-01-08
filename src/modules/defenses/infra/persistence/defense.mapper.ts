@@ -1,4 +1,4 @@
-import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document } from '@prisma/client';
+import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document, ExamBoardMember } from '@prisma/client';
 import { Defense } from '../../domain/entities';
 
 type DefenseWithRelations = PrismaDefense & {
@@ -11,6 +11,7 @@ type DefenseWithRelations = PrismaDefense & {
     user: User;
   };
   documents: Document[];
+  examBoard: ExamBoardMember[];
 };
 
 export class DefenseMapper {
@@ -19,10 +20,17 @@ export class DefenseMapper {
       {
         title: prisma.title,
         defenseDate: prisma.defenseDate,
+        location: prisma.location ?? undefined,
         finalGrade: prisma.finalGrade ?? undefined,
         result: prisma.result as 'PENDING' | 'APPROVED' | 'FAILED',
+        status: prisma.status as 'SCHEDULED' | 'CANCELED' | 'COMPLETED',
         advisorId: prisma.advisorId,
         studentIds: prisma.students.map((s) => s.studentId),
+        examBoard: prisma.examBoard.map((member) => ({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+        })),
         advisor: {
           id: prisma.advisor.id,
           name: prisma.advisor.user.name,
@@ -62,8 +70,10 @@ export class DefenseMapper {
       id: defense.id,
       title: defense.title,
       defenseDate: defense.defenseDate,
+      location: defense.location ?? null,
       finalGrade: defense.finalGrade ?? null,
       result: defense.result,
+      status: defense.status,
       advisorId: defense.advisorId,
       createdAt: defense.createdAt,
       updatedAt: defense.updatedAt,

@@ -2,18 +2,22 @@ model Defense {
   id          String        @id @default(uuid())
   title       String
   defenseDate DateTime
+  location    String?
   finalGrade  Float?
   result      DefenseResult @default(PENDING)
+  status      DefenseStatus @default(SCHEDULED)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   advisorId String
-  advisor   Advisor          @relation(fields: [advisorId], references: [id])
-  students  DefenseStudent[]
-  documents Document[]
+  advisor      Advisor          @relation(fields: [advisorId], references: [id])
+  students     DefenseStudent[]
+  documents    Document[]
+  examBoard    ExamBoardMember[]
 
   @@index([advisorId])
   @@index([result])
+  @@index([status])
 }
 
 model DefenseStudent {
@@ -30,8 +34,28 @@ model DefenseStudent {
   @@index([studentId])
 }
 
+model ExamBoardMember {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  defenseId String
+  defense   Defense @relation(fields: [defenseId], references: [id], onDelete: Cascade)
+
+  @@index([defenseId])
+  @@index([email])
+}
+
 enum DefenseResult {
   PENDING
   APPROVED
   FAILED
+}
+
+enum DefenseStatus {
+  SCHEDULED
+  CANCELED
+  COMPLETED
 }

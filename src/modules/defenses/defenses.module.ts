@@ -14,7 +14,11 @@ import {
   UpdateDefenseUseCase,
   SubmitDefenseResultUseCase,
   NotifyDefenseScheduledUseCase,
+  NotifyDefenseCanceledUseCase,
+  NotifyDefenseRescheduledUseCase,
   NotifyDefenseResultUseCase,
+  CancelDefenseUseCase,
+  RescheduleDefenseUseCase,
 } from './application/use-cases';
 import { DEFENSE_REPOSITORY } from './application/ports';
 import { PrismaDefenseRepository } from './infra/persistence';
@@ -45,7 +49,11 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
     UpdateDefenseUseCase,
     SubmitDefenseResultUseCase,
     NotifyDefenseScheduledUseCase,
+    NotifyDefenseCanceledUseCase,
+    NotifyDefenseRescheduledUseCase,
     NotifyDefenseResultUseCase,
+    CancelDefenseUseCase,
+    RescheduleDefenseUseCase,
     DefenseNotificationScheduler,
   ],
   exports: [DEFENSE_REPOSITORY],

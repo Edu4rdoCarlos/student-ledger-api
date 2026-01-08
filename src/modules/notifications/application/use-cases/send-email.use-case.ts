@@ -10,7 +10,7 @@ import {
 } from '../ports';
 
 interface SendEmailRequest {
-  userId: string;
+  userId?: string;
   to: string;
   subject: string;
   html?: string;
@@ -22,6 +22,8 @@ interface SendEmailRequest {
   contextType?: NotificationContextType;
   contextId?: string;
 }
+
+const EXTERNAL_USER_ID = 'EXTERNAL';
 
 @Injectable()
 export class SendEmailUseCase {
@@ -35,7 +37,7 @@ export class SendEmailUseCase {
   async execute(request: SendEmailRequest): Promise<Notification> {
     // Create notification record
     const notification = Notification.create({
-      userId: request.userId,
+      userId: request.userId || EXTERNAL_USER_ID,
       channel: NotificationChannel.EMAIL,
       to: request.to,
       subject: request.subject,

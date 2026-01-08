@@ -14,17 +14,17 @@ export interface EmailTemplateResult {
 export class EmailTemplateService {
   generateTemplate(template: EmailTemplate, data: EmailTemplateData): EmailTemplateResult {
     switch (template) {
-      case EmailTemplate.DEFENSE_SCHEDULED_ADVISOR:
-        return this.defenseScheduledAdvisor(data);
+      case EmailTemplate.DEFENSE_SCHEDULED:
+        return this.defenseScheduled(data);
 
-      case EmailTemplate.DEFENSE_SCHEDULED_STUDENT:
-        return this.defenseScheduledStudent(data);
+      case EmailTemplate.DEFENSE_CANCELED:
+        return this.defenseCanceled(data);
 
-      case EmailTemplate.DEFENSE_RESULT_STUDENT:
-        return this.defenseResultStudent(data);
+      case EmailTemplate.DEFENSE_RESCHEDULED:
+        return this.defenseRescheduled(data);
 
-      case EmailTemplate.DEFENSE_RESULT_ADVISOR:
-        return this.defenseResultAdvisor(data);
+      case EmailTemplate.DEFENSE_RESULT:
+        return this.defenseResult(data);
 
       case EmailTemplate.DOCUMENT_APPROVAL_REQUEST:
         return this.documentApprovalRequest(data);
@@ -40,23 +40,26 @@ export class EmailTemplateService {
     }
   }
 
-  private defenseScheduledAdvisor(data: EmailTemplateData): EmailTemplateResult {
+  private defenseScheduled(data: EmailTemplateData): EmailTemplateResult {
     const studentsNames = data.studentsNames || '';
     const defenseDate = new Date(data.defenseDate).toLocaleString('pt-BR', {
       dateStyle: 'full',
       timeStyle: 'short',
     });
+    const location = data.location ? `<li><strong>Local:</strong> ${data.location}</li>` : '';
 
     return {
       subject: `Defesa agendada: ${data.defenseTitle}`,
       html: `
         <h2>Defesa Agendada</h2>
         <p>Olá,</p>
-        <p>Uma defesa sob sua orientação foi agendada:</p>
+        <p>Uma defesa foi agendada:</p>
         <ul>
           <li><strong>Título:</strong> ${data.defenseTitle}</li>
           <li><strong>Data:</strong> ${defenseDate}</li>
+          ${location}
           <li><strong>Aluno(s):</strong> ${studentsNames}</li>
+          <li><strong>Orientador:</strong> ${data.advisorName}</li>
         </ul>
         <p>Por favor, prepare-se para a defesa e certifique-se de que todos os materiais necessários estejam prontos.</p>
         <br>
@@ -65,64 +68,62 @@ export class EmailTemplateService {
     };
   }
 
-  private defenseScheduledStudent(data: EmailTemplateData): EmailTemplateResult {
+  private defenseCanceled(data: EmailTemplateData): EmailTemplateResult {
+    const studentsNames = data.studentsNames || '';
     const defenseDate = new Date(data.defenseDate).toLocaleString('pt-BR', {
       dateStyle: 'full',
       timeStyle: 'short',
     });
 
     return {
-      subject: `Sua defesa foi agendada: ${data.defenseTitle}`,
+      subject: `Defesa cancelada: ${data.defenseTitle}`,
       html: `
-        <h2>Sua Defesa Foi Agendada</h2>
+        <h2>Defesa Cancelada</h2>
         <p>Olá,</p>
-        <p>Sua defesa foi agendada com sucesso:</p>
+        <p>Informamos que a seguinte defesa foi cancelada:</p>
         <ul>
           <li><strong>Título:</strong> ${data.defenseTitle}</li>
           <li><strong>Data:</strong> ${defenseDate}</li>
+          <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
         </ul>
-        <p>Por favor, prepare sua apresentação e esteja pronto para a data agendada.</p>
-        <p>Boa sorte!</p>
+        <p>Em caso de dúvidas, entre em contato com a coordenação.</p>
         <br>
         <p>Atenciosamente,<br>Student Ledger</p>
       `,
     };
   }
 
-  private defenseResultStudent(data: EmailTemplateData): EmailTemplateResult {
+  private defenseRescheduled(data: EmailTemplateData): EmailTemplateResult {
+    const studentsNames = data.studentsNames || '';
     const defenseDate = new Date(data.defenseDate).toLocaleString('pt-BR', {
       dateStyle: 'full',
       timeStyle: 'short',
     });
-    const isPassed = data.result === 'APPROVED';
-    const resultText = isPassed ? 'APROVADO' : 'REPROVADO';
-    const resultColor = isPassed ? '#22c55e' : '#ef4444';
+    const location = data.location ? `<li><strong>Local:</strong> ${data.location}</li>` : '';
 
     return {
-      subject: `Resultado da sua defesa: ${data.defenseTitle}`,
+      subject: `Defesa reagendada: ${data.defenseTitle}`,
       html: `
-        <h2>Resultado da Sua Defesa</h2>
+        <h2>Defesa Reagendada</h2>
         <p>Olá,</p>
-        <p>O resultado da sua defesa foi publicado:</p>
+        <p>Informamos que a seguinte defesa foi reagendada para uma nova data:</p>
         <ul>
           <li><strong>Título:</strong> ${data.defenseTitle}</li>
-          <li><strong>Data:</strong> ${defenseDate}</li>
+          <li><strong>Nova Data:</strong> ${defenseDate}</li>
+          ${location}
+          <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
-          <li><strong>Nota Final:</strong> ${data.finalGrade}</li>
-          <li><strong>Resultado:</strong> <span style="color: ${resultColor}; font-weight: bold;">${resultText}</span></li>
         </ul>
-        ${isPassed
-          ? '<p>Parabéns pela aprovação! Seu trabalho foi muito bem avaliado.</p>'
-          : '<p>Infelizmente você não atingiu a nota mínima necessária. Entre em contato com seu orientador para mais informações.</p>'
-        }
+        <p>Por favor, atualize sua agenda e prepare-se para a nova data.</p>
         <br>
         <p>Atenciosamente,<br>Student Ledger</p>
       `,
     };
   }
 
-  private defenseResultAdvisor(data: EmailTemplateData): EmailTemplateResult {
+  private defenseResult(data: EmailTemplateData): EmailTemplateResult {
+    const studentsNames = data.studentsNames || '';
     const defenseDate = new Date(data.defenseDate).toLocaleString('pt-BR', {
       dateStyle: 'full',
       timeStyle: 'short',
@@ -136,15 +137,19 @@ export class EmailTemplateService {
       html: `
         <h2>Resultado da Defesa</h2>
         <p>Olá,</p>
-        <p>O resultado da defesa sob sua orientação foi registrado:</p>
+        <p>O resultado da defesa foi publicado:</p>
         <ul>
           <li><strong>Título:</strong> ${data.defenseTitle}</li>
           <li><strong>Data:</strong> ${defenseDate}</li>
-          <li><strong>Aluno(s):</strong> ${data.studentsNames}</li>
+          <li><strong>Aluno(s):</strong> ${studentsNames}</li>
+          <li><strong>Orientador:</strong> ${data.advisorName}</li>
           <li><strong>Nota Final:</strong> ${data.finalGrade}</li>
           <li><strong>Resultado:</strong> <span style="color: ${resultColor}; font-weight: bold;">${resultText}</span></li>
         </ul>
-        <p>O documento da defesa foi anexado e enviado para aprovação da coordenação.</p>
+        ${isPassed
+          ? '<p>Parabéns! O trabalho foi muito bem avaliado.</p>'
+          : '<p>Infelizmente não foi atingida a nota mínima necessária. Entre em contato com a coordenação para mais informações.</p>'
+        }
         <br>
         <p>Atenciosamente,<br>Student Ledger</p>
       `,

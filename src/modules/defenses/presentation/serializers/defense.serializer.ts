@@ -1,5 +1,7 @@
 import { Defense } from '../../domain/entities';
-import { DefenseResponseDto } from '../dtos/response/defense-response.dto';
+import { DefenseResponseDto, ListDefensesResponseDto } from '../dtos/response';
+import { PaginationMetadata, HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
 
 interface CurrentUser {
   id: string;
@@ -31,8 +33,10 @@ export class DefenseSerializer {
       id: defense.id,
       title: defense.title,
       defenseDate: defense.defenseDate,
+      location: showSensitiveData ? defense.location : undefined,
       finalGrade: showFinalGrade ? defense.finalGrade : undefined,
       result: defense.result,
+      status: defense.status,
       advisor: {
         id: defense.advisor?.id ?? '',
         name: defense.advisor?.name ?? '',
@@ -46,6 +50,13 @@ export class DefenseSerializer {
           email: showSensitiveData ? s.email : undefined,
           registration: showSensitiveData ? s.registration : undefined,
         })) ?? [],
+      examBoard: showSensitiveData
+        ? defense.examBoard?.map((member) => ({
+            id: member.id!,
+            name: member.name,
+            email: member.email,
+          }))
+        : undefined,
       documents: showDocuments
         ? defense.documents?.map((d) => ({
             id: d.id,
@@ -70,5 +81,25 @@ export class DefenseSerializer {
 
   static serializeList(defenses: Defense[], currentUser: CurrentUser): DefenseResponseDto[] {
     return defenses.map((defense) => this.serialize(defense, currentUser));
+  }
+
+  static serializeToHttpResponse(defense: Defense, currentUser?: CurrentUser): HttpResponse<DefenseResponseDto> {
+    const serialized = currentUser
+      ? this.serialize(defense, currentUser)
+      : DefenseResponseDto.fromEntity(defense);
+    return HttpResponseSerializer.serialize(serialized);
+  }
+
+  static serializeListToResponse(
+    defenses: Defense[],
+    currentUser: CurrentUser,
+    page: number,
+    limit: number,
+    total: number,
+  ): ListDefensesResponseDto {
+    return {
+      data: this.serializeList(defenses, currentUser),
+      metadata: new PaginationMetadata({ page, perPage: limit, total }),
+    };
   }
 }

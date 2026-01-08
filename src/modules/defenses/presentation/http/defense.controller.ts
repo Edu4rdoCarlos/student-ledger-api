@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Body,
   Param,
   Query,
@@ -16,7 +17,7 @@ import {
   MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
@@ -28,18 +29,27 @@ import {
   ListDefensesUseCase,
   UpdateDefenseUseCase,
   SubmitDefenseResultUseCase,
+  CancelDefenseUseCase,
+  RescheduleDefenseUseCase,
 } from '../../application/use-cases';
 import {
   CreateDefenseDto,
   UpdateDefenseDto,
   SubmitDefenseResultDto,
+  RescheduleDefenseDto,
 } from '../dtos/request';
 import { DefenseResponseDto, SubmitDefenseResultResponseDto, ListDefensesResponseDto } from '../dtos/response';
 import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
 import { ListDocumentVersionsUseCase } from '../../../documents/application/use-cases';
-import { PaginationMetadata, HttpResponse, PaginationDto } from '../../../../shared/dtos';
-import { HttpResponseSerializer } from '../../../../shared/serializers';
-import { ApiDefenseListResponse, ApiDefenseCreatedResponse, ApiDefenseOkResponse } from '../docs';
+import { HttpResponse, PaginationDto } from '../../../../shared/dtos';
+import {
+  ApiDefenseListResponse,
+  ApiDefenseCreatedResponse,
+  ApiDefenseOkResponse,
+  ApiDefenseCancelResponse,
+  ApiDefenseRescheduleResponse,
+  ApiSubmitResultRequest,
+} from '../docs';
 import { DefenseSerializer } from '../serializers/defense.serializer';
 
 @ApiTags('Defenses')
@@ -54,6 +64,8 @@ export class DefenseController {
     private readonly updateDefenseUseCase: UpdateDefenseUseCase,
     private readonly submitDefenseResultUseCase: SubmitDefenseResultUseCase,
     private readonly listDocumentVersionsUseCase: ListDocumentVersionsUseCase,
+    private readonly cancelDefenseUseCase: CancelDefenseUseCase,
+    private readonly rescheduleDefenseUseCase: RescheduleDefenseUseCase,
   ) {}
 
   @Post()
@@ -65,10 +77,14 @@ export class DefenseController {
     @Body() createDefenseDto: CreateDefenseDto,
   ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.createDefenseUseCase.execute({
-      ...createDefenseDto,
+      title: createDefenseDto.title,
       defenseDate: new Date(createDefenseDto.defenseDate),
+      location: createDefenseDto.location,
+      advisorId: createDefenseDto.advisorId,
+      studentIds: createDefenseDto.studentIds,
+      examBoard: createDefenseDto.examBoard,
     });
-    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
+    return DefenseSerializer.serializeToHttpResponse(defense);
   }
 
   @Get()
@@ -82,21 +98,14 @@ export class DefenseController {
     @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
   ): Promise<ListDefensesResponseDto> {
     const { page = 1, limit = 10 } = pagination;
-    const skip = (page - 1) * limit;
-
-    const options = {
+    const { items, total } = await this.listDefensesUseCase.execute({
       advisorId,
       result,
-      skip,
+      skip: (page - 1) * limit,
       take: limit,
-    };
+    });
 
-    const { items, total } = await this.listDefensesUseCase.execute(options);
-
-    return {
-      data: DefenseSerializer.serializeList(items, user),
-      metadata: new PaginationMetadata({ page, perPage: limit, total }),
-    };
+    return DefenseSerializer.serializeListToResponse(items, user, page, limit, total);
   }
 
   @Get(':id')
@@ -108,7 +117,7 @@ export class DefenseController {
     @Param('id') id: string,
   ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.getDefenseUseCase.execute(id);
-    return HttpResponseSerializer.serialize(DefenseSerializer.serialize(defense, user));
+    return DefenseSerializer.serializeToHttpResponse(defense, user);
   }
 
   @Put(':id')
@@ -125,37 +134,18 @@ export class DefenseController {
       defenseDate: updateDefenseDto.defenseDate
         ? new Date(updateDefenseDto.defenseDate)
         : undefined,
+      location: updateDefenseDto.location,
+      examBoard: updateDefenseDto.examBoard,
     });
-    return HttpResponseSerializer.serialize(DefenseResponseDto.fromEntity(defense));
+    return DefenseSerializer.serializeToHttpResponse(defense);
   }
 
   @Post(':id/result')
   @Roles('ADMIN', 'COORDINATOR')
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('document'))
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })
-  @ApiBody({
-    description: 'Defense result with grade and document file',
-    schema: {
-      type: 'object',
-      required: ['finalGrade', 'document'],
-      properties: {
-        finalGrade: {
-          type: 'number',
-          minimum: 0,
-          maximum: 10,
-          example: 8.5,
-          description: 'Final grade (0 to 10). Grades >= 7 pass, < 7 fail'
-        },
-        document: {
-          type: 'string',
-          format: 'binary',
-          description: 'Unified defense document file (PDF containing all pages)'
-        }
-      }
-    }
-  })
+  @ApiSubmitResultRequest()
   async submitResult(
     @Param('id') id: string,
     @Body('finalGrade') finalGrade: string,
@@ -201,5 +191,29 @@ export class DefenseController {
       data: versions.map(doc => DocumentResponseDto.fromEntity(doc)),
       total: versions.length,
     };
+  }
+
+  @Patch(':id/cancel')
+  @Roles('ADMIN', 'COORDINATOR')
+  @ApiOperation({ summary: 'Cancel a defense (coordinator only)' })
+  @ApiDefenseCancelResponse()
+  async cancel(@Param('id') id: string): Promise<HttpResponse<DefenseResponseDto>> {
+    const defense = await this.cancelDefenseUseCase.execute(id);
+    return DefenseSerializer.serializeToHttpResponse(defense);
+  }
+
+  @Patch(':id/reschedule')
+  @Roles('ADMIN', 'COORDINATOR')
+  @ApiOperation({ summary: 'Reschedule a defense (coordinator only)' })
+  @ApiDefenseRescheduleResponse()
+  async reschedule(
+    @Param('id') id: string,
+    @Body() rescheduleDto: RescheduleDefenseDto,
+  ): Promise<HttpResponse<DefenseResponseDto>> {
+    const defense = await this.rescheduleDefenseUseCase.execute({
+      defenseId: id,
+      newDate: new Date(rescheduleDto.defenseDate),
+    });
+    return DefenseSerializer.serializeToHttpResponse(defense);
   }
 }
