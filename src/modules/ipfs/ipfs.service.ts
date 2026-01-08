@@ -32,7 +32,10 @@ export class IpfsService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      await this.healthCheck();
+      const healthStatus = await this.healthCheck();
+      this.logger.log(
+        `IPFS conectado com sucesso - Peer ID: ${healthStatus.peerId}`,
+      );
     } catch (error) {
       this.logger.warn('IPFS offline no init - uploads serão enfileirados');
     }
