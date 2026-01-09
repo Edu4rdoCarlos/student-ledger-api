@@ -72,7 +72,6 @@ export class PrismaUserRepository implements IUserRepository {
         password: data.password,
         name: data.name,
         role: data.role as Role,
-        organizationId: data.organizationId,
       },
       select: {
         id: true,

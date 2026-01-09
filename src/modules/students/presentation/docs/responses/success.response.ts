@@ -12,7 +12,24 @@ export const ApiStudentCreatedResponse = () =>
         type: 'object',
         properties: {
           data: {
-            $ref: getSchemaPath(StudentResponseDto),
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'ID do estudante' },
+              registration: { type: 'string', description: 'Matrícula do estudante' },
+              name: { type: 'string', description: 'Nome do estudante' },
+              email: { type: 'string', description: 'Email do estudante' },
+              userId: { type: 'string', description: 'ID do usuário associado' },
+              course: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', description: 'ID do curso' },
+                  name: { type: 'string', description: 'Nome do curso' },
+                  code: { type: 'string', description: 'Código do curso' },
+                },
+              },
+              createdAt: { type: 'string', format: 'date-time', description: 'Data de criação' },
+              updatedAt: { type: 'string', format: 'date-time', description: 'Data de atualização' },
+            },
           },
         },
       },

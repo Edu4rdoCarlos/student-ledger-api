@@ -30,7 +30,6 @@ export class CreateAdvisorUseCase {
       password: hashedPassword,
       name: dto.name,
       role: Role.ADVISOR,
-      organizationId: dto.organizationId,
     });
 
     const advisor = Advisor.create({

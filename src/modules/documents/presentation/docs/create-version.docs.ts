@@ -4,6 +4,8 @@ import {
   ApiConsumes,
   ApiBody,
   ApiOkResponse,
+  ApiExtraModels,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import {
   ApiBadRequestResponse,
@@ -18,6 +20,7 @@ import { CreateDocumentVersionResponseDto } from '../dtos/response';
 
 export function CreateDocumentVersionDocs() {
   return applyDecorators(
+    ApiExtraModels(CreateDocumentVersionResponseDto),
     ApiConsumes('multipart/form-data'),
     ApiOperation({
       summary: 'Create new version of approved document',
@@ -57,7 +60,14 @@ Creates a new version of an already approved and blockchain-registered document.
     }),
     ApiOkResponse({
       description: 'New version created successfully',
-      type: CreateDocumentVersionResponseDto,
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            $ref: getSchemaPath(CreateDocumentVersionResponseDto),
+          },
+        },
+      },
     }),
     ApiBadRequestResponse('Document cannot be versioned (not approved, no blockchain txId, identical content)'),
     ApiUnauthorizedErrorResponse(),
@@ -67,22 +77,23 @@ Creates a new version of an already approved and blockchain-registered document.
     ApiTooManyRequestsResponse('Limit of 10 versions per hour exceeded'),
     ApiInternalServerErrorResponse('Error uploading to IPFS or creating approvals'),
     ApiBody({
-      description: 'New version of document with updated grade',
+      description: 'New version of document with optional grade update',
       schema: {
         type: 'object',
-        required: ['finalGrade', 'changeReason', 'document'],
+        required: ['changeReason', 'document'],
         properties: {
           finalGrade: {
             type: 'number',
             minimum: 0,
             maximum: 10,
             example: 8.5,
-            description: 'Updated final grade (0 to 10)'
+            description: 'Updated final grade (0 to 10). Optional - only required if grade is being changed',
+            nullable: true
           },
           changeReason: {
             type: 'string',
-            example: 'Final grade correction after advisor review',
-            description: 'Reason for creating new version'
+            example: 'Correction of document content after review',
+            description: 'Reason for creating new version (required)'
           },
           document: {
             type: 'string',

@@ -30,12 +30,4 @@ export class ListStudentsDto {
   @Max(100, { message: 'Limit deve ser no máximo 100' })
   @IsOptional()
   perPage?: number = 10;
-
-  @ApiProperty({
-    description: 'Filtrar por ID do curso',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  courseId?: string;
 }

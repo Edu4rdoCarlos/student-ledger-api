@@ -35,13 +35,13 @@ export class ApprovalController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ListPendingApprovalsDocs()
-  async listPending(@CurrentUser() user: any): Promise<ApprovalResponseDto[]> {
+  async listPending(@CurrentUser() user: any) {
     const { approvals } = await this.listPendingApprovalsUseCase.execute({
       userId: user.id,
       userRole: user.role,
     });
 
-    return approvals.map(ApprovalSerializer.toDto);
+    return ApprovalSerializer.toHttpResponseList(approvals);
   }
 
   @Post(':id/approve')
@@ -50,13 +50,13 @@ export class ApprovalController {
   async approve(
     @Param('id') approvalId: string,
     @CurrentUser() user: any,
-  ): Promise<ApprovalResponseDto> {
+  ) {
     const { approval } = await this.approveDocumentUseCase.execute({
       approvalId,
       userId: user.id,
     });
 
-    return ApprovalSerializer.toDto(approval);
+    return ApprovalSerializer.toHttpResponse(approval);
   }
 
   @Post(':id/reject')
@@ -66,13 +66,12 @@ export class ApprovalController {
     @Param('id') approvalId: string,
     @Body() dto: RejectDto,
     @CurrentUser() user: any,
-  ): Promise<ApprovalResponseDto> {
+  ) {
     const { approval } = await this.rejectDocumentUseCase.execute({
       approvalId,
       userId: user.id,
       justification: dto.justification,
     });
 
-    return ApprovalSerializer.toDto(approval);
-  }
-}
+    return ApprovalSerializer.toHttpResponse(approval);
+  }}

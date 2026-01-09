@@ -1,5 +1,5 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import {
   ApiBadRequestResponse,
   ApiUnauthorizedErrorResponse,
@@ -10,6 +10,7 @@ import { ApprovalResponseDto } from '../dtos/response';
 
 export function ApproveDocumentDocs() {
   return applyDecorators(
+    ApiExtraModels(ApprovalResponseDto),
     ApiOperation({
       summary: 'Approve document',
       description: `
@@ -30,10 +31,16 @@ Approves a specific document in the approval workflow.
 - If last required approval, document goes to blockchain
       `,
     }),
-    ApiResponse({
-      status: HttpStatus.OK,
+    ApiOkResponse({
       description: 'Document approved successfully',
-      type: ApprovalResponseDto,
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            $ref: getSchemaPath(ApprovalResponseDto),
+          },
+        },
+      },
     }),
     ApiBadRequestResponse('Approval already processed or in invalid state'),
     ApiUnauthorizedErrorResponse(),

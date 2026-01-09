@@ -1,5 +1,7 @@
 import { Approval } from '../../domain/entities';
 import { ApprovalResponseDto } from '../dtos/response';
+import { HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
 
 export class ApprovalSerializer {
   static toDto(approval: Approval): ApprovalResponseDto {
@@ -18,5 +20,13 @@ export class ApprovalSerializer {
 
   static toDtoList(approvals: Approval[]): ApprovalResponseDto[] {
     return approvals.map(this.toDto);
+  }
+
+  static toHttpResponse(approval: Approval): HttpResponse<ApprovalResponseDto> {
+    return HttpResponseSerializer.serialize(this.toDto(approval));
+  }
+
+  static toHttpResponseList(approvals: Approval[]): HttpResponse<ApprovalResponseDto[]> {
+    return HttpResponseSerializer.serialize(this.toDtoList(approvals));
   }
 }

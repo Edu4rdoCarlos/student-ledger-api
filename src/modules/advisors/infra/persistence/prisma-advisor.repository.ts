@@ -15,18 +15,34 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   }
 
   async findById(id: string): Promise<Advisor | null> {
-    const found = await this.prisma.advisor.findUnique({ where: { id } });
+    const found = await this.prisma.advisor.findUnique({
+      where: { id },
+      include: {
+        department: true,
+        course: true,
+      },
+    });
     return found ? AdvisorMapper.toDomain(found) : null;
   }
 
   async findByUserId(userId: string): Promise<Advisor | null> {
-    const found = await this.prisma.advisor.findUnique({ where: { id: userId } });
+    const found = await this.prisma.advisor.findUnique({
+      where: { id: userId },
+      include: {
+        department: true,
+        course: true,
+      },
+    });
     return found ? AdvisorMapper.toDomain(found) : null;
   }
 
   async findByCourseId(courseId: string): Promise<Advisor[]> {
     const advisors = await this.prisma.advisor.findMany({
       where: { courseId },
+      include: {
+        department: true,
+        course: true,
+      },
       orderBy: { createdAt: 'asc' },
     });
     return advisors.map(AdvisorMapper.toDomain);
@@ -40,6 +56,10 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
         where,
         skip: options?.skip,
         take: options?.take,
+        include: {
+          department: true,
+          course: true,
+        },
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.advisor.count({ where }),

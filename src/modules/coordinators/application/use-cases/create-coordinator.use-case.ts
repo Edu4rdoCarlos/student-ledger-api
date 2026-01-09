@@ -51,7 +51,6 @@ export class CreateCoordinatorUseCase {
       password: hashedPassword,
       name: dto.name,
       role: Role.COORDINATOR,
-      organizationId: dto.organizationId,
     });
 
     const coordinator = Coordinator.create({

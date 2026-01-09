@@ -18,8 +18,4 @@ export class CreateCoordinatorDto {
   @IsUUID()
   @IsNotEmpty({ message: 'Coordenador deve estar obrigatoriamente alocado em um curso' })
   courseId: string;
-
-  @ApiProperty({ example: 'uuid-da-organizacao', description: 'ID da organização', required: false })
-  @IsUUID()
-  organizationId?: string;
 }

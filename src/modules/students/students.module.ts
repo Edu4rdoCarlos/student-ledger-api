@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../database/prisma';
 import { AuthModule } from '../auth/auth.module';
 import { FabricModule } from '../fabric/fabric.module';
+import { CoursesModule } from '../courses/courses.module';
 import { STUDENT_REPOSITORY } from './application/ports';
 import { PrismaStudentRepository } from './infra/persistence';
 import { StudentsController } from './presentation/http';
@@ -13,7 +14,7 @@ import {
 } from './application/use-cases';
 
 @Module({
-  imports: [PrismaModule, AuthModule, FabricModule],
+  imports: [PrismaModule, AuthModule, FabricModule, CoursesModule],
   controllers: [StudentsController],
   providers: [
     {

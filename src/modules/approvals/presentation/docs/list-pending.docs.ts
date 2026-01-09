@@ -1,5 +1,5 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import {
   ApiUnauthorizedErrorResponse,
   ApiForbiddenErrorResponse,
@@ -8,6 +8,7 @@ import { ApprovalResponseDto } from '../dtos/response';
 
 export function ListPendingApprovalsDocs() {
   return applyDecorators(
+    ApiExtraModels(ApprovalResponseDto),
     ApiOperation({
       summary: 'List pending approvals',
       description: `
@@ -24,10 +25,17 @@ Lists pending approvals for the authenticated user.
 - Student needs to approve minutes from their defense
       `,
     }),
-    ApiResponse({
-      status: HttpStatus.OK,
+    ApiOkResponse({
       description: 'List of pending approvals returned successfully',
-      type: [ApprovalResponseDto],
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: { $ref: getSchemaPath(ApprovalResponseDto) },
+          },
+        },
+      },
     }),
     ApiUnauthorizedErrorResponse(),
     ApiForbiddenErrorResponse(),

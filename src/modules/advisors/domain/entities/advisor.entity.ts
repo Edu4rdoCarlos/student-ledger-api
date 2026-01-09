@@ -1,8 +1,21 @@
+export interface Department {
+  id: string;
+  name: string;
+}
+
+export interface Course {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface AdvisorProps {
   userId: string;
   departmentId?: string;
+  department?: Department;
   specialization?: string;
   courseId?: string;
+  course?: Course;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -39,12 +52,20 @@ export class Advisor {
     return this.props.departmentId;
   }
 
+  get department(): Department | undefined {
+    return this.props.department;
+  }
+
   get specialization(): string | undefined {
     return this.props.specialization;
   }
 
   get courseId(): string | undefined {
     return this.props.courseId;
+  }
+
+  get course(): Course | undefined {
+    return this.props.course;
   }
 
   get createdAt(): Date {

@@ -1,14 +1,32 @@
-import { Advisor as PrismaAdvisor } from '@prisma/client';
+import { Advisor as PrismaAdvisor, Department as PrismaDepartment, Course as PrismaCourse } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
 
+type PrismaAdvisorWithRelations = PrismaAdvisor & {
+  department?: PrismaDepartment | null;
+  course?: PrismaCourse | null;
+};
+
 export class AdvisorMapper {
-  static toDomain(prisma: PrismaAdvisor): Advisor {
+  static toDomain(prisma: PrismaAdvisorWithRelations): Advisor {
     return Advisor.create(
       {
         userId: prisma.id,
         departmentId: prisma.departmentId || undefined,
+        department: prisma.department
+          ? {
+              id: prisma.department.id,
+              name: prisma.department.name,
+            }
+          : undefined,
         specialization: prisma.specialization || undefined,
         courseId: prisma.courseId || undefined,
+        course: prisma.course
+          ? {
+              id: prisma.course.id,
+              code: prisma.course.code,
+              name: prisma.course.name,
+            }
+          : undefined,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
       },

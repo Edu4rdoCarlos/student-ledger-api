@@ -65,7 +65,7 @@ export class StudentsController {
     @Query() query: ListStudentsDto,
     @CurrentUser() currentUser: any,
   ): Promise<ListStudentsResponse> {
-    return this.listStudents.execute(query, currentUser);
+    return this.listStudents.execute(currentUser, query);
   }
 
   @Get(':registration')

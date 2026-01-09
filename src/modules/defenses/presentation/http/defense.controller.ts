@@ -49,6 +49,7 @@ import {
   ApiDefenseOkResponse,
   ApiDefenseCancelResponse,
   ApiDefenseRescheduleResponse,
+  ApiDocumentHistoryResponse,
   ApiSubmitResultRequest,
 } from '../docs';
 import { DefenseSerializer } from '../serializers/defense.serializer';
@@ -191,6 +192,7 @@ export class DefenseController {
     summary: 'List all document versions for a defense',
     description: 'Returns all versions of the defense document, ordered by version number (newest first)'
   })
+  @ApiDocumentHistoryResponse()
   async getDocumentHistory(@Param('id') id: string) {
     const versions = await this.listDocumentVersionsUseCase.execute(id);
 

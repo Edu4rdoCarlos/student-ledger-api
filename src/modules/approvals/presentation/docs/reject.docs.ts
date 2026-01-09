@@ -1,5 +1,5 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import {
   ApiBadRequestResponse,
   ApiUnauthorizedErrorResponse,
@@ -10,6 +10,7 @@ import { ApprovalResponseDto } from '../dtos/response';
 
 export function RejectDocumentDocs() {
   return applyDecorators(
+    ApiExtraModels(ApprovalResponseDto),
     ApiOperation({
       summary: 'Reject document',
       description: `
@@ -33,10 +34,16 @@ Rejects a document in the approval workflow with mandatory justification.
 - Approval workflow is interrupted
       `,
     }),
-    ApiResponse({
-      status: HttpStatus.OK,
+    ApiOkResponse({
       description: 'Document rejected successfully',
-      type: ApprovalResponseDto,
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            $ref: getSchemaPath(ApprovalResponseDto),
+          },
+        },
+      },
     }),
     ApiBadRequestResponse('Approval already processed, justification missing or invalid'),
     ApiUnauthorizedErrorResponse(),

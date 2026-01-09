@@ -4,16 +4,19 @@ import {
   ApiConsumes,
   ApiBody,
   ApiOkResponse,
+  ApiExtraModels,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import {
   ApiBadRequestResponse,
   ApiUnauthorizedErrorResponse,
   ApiTooManyRequestsResponse,
 } from '../../../../shared/decorators';
-import { ValidateDocumentResponseDto } from '../dtos/response';
+import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../dtos/response';
 
 export function ValidateDocumentDocs() {
   return applyDecorators(
+    ApiExtraModels(ValidateDocumentResponseDto, SimpleDocumentDto),
     ApiConsumes('multipart/form-data'),
     ApiOperation({
       summary: 'Validate document authenticity',
@@ -44,7 +47,14 @@ Validates if a document was registered on blockchain and is authentic.
     }),
     ApiOkResponse({
       description: 'Validation result returned successfully',
-      type: ValidateDocumentResponseDto,
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            $ref: getSchemaPath(ValidateDocumentResponseDto),
+          },
+        },
+      },
     }),
     ApiBadRequestResponse('Invalid file or not a PDF'),
     ApiUnauthorizedErrorResponse(),

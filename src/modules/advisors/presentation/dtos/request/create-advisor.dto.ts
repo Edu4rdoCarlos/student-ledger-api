@@ -30,9 +30,4 @@ export class CreateAdvisorDto {
   @IsUUID()
   @IsOptional()
   courseId?: string;
-
-  @ApiProperty({ example: 'uuid-da-organizacao', description: 'ID da organização', required: false })
-  @IsUUID()
-  @IsOptional()
-  organizationId?: string;
 }

@@ -1,19 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class DocumentVersionSummaryDto {
+export class DocumentVersionSummaryDto {
   @ApiProperty({ example: 'uuid-here' })
   id: string;
 
   @ApiProperty({ example: 1 })
   version: number;
 
-  @ApiProperty({ example: 'INACTIVE' })
+  @ApiProperty({ example: 'PENDING' })
   status: string;
-}
 
-class NewDocumentVersionSummaryDto extends DocumentVersionSummaryDto {
-  @ApiProperty({ example: 'Correção de nota final após revisão' })
+  @ApiProperty({ example: 'Correção de nota final após revisão', required: false })
   changeReason?: string;
+
+  @ApiProperty({ example: '2024-01-08T10:00:00Z' })
+  createdAt: Date;
 }
 
 export class CreateDocumentVersionResponseDto {
@@ -22,9 +23,9 @@ export class CreateDocumentVersionResponseDto {
   })
   message: string;
 
-  @ApiProperty({ type: DocumentVersionSummaryDto })
-  previousVersion: DocumentVersionSummaryDto;
-
-  @ApiProperty({ type: NewDocumentVersionSummaryDto })
-  newVersion: NewDocumentVersionSummaryDto;
+  @ApiProperty({
+    type: [DocumentVersionSummaryDto],
+    description: 'Array com todas as versões do documento, ordenadas da mais recente para a mais antiga',
+  })
+  versions: DocumentVersionSummaryDto[];
 }

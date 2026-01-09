@@ -1,4 +1,6 @@
 import { ValidateDocumentResponseDto } from '../dtos/response/document-response.dto';
+import { HttpResponse } from '../../../../shared/dtos';
+import { HttpResponseSerializer } from '../../../../shared/serializers';
 
 interface CurrentUser {
   role?: string;
@@ -8,17 +10,17 @@ export class ValidateDocumentSerializer {
   static serialize(
     result: ValidateDocumentResponseDto,
     currentUser?: CurrentUser,
-  ): Partial<ValidateDocumentResponseDto> {
+  ): HttpResponse<Partial<ValidateDocumentResponseDto>> {
     const isAdminOrCoordinator =
       currentUser?.role === 'ADMIN' || currentUser?.role === 'COORDINATOR';
 
-    if (!isAdminOrCoordinator) {
-      return {
-        isValid: result.isValid,
-        message: result.message,
-      };
-    }
+    const serializedResult = !isAdminOrCoordinator
+      ? {
+          isValid: result.isValid,
+          message: result.message,
+        }
+      : result;
 
-    return result;
+    return HttpResponseSerializer.serialize(serializedResult);
   }
 }

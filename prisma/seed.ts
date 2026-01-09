@@ -1,7 +1,6 @@
 import {
   PrismaClient,
   Role,
-  OrganizationStatus,
   DefenseResult,
   DocumentType,
   DocumentStatus,
@@ -18,49 +17,7 @@ async function main() {
 
   const defaultPassword = await bcrypt.hash('123456', 10);
 
-  console.log('📦 Creating Organizations...');
-
-  const orgAtiva = await prisma.organization.upsert({
-    where: { mspId: 'Org1MSP' },
-    update: {},
-    create: {
-      nome: 'Universidade Federal do Rio Grande do Sul',
-      mspId: 'Org1MSP',
-      peerEndpoint: 'peer0.org1.example.com:7051',
-      peerName: 'peer0.org1.example.com',
-      status: OrganizationStatus.ATIVA,
-    },
-  });
-
-  const orgPendente = await prisma.organization.upsert({
-    where: { mspId: 'Org2MSP' },
-    update: {},
-    create: {
-      nome: 'Universidade Federal de Santa Catarina',
-      mspId: 'Org2MSP',
-      peerEndpoint: 'peer0.org2.example.com:7051',
-      peerName: 'peer0.org2.example.com',
-      status: OrganizationStatus.PENDENTE,
-    },
-  });
-
-  const orgInativa = await prisma.organization.upsert({
-    where: { mspId: 'Org3MSP' },
-    update: {},
-    create: {
-      nome: 'Universidade Estadual de Campinas',
-      mspId: 'Org3MSP',
-      peerEndpoint: 'peer0.org3.example.com:7051',
-      peerName: 'peer0.org3.example.com',
-      status: OrganizationStatus.INATIVA,
-    },
-  });
-
-  console.log(`  ✓ ${orgAtiva.nome} (ATIVA)`);
-  console.log(`  ✓ ${orgPendente.nome} (PENDENTE)`);
-  console.log(`  ✓ ${orgInativa.nome} (INATIVA)`);
-
-  console.log('\n👤 Creating Admin User...');
+  console.log('👤 Creating Admin User...');
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@ufrgs.edu.br' },
@@ -70,8 +27,7 @@ async function main() {
       password: defaultPassword,
       name: 'Administrador do Sistema',
       role: Role.ADMIN,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
   console.log(`  ✓ ${admin.email}`);
 
@@ -85,8 +41,7 @@ async function main() {
       password: defaultPassword,
       name: 'Prof. Dr. Carlos Eduardo Silva',
       role: Role.COORDINATOR,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const coordinator1 = await prisma.coordinator.upsert({
@@ -105,8 +60,7 @@ async function main() {
       password: defaultPassword,
       name: 'Profa. Dra. Maria Fernanda Costa',
       role: Role.COORDINATOR,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const coordinator2 = await prisma.coordinator.upsert({
@@ -201,8 +155,7 @@ async function main() {
       password: defaultPassword,
       name: 'Prof. Dr. João Pedro Oliveira',
       role: Role.ADVISOR,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const advisor1 = await prisma.advisor.upsert({
@@ -223,8 +176,7 @@ async function main() {
       password: defaultPassword,
       name: 'Profa. Dra. Ana Paula Santos',
       role: Role.ADVISOR,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const advisor2 = await prisma.advisor.upsert({
@@ -250,8 +202,7 @@ async function main() {
       password: defaultPassword,
       name: 'Lucas Silva Pereira',
       role: Role.STUDENT,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const student1 = await prisma.student.upsert({
@@ -272,8 +223,7 @@ async function main() {
       password: defaultPassword,
       name: 'Mariana Costa Ferreira',
       role: Role.STUDENT,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const student2 = await prisma.student.upsert({
@@ -294,8 +244,7 @@ async function main() {
       password: defaultPassword,
       name: 'Pedro Henrique Souza',
       role: Role.STUDENT,
-      organizationId: orgAtiva.id,
-    },
+          },
   });
 
   const student3 = await prisma.student.upsert({

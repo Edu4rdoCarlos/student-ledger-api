@@ -12,16 +12,12 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  approvals      Approval[]
-  refreshTokens  RefreshToken[]
-  notifications  Notification[]
-  student        Student?
-  advisor        Advisor?
-  coordinator    Coordinator?
-
-  @@index([organizationId])
+  approvals     Approval[]
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  student       Student?
+  advisor       Advisor?
+  coordinator   Coordinator?
 }
 
 enum Role {

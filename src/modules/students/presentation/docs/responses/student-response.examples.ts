@@ -14,14 +14,12 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     {
       role: 'coordinator',
       email: 'coordinator@ifal.local',
-      mspId: 'CoordenacaoMSP',
       timestamp: '2024-01-05T10:30:00.000Z',
       status: 'APPROVED',
     },
     {
       role: 'advisor',
       email: 'advisor@ifal.local',
-      mspId: 'OrientadorMSP',
       timestamp: '2024-01-05T10:15:00.000Z',
       status: 'REJECTED',
       justification: 'Document does not meet minimum formatting requirements',
@@ -29,7 +27,6 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     {
       role: 'student',
       email: 'student@ifal.local',
-      mspId: 'AlunoMSP',
       timestamp: '2024-01-05T10:05:00.000Z',
       status: 'APPROVED',
     },

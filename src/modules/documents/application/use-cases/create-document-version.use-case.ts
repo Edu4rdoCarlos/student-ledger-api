@@ -9,7 +9,7 @@ import { DocumentNotFoundError } from '../../domain/errors';
 
 interface CreateDocumentVersionRequest {
   documentId: string;
-  finalGrade: number;
+  finalGrade?: number;
   documentFile: Buffer;
   documentFilename: string;
   changeReason: string;
@@ -81,8 +81,11 @@ export class CreateDocumentVersionUseCase {
         throw new Error('Defense não encontrada');
       }
 
-      defense.setGrade(request.finalGrade);
-      await this.defenseRepository.update(defense);
+      // Only update grade if provided
+      if (request.finalGrade !== undefined) {
+        defense.setGrade(request.finalGrade);
+        await this.defenseRepository.update(defense);
+      }
 
       this.createApprovalsUseCase.execute({ documentId: createdVersion.id }).catch((error) => {
         this.logger.error(`Falha ao criar aprovações: ${error.message}`);

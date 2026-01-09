@@ -5,6 +5,7 @@ import { AdvisorInDefenseDto } from '../../dtos/response/advisor-in-defense.dto'
 import { StudentInDefenseDto } from '../../dtos/response/student-in-defense.dto';
 import { DocumentInDefenseDto } from '../../dtos/response/document-in-defense.dto';
 import { PaginationMetadata } from '../../../../../shared/dtos';
+import { DocumentResponseDto } from '../../../../documents/presentation/dtos/response';
 
 export const ApiDefenseCreatedResponse = () =>
   applyDecorators(
@@ -84,6 +85,27 @@ export const ApiDefenseRescheduleResponse = () =>
         properties: {
           data: {
             $ref: getSchemaPath(DefenseResponseDto),
+          },
+        },
+      },
+    }),
+  );
+
+export const ApiDocumentHistoryResponse = () =>
+  applyDecorators(
+    ApiExtraModels(DocumentResponseDto),
+    ApiOkResponse({
+      description: 'Lista de versões do documento da defesa, ordenadas da mais recente para a mais antiga.',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: { $ref: getSchemaPath(DocumentResponseDto) },
+          },
+          total: {
+            type: 'number',
+            description: 'Número total de versões do documento',
           },
         },
       },

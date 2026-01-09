@@ -1,11 +1,11 @@
-import { Inject, Injectable, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Student } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
-import { StudentMatriculaAlreadyExistsError } from '../../domain/errors';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
 import { ICurrentUser } from '../../../../shared/types';
 
@@ -16,6 +16,8 @@ export class CreateStudentUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
+    @Inject(COURSE_REPOSITORY)
+    private readonly courseRepository: ICourseRepository,
   ) {}
 
   async execute(dto: CreateStudentDto, currentUser?: ICurrentUser): Promise<StudentResponseDto> {
@@ -28,13 +30,18 @@ export class CreateStudentUseCase {
       }
     }
 
-    const [emailExists, matriculaExists] = await Promise.all([
+    const [emailExists, matriculaExists, course] = await Promise.all([
       this.userRepository.existsByEmail(dto.email),
       this.studentRepository.existsByMatricula(dto.registration),
+      this.courseRepository.findById(dto.courseId),
     ]);
 
     if (emailExists || matriculaExists) {
       throw new ConflictException('Email ou matrícula já cadastrados no sistema');
+    }
+
+    if (!course) {
+      throw new NotFoundException('Curso não encontrado');
     }
 
     const randomPassword = generateRandomPassword();
@@ -45,7 +52,6 @@ export class CreateStudentUseCase {
       password: hashedPassword,
       name: dto.name,
       role: Role.STUDENT,
-      organizationId: dto.organizationId,
     });
 
     const student = Student.create({
@@ -55,6 +61,20 @@ export class CreateStudentUseCase {
     });
 
     const created = await this.studentRepository.create(student);
-    return StudentResponseDto.fromEntity(created);
+
+    return {
+      id: created.id,
+      registration: created.matricula,
+      name: user.name,
+      email: user.email,
+      userId: user.id,
+      course: {
+        id: course.id,
+        name: course.name,
+        code: course.code,
+      },
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+    };
   }
 }

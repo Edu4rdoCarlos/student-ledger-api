@@ -5,10 +5,10 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { ICurrentUser } from '../../../../shared/types';
-import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase } from '../../application/use-cases';
+import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase, ListDocumentVersionsUseCase } from '../../application/use-cases';
 import { CreateDocumentVersionResponseDto } from '../dtos/response';
 import { CreateDocumentVersionDto } from '../dtos/request';
-import { ValidateDocumentSerializer } from '../serializers';
+import { ValidateDocumentSerializer, CreateDocumentVersionSerializer } from '../serializers';
 import { PdfContentValidator } from '../../../../shared/validators';
 import { sanitizeFilename } from '../../../../shared/utils';
 import { DownloadDocumentDocs, ValidateDocumentDocs, CreateDocumentVersionDocs } from '../docs';
@@ -21,6 +21,7 @@ export class DocumentsController {
     private readonly validateDocument: ValidateDocumentUseCase,
     private readonly downloadDocument: DownloadDocumentUseCase,
     private readonly createDocumentVersion: CreateDocumentVersionUseCase,
+    private readonly listDocumentVersions: ListDocumentVersionsUseCase,
   ) {}
 
   @Get(':id/download')
@@ -69,7 +70,7 @@ export class DocumentsController {
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
     )
     file: Express.Multer.File,
-  ): Promise<CreateDocumentVersionResponseDto> {
+  ) {
     const safeFilename = sanitizeFilename(file.originalname);
 
     const { previousVersion, newVersion } = await this.createDocumentVersion.execute({
@@ -80,19 +81,20 @@ export class DocumentsController {
       changeReason: dto.changeReason,
     });
 
-    return {
+    // Buscar todas as versões do documento pela defenseId
+    const allVersions = await this.listDocumentVersions.execute(newVersion.defenseId);
+
+    const responseData = {
       message: `Nova versão criada com sucesso. Versão ${previousVersion.version} inativada, versão ${newVersion.version} aguardando aprovação.`,
-      previousVersion: {
-        id: previousVersion.id,
-        version: previousVersion.version,
-        status: previousVersion.status,
-      },
-      newVersion: {
-        id: newVersion.id,
-        version: newVersion.version,
-        status: newVersion.status,
-        changeReason: newVersion.changeReason,
-      },
+      versions: allVersions.map(doc => ({
+        id: doc.id,
+        version: doc.version,
+        status: doc.status,
+        changeReason: doc.changeReason,
+        createdAt: doc.createdAt,
+      })),
     };
+
+    return CreateDocumentVersionSerializer.serialize(responseData);
   }
 }

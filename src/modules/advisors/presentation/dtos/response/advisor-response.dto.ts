@@ -1,6 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Advisor } from '../../../domain/entities';
 
+class DepartmentInfo {
+  @ApiProperty({ description: 'ID do departamento' })
+  id: string;
+
+  @ApiProperty({ description: 'Nome do departamento' })
+  name: string;
+}
+
+class CourseInfo {
+  @ApiProperty({ description: 'ID do curso' })
+  id: string;
+
+  @ApiProperty({ description: 'Código do curso' })
+  code: string;
+
+  @ApiProperty({ description: 'Nome do curso' })
+  name: string;
+}
+
 export class AdvisorResponseDto {
   @ApiProperty({ description: 'ID do orientador' })
   id: string;
@@ -8,14 +27,14 @@ export class AdvisorResponseDto {
   @ApiProperty({ description: 'ID do usuário associado' })
   userId: string;
 
-  @ApiProperty({ required: false, description: 'ID do departamento' })
-  departmentId?: string;
+  @ApiProperty({ required: false, type: DepartmentInfo, description: 'Informações do departamento' })
+  department?: DepartmentInfo;
 
   @ApiProperty({ required: false, description: 'Área de especialização' })
   specialization?: string;
 
-  @ApiProperty({ required: false, description: 'ID do curso' })
-  courseId?: string;
+  @ApiProperty({ required: false, type: CourseInfo, description: 'Informações do curso' })
+  course?: CourseInfo;
 
   @ApiProperty({ description: 'Data de criação' })
   createdAt: Date;
@@ -27,11 +46,27 @@ export class AdvisorResponseDto {
     const dto = new AdvisorResponseDto();
     dto.id = advisor.id;
     dto.userId = advisor.userId;
-    dto.departmentId = advisor.departmentId;
     dto.specialization = advisor.specialization;
-    dto.courseId = advisor.courseId;
     dto.createdAt = advisor.createdAt;
     dto.updatedAt = advisor.updatedAt;
+
+    // Incluir informações do departamento se disponível
+    if (advisor.department) {
+      dto.department = {
+        id: advisor.department.id,
+        name: advisor.department.name,
+      };
+    }
+
+    // Incluir informações do curso se disponível
+    if (advisor.course) {
+      dto.course = {
+        id: advisor.course.id,
+        code: advisor.course.code,
+        name: advisor.course.name,
+      };
+    }
+
     return dto;
   }
 }

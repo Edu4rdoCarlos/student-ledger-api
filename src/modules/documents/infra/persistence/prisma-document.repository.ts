@@ -23,6 +23,7 @@ export class PrismaDocumentRepository implements IDocumentRepository {
   async findByHash(hash: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
       where: { documentHash: hash },
+      orderBy: { version: 'desc' },
     });
     return found ? DocumentMapper.toDomain(found) : null;
   }

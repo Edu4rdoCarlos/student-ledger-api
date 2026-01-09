@@ -1,5 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Student } from '../../../domain/entities';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { STUDENT_RESPONSE_EXAMPLE } from '../../docs/responses';
 
 export interface DefenseRecord {
@@ -17,12 +16,17 @@ export interface DefenseRecord {
   signatures: Array<{
     role: string;
     email: string;
-    mspId: string;
     timestamp: string;
     status: 'APPROVED' | 'REJECTED' | 'PENDING';
     justification?: string;
   }>;
   validatedAt: string;
+}
+
+export interface CourseInfo {
+  id: string;
+  name: string;
+  code: string;
 }
 
 export class StudentResponseDto {
@@ -32,11 +36,25 @@ export class StudentResponseDto {
   @ApiProperty({ description: 'Matrícula do estudante' })
   registration: string;
 
+  @ApiProperty({ description: 'Nome do estudante' })
+  name: string;
+
+  @ApiProperty({ description: 'Email do estudante' })
+  email: string;
+
   @ApiProperty({ description: 'ID do usuário associado' })
   userId: string;
 
-  @ApiProperty({ description: 'ID do curso' })
-  courseId: string;
+  @ApiProperty({
+    description: 'Informações do curso',
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID do curso' },
+      name: { type: 'string', description: 'Nome do curso' },
+      code: { type: 'string', description: 'Código do curso' },
+    },
+  })
+  course: CourseInfo;
 
   @ApiProperty({ description: 'Data de criação' })
   createdAt: Date;
@@ -44,23 +62,10 @@ export class StudentResponseDto {
   @ApiProperty({ description: 'Data de atualização' })
   updatedAt: Date;
 
-  @ApiProperty({
-    description: 'Histórico de defesas registradas no blockchain',
+  @ApiPropertyOptional({
+    description: 'Histórico de defesas registradas no blockchain (apenas no GET /:registration)',
     type: 'array',
-    required: false,
     example: [STUDENT_RESPONSE_EXAMPLE],
   })
   defenses?: DefenseRecord[];
-
-  static fromEntity(student: Student, defenses?: DefenseRecord[]): StudentResponseDto {
-    return {
-      id: student.id,
-      registration: student.matricula,
-      userId: student.userId,
-      courseId: student.courseId,
-      createdAt: student.createdAt,
-      updatedAt: student.updatedAt,
-      defenses: defenses || [],
-    };
-  }
 }

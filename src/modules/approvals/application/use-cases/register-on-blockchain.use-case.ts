@@ -5,6 +5,8 @@ import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/applic
 import { IFabricGateway, FABRIC_GATEWAY, DocumentSignature } from '../../../fabric/application/ports';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ApprovalStatus, ApprovalRole } from '../../domain/entities';
+import { FabricOrganizationConfig } from '../../../fabric/infra/config/fabric-organization.config';
+import { Role } from '@prisma/client';
 
 interface RegisterOnBlockchainRequest {
   documentId: string;
@@ -30,6 +32,7 @@ export class RegisterOnBlockchainUseCase {
     private readonly fabricGateway: IFabricGateway,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
+    private readonly fabricOrgConfig: FabricOrganizationConfig,
   ) {}
 
   async execute(request: RegisterOnBlockchainRequest): Promise<RegisterOnBlockchainResponse> {
@@ -122,11 +125,15 @@ export class RegisterOnBlockchainUseCase {
 
       const fabricRole = roleToFabricRole(approval.role);
 
+      const userRole: Role = approval.role === ApprovalRole.COORDINATOR ? 'COORDINATOR' :
+                             approval.role === ApprovalRole.ADVISOR ? 'ADVISOR' : 'STUDENT';
+
+      const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
+
       const signature: DocumentSignature = {
         role: fabricRole,
         email: user.email,
-        mspId: fabricRole === 'coordenador' ? 'CoordenacaoMSP' :
-               fabricRole === 'orientador' ? 'OrientadorMSP' : 'AlunoMSP',
+        mspId,
         timestamp: approval.approvedAt.toISOString(),
         status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
       };
@@ -160,7 +167,6 @@ export class RegisterOnBlockchainUseCase {
         role: coordinator.role as 'COORDINATOR',
       };
 
-      // Valida dados obrigatórios da defesa
       if (!defense.studentIds || defense.studentIds.length === 0) {
         this.logger.error(`Defesa ${defense.id} não possui alunos vinculados`);
         throw new Error('Defesa não possui alunos vinculados');

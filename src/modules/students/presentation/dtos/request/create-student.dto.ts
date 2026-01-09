@@ -23,8 +23,4 @@ export class CreateStudentDto {
   @IsUUID()
   @IsNotEmpty()
   courseId: string;
-
-  @ApiProperty({ example: 'uuid-da-organizacao', description: 'ID da organização', required: false })
-  @IsUUID()
-  organizationId?: string;
 }

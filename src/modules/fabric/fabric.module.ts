@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { FabricService } from './fabric.service';
 import { FABRIC_GATEWAY } from './application/ports';
 import { FabricGrpcAdapter } from './infra/adapters';
+import { FabricOrganizationConfig } from './infra/config/fabric-organization.config';
 
 @Global()
 @Module({
@@ -11,7 +12,8 @@ import { FabricGrpcAdapter } from './infra/adapters';
       useClass: FabricGrpcAdapter,
     },
     FabricService,
+    FabricOrganizationConfig,
   ],
-  exports: [FabricService, FABRIC_GATEWAY],
+  exports: [FabricService, FABRIC_GATEWAY, FabricOrganizationConfig],
 })
 export class FabricModule {}
