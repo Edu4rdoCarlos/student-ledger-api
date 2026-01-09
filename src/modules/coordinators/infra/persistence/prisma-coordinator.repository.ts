@@ -19,6 +19,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
         },
       },
       include: {
+        user: true,
         courses: true,
       },
     });
@@ -29,7 +30,10 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async findById(id: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findUnique({
       where: { id },
-      include: { courses: true },
+      include: {
+        user: true,
+        courses: true
+      },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
@@ -37,7 +41,10 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async findByUserId(userId: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findUnique({
       where: { userId },
-      include: { courses: true },
+      include: {
+        user: true,
+        courses: true
+      },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
@@ -49,14 +56,20 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
           some: { id: courseId },
         },
       },
-      include: { courses: true },
+      include: {
+        user: true,
+        courses: true
+      },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
 
   async findAll(): Promise<Coordinator[]> {
     const coordinators = await this.prisma.coordinator.findMany({
-      include: { courses: true },
+      include: {
+        user: true,
+        courses: true
+      },
       orderBy: { createdAt: 'asc' },
     });
     return coordinators.map(CoordinatorMapper.toDomain);
@@ -65,9 +78,12 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async update(coordinator: Coordinator): Promise<Coordinator> {
     const data = CoordinatorMapper.toPrisma(coordinator);
     const updated = await this.prisma.coordinator.update({
-      where: { id: coordinator.id },
+      where: { userId: coordinator.id },
       data,
-      include: { courses: true },
+      include: {
+        user: true,
+        courses: true
+      },
     });
     return CoordinatorMapper.toDomain(updated);
   }

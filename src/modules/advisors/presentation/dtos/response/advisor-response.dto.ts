@@ -21,10 +21,7 @@ class CourseInfo {
 }
 
 export class AdvisorResponseDto {
-  @ApiProperty({ description: 'ID do orientador' })
-  id: string;
-
-  @ApiProperty({ description: 'ID do usuário associado' })
+  @ApiProperty({ description: 'ID do usuário do orientador' })
   userId: string;
 
   @ApiProperty({ required: false, type: DepartmentInfo, description: 'Informações do departamento' })
@@ -44,11 +41,10 @@ export class AdvisorResponseDto {
 
   static fromEntity(advisor: Advisor): AdvisorResponseDto {
     const dto = new AdvisorResponseDto();
-    dto.id = advisor.id;
-    dto.userId = advisor.userId;
+    dto.userId = advisor.id;
     dto.specialization = advisor.specialization;
-    dto.createdAt = advisor.createdAt;
-    dto.updatedAt = advisor.updatedAt;
+    dto.createdAt = advisor.createdAt!;
+    dto.updatedAt = advisor.updatedAt!;
 
     // Incluir informações do departamento se disponível
     if (advisor.department) {

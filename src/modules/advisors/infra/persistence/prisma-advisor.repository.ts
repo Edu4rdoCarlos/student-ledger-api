@@ -10,7 +10,14 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
 
   async create(advisor: Advisor): Promise<Advisor> {
     const data = AdvisorMapper.toPrisma(advisor);
-    const created = await this.prisma.advisor.create({ data });
+    const created = await this.prisma.advisor.create({
+      data,
+      include: {
+        user: true,
+        department: true,
+        course: true,
+      }
+    });
     return AdvisorMapper.toDomain(created);
   }
 
@@ -18,6 +25,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     const found = await this.prisma.advisor.findUnique({
       where: { id },
       include: {
+        user: true,
         department: true,
         course: true,
       },
@@ -29,6 +37,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     const found = await this.prisma.advisor.findUnique({
       where: { id: userId },
       include: {
+        user: true,
         department: true,
         course: true,
       },
@@ -40,6 +49,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     const advisors = await this.prisma.advisor.findMany({
       where: { courseId },
       include: {
+        user: true,
         department: true,
         course: true,
       },
@@ -57,6 +67,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
         skip: options?.skip,
         take: options?.take,
         include: {
+          user: true,
           department: true,
           course: true,
         },
@@ -76,6 +87,11 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     const updated = await this.prisma.advisor.update({
       where: { id: advisor.id },
       data,
+      include: {
+        user: true,
+        department: true,
+        course: true,
+      }
     });
     return AdvisorMapper.toDomain(updated);
   }

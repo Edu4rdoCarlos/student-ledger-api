@@ -1,70 +1,49 @@
-export interface CoordinatorProps {
-  userId: string;
+import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
+
+export interface CoordinatorProps extends UserBaseProps {
   courseId: string;
   isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
-export class Coordinator {
-  private readonly _id: string;
-  private props: CoordinatorProps;
+export class Coordinator extends UserBase {
+  private constructor(props: CoordinatorProps) {
+    const { isActive, ...baseProps } = props;
+    super(baseProps);
+    (this.props as any).isActive = isActive ?? true;
+  }
 
-  private constructor(props: CoordinatorProps, id?: string) {
-    this._id = id ?? crypto.randomUUID();
-    this.props = {
+  static create(props: CoordinatorProps): Coordinator {
+    return new Coordinator({
       ...props,
-      isActive: props.isActive ?? true,
-    };
-  }
-
-  static create(props: CoordinatorProps, id?: string): Coordinator {
-    return new Coordinator(
-      {
-        ...props,
-        createdAt: props.createdAt ?? new Date(),
-        updatedAt: props.updatedAt ?? new Date(),
-      },
-      id,
-    );
-  }
-
-  get id(): string {
-    return this._id;
+      createdAt: props.createdAt ?? new Date(),
+      updatedAt: props.updatedAt ?? new Date(),
+    });
   }
 
   get userId(): string {
-    return this.props.userId;
+    return this.id;
   }
 
   get courseId(): string {
-    return this.props.courseId;
+    return (this.props as CoordinatorProps).courseId;
   }
 
   get isActive(): boolean {
-    return this.props.isActive ?? true;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt!;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt!;
+    return (this.props as CoordinatorProps).isActive ?? true;
   }
 
   deactivate(): void {
-    this.props.isActive = false;
-    this.props.updatedAt = new Date();
+    (this.props as any).isActive = false;
+    (this.props as any).updatedAt = new Date();
   }
 
   activate(): void {
-    this.props.isActive = true;
-    this.props.updatedAt = new Date();
+    (this.props as any).isActive = true;
+    (this.props as any).updatedAt = new Date();
   }
 
   updateCourse(courseId: string): void {
-    this.props.courseId = courseId;
-    this.props.updatedAt = new Date();
+    (this.props as any).courseId = courseId;
+    (this.props as any).updatedAt = new Date();
   }
 }

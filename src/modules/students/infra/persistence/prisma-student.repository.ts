@@ -10,22 +10,34 @@ export class PrismaStudentRepository implements IStudentRepository {
 
   async create(student: Student): Promise<Student> {
     const data = StudentMapper.toPrisma(student);
-    const created = await this.prisma.student.create({ data });
+    const created = await this.prisma.student.create({
+      data,
+      include: { user: true }
+    });
     return StudentMapper.toDomain(created);
   }
 
   async findById(id: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { id } });
+    const found = await this.prisma.student.findUnique({
+      where: { id },
+      include: { user: true }
+    });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
   async findByMatricula(matricula: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { registration: matricula } });
+    const found = await this.prisma.student.findUnique({
+      where: { registration: matricula },
+      include: { user: true }
+    });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
   async findByUserId(userId: string): Promise<Student | null> {
-    const found = await this.prisma.student.findUnique({ where: { id: userId } });
+    const found = await this.prisma.student.findUnique({
+      where: { id: userId },
+      include: { user: true }
+    });
     return found ? StudentMapper.toDomain(found) : null;
   }
 
@@ -33,6 +45,7 @@ export class PrismaStudentRepository implements IStudentRepository {
     const students = await this.prisma.student.findMany({
       where: { courseId },
       orderBy: { createdAt: 'asc' },
+      include: { user: true }
     });
     return students.map(StudentMapper.toDomain);
   }
@@ -46,6 +59,7 @@ export class PrismaStudentRepository implements IStudentRepository {
         skip: options?.skip,
         take: options?.take,
         orderBy: { createdAt: 'asc' },
+        include: { user: true }
       }),
       this.prisma.student.count({ where }),
     ]);
@@ -61,6 +75,7 @@ export class PrismaStudentRepository implements IStudentRepository {
     const updated = await this.prisma.student.update({
       where: { id: student.id },
       data,
+      include: { user: true }
     });
     return StudentMapper.toDomain(updated);
   }

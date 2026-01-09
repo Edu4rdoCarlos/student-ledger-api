@@ -3,7 +3,6 @@ import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentNotFoundError } from '../../domain/errors';
 import { StudentResponseDto, DefenseRecord } from '../../presentation/dtos';
 import { IFabricGateway, FABRIC_GATEWAY, FabricUser } from '../../../fabric/application/ports';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 
 export interface GetStudentRequest {
@@ -24,8 +23,6 @@ export class GetStudentUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(FABRIC_GATEWAY)
     private readonly fabricGateway: IFabricGateway,
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: IUserRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
   ) {}
@@ -37,14 +34,7 @@ export class GetStudentUseCase {
       throw new StudentNotFoundError(request.matricula);
     }
 
-    const [user, course] = await Promise.all([
-      this.userRepository.findById(student.userId),
-      this.courseRepository.findById(student.courseId),
-    ]);
-
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
+    const course = await this.courseRepository.findById(student.courseId);
 
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
@@ -66,18 +56,17 @@ export class GetStudentUseCase {
     }
 
     return {
-      id: student.id,
+      userId: student.id,
       registration: student.matricula,
-      name: user.name,
-      email: user.email,
-      userId: user.id,
+      name: student.name,
+      email: student.email,
       course: {
         id: course.id,
         name: course.name,
         code: course.code,
       },
-      createdAt: student.createdAt,
-      updatedAt: student.updatedAt,
+      createdAt: student.createdAt!,
+      updatedAt: student.updatedAt!,
       defenses,
     };
   }

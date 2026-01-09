@@ -1,57 +1,37 @@
-export interface StudentProps {
+import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
+
+export interface StudentProps extends UserBaseProps {
   matricula: string;
-  userId: string;
   courseId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
-export class Student {
-  private readonly _id: string;
-  private props: StudentProps;
-
-  private constructor(props: StudentProps, id?: string) {
-    this._id = id ?? crypto.randomUUID();
-    this.props = props;
+export class Student extends UserBase {
+  private constructor(props: StudentProps) {
+    super(props);
   }
 
-  static create(props: StudentProps, id?: string): Student {
-    return new Student(
-      {
-        ...props,
-        createdAt: props.createdAt ?? new Date(),
-        updatedAt: props.updatedAt ?? new Date(),
-      },
-      id,
-    );
-  }
-
-  get id(): string {
-    return this._id;
+  static create(props: StudentProps): Student {
+    return new Student({
+      ...props,
+      createdAt: props.createdAt ?? new Date(),
+      updatedAt: props.updatedAt ?? new Date(),
+    });
   }
 
   get matricula(): string {
-    return this.props.matricula;
+    return (this.props as StudentProps).matricula;
   }
 
   get userId(): string {
-    return this.props.userId;
+    return this.id;
   }
 
   get courseId(): string {
-    return this.props.courseId;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt!;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt!;
+    return (this.props as StudentProps).courseId;
   }
 
   updateCourse(courseId: string): void {
-    this.props.courseId = courseId;
-    this.props.updatedAt = new Date();
+    (this.props as any).courseId = courseId;
+    (this.props as any).updatedAt = new Date();
   }
 }

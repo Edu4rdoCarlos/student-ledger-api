@@ -30,8 +30,8 @@ export interface CourseInfo {
 }
 
 export class StudentResponseDto {
-  @ApiProperty({ description: 'ID do estudante' })
-  id: string;
+  @ApiProperty({ description: 'ID do usuário do estudante' })
+  userId: string;
 
   @ApiProperty({ description: 'Matrícula do estudante' })
   registration: string;
@@ -41,9 +41,6 @@ export class StudentResponseDto {
 
   @ApiProperty({ description: 'Email do estudante' })
   email: string;
-
-  @ApiProperty({ description: 'ID do usuário associado' })
-  userId: string;
 
   @ApiProperty({
     description: 'Informações do curso',

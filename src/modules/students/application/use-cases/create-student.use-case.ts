@@ -55,26 +55,28 @@ export class CreateStudentUseCase {
     });
 
     const student = Student.create({
+      id: user.id,
       matricula: dto.registration,
-      userId: user.id,
       courseId: dto.courseId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
     });
 
     const created = await this.studentRepository.create(student);
 
     return {
-      id: created.id,
+      userId: created.id,
       registration: created.matricula,
-      name: user.name,
-      email: user.email,
-      userId: user.id,
+      name: created.name,
+      email: created.email,
       course: {
         id: course.id,
         name: course.name,
         code: course.code,
       },
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
+      createdAt: created.createdAt!,
+      updatedAt: created.updatedAt!,
     };
   }
 }

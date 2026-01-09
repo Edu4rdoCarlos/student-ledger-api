@@ -54,7 +54,10 @@ export class CreateCoordinatorUseCase {
     });
 
     const coordinator = Coordinator.create({
-      userId: user.id,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
       courseId: courseExists.id,
       isActive: true,
     });

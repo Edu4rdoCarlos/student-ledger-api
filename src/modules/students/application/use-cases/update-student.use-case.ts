@@ -36,32 +36,24 @@ export class UpdateStudentUseCase {
       throw new StudentNotFoundError(matricula);
     }
 
-    const [user, course] = await Promise.all([
-      this.userRepository.findById(updated.userId),
-      this.courseRepository.findById(updated.courseId),
-    ]);
-
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
+    const course = await this.courseRepository.findById(updated.courseId);
 
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
     }
 
     return {
-      id: updated.id,
+      userId: updated.id,
       registration: updated.matricula,
-      name: user.name,
-      email: user.email,
-      userId: user.id,
+      name: updated.name,
+      email: updated.email,
       course: {
         id: course.id,
         name: course.name,
         code: course.code,
       },
-      createdAt: updated.createdAt,
-      updatedAt: updated.updatedAt,
+      createdAt: updated.createdAt!,
+      updatedAt: updated.updatedAt!,
     };
   }
 }

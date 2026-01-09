@@ -3,7 +3,6 @@ import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentResponseDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
 import { ICurrentUser } from '../../../../shared/types';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 
 export interface ListStudentsQuery {
@@ -21,8 +20,6 @@ export class ListStudentsUseCase {
   constructor(
     @Inject(STUDENT_REPOSITORY)
     private readonly studentRepository: IStudentRepository,
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: IUserRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
   ) {}
@@ -48,40 +45,33 @@ export class ListStudentsUseCase {
 
     const uniqueCourseIds = courseId ? [courseId] : [...new Set(items.map(student => student.courseId))];
 
-    const [fetchedUsers, fetchedCourses] = await Promise.all([
-      Promise.all(items.map(student => this.userRepository.findById(student.userId))),
-      Promise.all(uniqueCourseIds.map(id => this.courseRepository.findById(id))),
-    ]);
+    const fetchedCourses = await Promise.all(
+      uniqueCourseIds.map(id => this.courseRepository.findById(id))
+    );
 
     const courseMap = new Map(
       fetchedCourses.filter(course => course !== null).map(course => [course!.id, course!]),
     );
 
-    const data = items.map((student, index) => {
-      const user = fetchedUsers[index];
+    const data = items.map((student) => {
       const course = courseMap.get(student.courseId);
-
-      if (!user) {
-        throw new Error(`User with ID ${student.userId} not found for student ${student.id}`);
-      }
 
       if (!course) {
         throw new Error(`Course with ID ${student.courseId} not found for student ${student.id}`);
       }
 
       return {
-        id: student.id,
+        userId: student.id,
         registration: student.matricula,
-        name: user.name,
-        email: user.email,
-        userId: student.userId,
+        name: student.name,
+        email: student.email,
         course: {
           id: course.id,
           name: course.name,
           code: course.code,
         },
-        createdAt: student.createdAt,
-        updatedAt: student.updatedAt,
+        createdAt: student.createdAt!,
+        updatedAt: student.updatedAt!,
       };
     });
 

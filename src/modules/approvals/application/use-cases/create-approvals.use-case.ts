@@ -100,20 +100,15 @@ export class CreateApprovalsUseCase {
     let recipientEmail: string;
     let userId: string;
 
-    const studentsNames = await this.getStudentsNames(students);
+    const studentsNames = this.getStudentsNames(students);
 
     switch (approval.role) {
       case ApprovalRole.COORDINATOR:
         return;
 
       case ApprovalRole.ADVISOR:
-        const advisorUser = await this.userRepository.findById(advisor.userId);
-        if (!advisorUser) {
-          this.logger.warn(`Usuário do orientador não encontrado: ${advisor.userId}`);
-          return;
-        }
-        recipientEmail = advisorUser.email;
-        userId = advisorUser.id;
+        recipientEmail = advisor.email;
+        userId = advisor.id;
         break;
 
       case ApprovalRole.STUDENT:
@@ -122,13 +117,8 @@ export class CreateApprovalsUseCase {
           return;
         }
         const student = students[0];
-        const studentUser = await this.userRepository.findById(student.userId);
-        if (!studentUser) {
-          this.logger.warn(`Usuário do aluno não encontrado: ${student.userId}`);
-          return;
-        }
-        recipientEmail = studentUser.email;
-        userId = studentUser.id;
+        recipientEmail = student.email;
+        userId = student.id;
         break;
 
       default:
@@ -158,16 +148,9 @@ export class CreateApprovalsUseCase {
     });
   }
 
-  private async getStudentsNames(students: any[]): Promise<string> {
-    const userIds = students.map(s => s.userId);
-    const users = await this.userRepository.findByIds(userIds);
-    const userMap = new Map(users.map(u => [u.id, u]));
-
+  private getStudentsNames(students: any[]): string {
     return students
-      .map(s => {
-        const user = userMap.get(s.userId);
-        return user?.name;
-      })
+      .map(s => s.name)
       .filter(Boolean)
       .join(', ');
   }

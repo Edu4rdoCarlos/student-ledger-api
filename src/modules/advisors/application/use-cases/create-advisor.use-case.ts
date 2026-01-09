@@ -33,7 +33,10 @@ export class CreateAdvisorUseCase {
     });
 
     const advisor = Advisor.create({
-      userId: user.id,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
       departmentId: dto.departmentId,
       specialization: dto.specialization,
       courseId: dto.courseId,

@@ -33,27 +33,14 @@ export class NotifyDefenseResultUseCase {
       return;
     }
 
-    const advisorUser = await this.userRepository.findById(advisor.userId);
-    if (!advisorUser) {
-      return;
-    }
-
     const students = await Promise.all(
       defense.studentIds.map(id => this.studentRepository.findById(id))
     );
 
     const validStudents = students.filter(s => s !== null);
 
-    const studentUserIds = validStudents.map(s => s.userId);
-    const studentUsers = await this.userRepository.findByIds(studentUserIds);
-
-    const studentUserMap = new Map(studentUsers.map(u => [u.id, u]));
-
     const studentsNames = validStudents
-      .map(s => {
-        const user = studentUserMap.get(s.userId);
-        return user?.name;
-      })
+      .map(s => s.name)
       .filter(Boolean)
       .join(', ');
 
@@ -63,7 +50,7 @@ export class NotifyDefenseResultUseCase {
       finalGrade: defense.finalGrade,
       result: defense.result,
       studentsNames,
-      advisorName: advisorUser.name,
+      advisorName: advisor.name,
     };
 
     const email = this.emailTemplateService.generateTemplate(
@@ -74,7 +61,7 @@ export class NotifyDefenseResultUseCase {
     // Notificar orientador
     await this.sendEmailUseCase.execute({
       userId: advisor.userId,
-      to: advisorUser.email,
+      to: advisor.email,
       subject: email.subject,
       html: email.html,
       contextType: NotificationContextType.DEFENSE_RESULT,
@@ -83,14 +70,9 @@ export class NotifyDefenseResultUseCase {
 
     // Notificar estudantes
     for (const student of validStudents) {
-      const studentUser = studentUserMap.get(student.userId);
-      if (!studentUser) {
-        continue;
-      }
-
       await this.sendEmailUseCase.execute({
         userId: student.userId,
-        to: studentUser.email,
+        to: student.email,
         subject: email.subject,
         html: email.html,
         contextType: NotificationContextType.DEFENSE_RESULT,

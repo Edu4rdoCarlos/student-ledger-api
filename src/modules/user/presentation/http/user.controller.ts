@@ -3,28 +3,28 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
-import { ChangePasswordUseCase, GetProfileUseCase } from '../../application/use-cases';
-import { ProfileResponseDto } from '../dtos';
+import { ChangePasswordUseCase, GetUserUseCase } from '../../application/use-cases';
+import { UserResponseDto } from '../dtos';
 
-@ApiTags('Profile')
+@ApiTags('User')
 @ApiBearerAuth()
-@Controller('profile')
-export class ProfileController {
+@Controller('user')
+export class UserController {
   constructor(
     private readonly changePassword: ChangePasswordUseCase,
-    private readonly getProfile: GetProfileUseCase,
+    private readonly getUser: GetUserUseCase,
   ) {}
 
   @Get('me')
   @Roles('STUDENT', 'ADVISOR', 'COORDINATOR', 'ADMIN')
   @ApiOperation({
-    summary: 'Get current user profile',
-    description: 'Returns profile information for the authenticated user, including role-specific data.',
+    summary: 'Get current user user',
+    description: 'Returns user information for the authenticated user, including role-specific data.',
   })
   @ApiResponse({
     status: 200,
     description: 'Profile retrieved successfully.',
-    type: ProfileResponseDto,
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -34,9 +34,9 @@ export class ProfileController {
     status: 404,
     description: 'User not found',
   })
-  async getMe(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<ProfileResponseDto>> {
-    const profile = await this.getProfile.execute(currentUser.id);
-    return HttpResponseSerializer.serialize(profile);
+  async getMe(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<UserResponseDto>> {
+    const user = await this.getUser.execute(currentUser.id);
+    return HttpResponseSerializer.serialize(user);
   }
 
   @Patch('password')

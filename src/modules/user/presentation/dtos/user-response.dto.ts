@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ProfileStudentDataDto {
-  @ApiProperty({ description: 'ID do estudante' })
-  id: string;
+export class UserStudentDataDto {
+  @ApiProperty({ description: 'ID do usuário do estudante' })
+  userId: string;
 
   @ApiProperty({ description: 'Matrícula do estudante' })
   registration: string;
@@ -11,9 +11,9 @@ export class ProfileStudentDataDto {
   courseId: string;
 }
 
-export class ProfileAdvisorDataDto {
-  @ApiProperty({ description: 'ID do orientador' })
-  id: string;
+export class UserAdvisorDataDto {
+  @ApiProperty({ description: 'ID do usuário do orientador' })
+  userId: string;
 
   @ApiProperty({ required: false, description: 'ID do departamento' })
   departmentId?: string;
@@ -25,9 +25,9 @@ export class ProfileAdvisorDataDto {
   courseId?: string;
 }
 
-export class ProfileCoordinatorDataDto {
-  @ApiProperty({ description: 'ID do coordenador' })
-  id: string;
+export class UserCoordinatorDataDto {
+  @ApiProperty({ description: 'ID do usuário do coordenador' })
+  userId: string;
 
   @ApiProperty({ description: 'ID do curso' })
   courseId: string;
@@ -36,18 +36,18 @@ export class ProfileCoordinatorDataDto {
   isActive: boolean;
 }
 
-export class ProfileMetadataDto {
+export class UserMetadataDto {
   @ApiProperty({ required: false, description: 'Dados do estudante, se role for STUDENT' })
-  student?: ProfileStudentDataDto;
+  student?: UserStudentDataDto;
 
   @ApiProperty({ required: false, description: 'Dados do orientador, se role for ADVISOR' })
-  advisor?: ProfileAdvisorDataDto;
+  advisor?: UserAdvisorDataDto;
 
   @ApiProperty({ required: false, description: 'Dados do coordenador, se role for COORDINATOR' })
-  coordinator?: ProfileCoordinatorDataDto;
+  coordinator?: UserCoordinatorDataDto;
 }
 
-export class ProfileResponseDto {
+export class UserResponseDto {
   @ApiProperty({ description: 'ID do usuário' })
   id: string;
 
@@ -61,5 +61,5 @@ export class ProfileResponseDto {
   role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
 
   @ApiProperty({ required: false, description: 'Metadados adicionais baseados no role do usuário' })
-  metadata?: ProfileMetadataDto;
+  metadata?: UserMetadataDto;
 }

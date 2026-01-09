@@ -3,9 +3,6 @@ import { Coordinator } from '../../../domain/entities';
 
 export class CoordinatorResponseDto {
   @ApiProperty({ example: 'uuid-do-coordenador' })
-  id: string;
-
-  @ApiProperty({ example: 'uuid-do-usuario' })
   userId: string;
 
   @ApiProperty({ example: 'uuid-do-curso' })
@@ -22,12 +19,11 @@ export class CoordinatorResponseDto {
 
   static fromEntity(coordinator: Coordinator): CoordinatorResponseDto {
     return {
-      id: coordinator.id,
-      userId: coordinator.userId,
+      userId: coordinator.id,
       courseId: coordinator.courseId,
       isActive: coordinator.isActive,
-      createdAt: coordinator.createdAt,
-      updatedAt: coordinator.updatedAt,
+      createdAt: coordinator.createdAt!,
+      updatedAt: coordinator.updatedAt!,
     };
   }
 }
