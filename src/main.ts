@@ -8,6 +8,19 @@ import { AllExceptionsFilter } from './shared/filters';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
+
+  app.enableCors({
+    origin: process.env.NODE_ENV === 'production'
+      ? process.env.FRONTEND_URL
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:8080'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
+  });
+
   app.use(cookieParser());
 
   app.useGlobalPipes(
@@ -72,7 +85,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
