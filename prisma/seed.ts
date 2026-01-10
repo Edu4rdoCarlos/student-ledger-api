@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...\n');
 
-  const defaultPassword = await bcrypt.hash('123456', 10);
+  const defaultPassword = await bcrypt.hash('Admin123!', 10);
 
   console.log('👤 Creating Admin User...');
 
@@ -476,7 +476,7 @@ async function main() {
   console.log('\n' + '='.repeat(50));
   console.log('🎉 Seed completed successfully!');
   console.log('='.repeat(50));
-  console.log('\n📋 Credentials (password: 123456):');
+  console.log('\n📋 Credentials (password: Admin123!):');
   console.log('─'.repeat(50));
   console.log(`  ADMIN:       ${admin.email}`);
   console.log(`  COORDINATOR: ${coordUser1.email}`);
