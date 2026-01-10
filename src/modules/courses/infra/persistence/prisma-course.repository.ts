@@ -15,12 +15,38 @@ export class PrismaCourseRepository implements ICourseRepository {
   }
 
   async findById(id: string): Promise<Course | null> {
-    const found = await this.prisma.course.findUnique({ where: { id } });
+    const found = await this.prisma.course.findUnique({
+      where: { id },
+      include: {
+        department: true,
+        coordinator: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
     return found ? CourseMapper.toDomain(found) : null;
   }
 
   async findByCode(code: string): Promise<Course | null> {
-    const found = await this.prisma.course.findUnique({ where: { code } });
+    const found = await this.prisma.course.findUnique({
+      where: { code },
+      include: {
+        department: true,
+        coordinator: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
     return found ? CourseMapper.toDomain(found) : null;
   }
 
@@ -33,6 +59,17 @@ export class PrismaCourseRepository implements ICourseRepository {
         skip: options?.skip,
         take: options?.take,
         orderBy: { createdAt: 'asc' },
+        include: {
+          department: true,
+          coordinator: {
+            where: {
+              isActive: true,
+            },
+            include: {
+              user: true,
+            },
+          },
+        },
       }),
       this.prisma.course.count({ where }),
     ]);

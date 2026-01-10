@@ -3,7 +3,12 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
+import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { DEFENSE_REPOSITORY, IDefenseRepository } from '../../../defenses/application/ports';
 import { UserResponseDto, UserMetadataDto } from '../../presentation/dtos';
+import { CourseResponseDto } from '../../../courses/presentation/dtos';
+import { DepartmentResponseDto } from '../../../departments/presentation/dtos';
+import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
 @Injectable()
 export class GetUserUseCase {
@@ -16,6 +21,10 @@ export class GetUserUseCase {
     private readonly advisorRepository: IAdvisorRepository,
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
+    @Inject(COURSE_REPOSITORY)
+    private readonly courseRepository: ICourseRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
   ) {}
 
   async execute(userId: string): Promise<UserResponseDto> {
@@ -36,29 +45,41 @@ export class GetUserUseCase {
     if (user.role === 'STUDENT') {
       const student = await this.studentRepository.findByUserId(userId);
       if (student) {
+        const [course, defenses] = await Promise.all([
+          this.courseRepository.findById(student.courseId),
+          this.defenseRepository.findByStudentId(student.id),
+        ]);
+
         metadata.student = {
           userId: student.id,
           registration: student.matricula,
-          courseId: student.courseId,
+          course: course ? CourseResponseDto.fromEntity(course) : undefined,
+          defenses: defenses.map(DefenseResponseDto.fromEntity),
         };
       }
     } else if (user.role === 'ADVISOR') {
       const advisor = await this.advisorRepository.findByUserId(userId);
       if (advisor) {
+        const defenses = await this.defenseRepository.findByAdvisorId(advisor.id);
+
         metadata.advisor = {
           userId: advisor.id,
-          departmentId: advisor.departmentId,
           specialization: advisor.specialization,
-          courseId: advisor.courseId,
+          department: advisor.department ? DepartmentResponseDto.fromEntity(advisor.department) : undefined,
+          course: advisor.course ? CourseResponseDto.fromEntity(advisor.course) : undefined,
+          defenses: defenses.map(DefenseResponseDto.fromEntity),
         };
       }
     } else if (user.role === 'COORDINATOR') {
       const coordinator = await this.coordinatorRepository.findByUserId(userId);
       if (coordinator) {
+        const course = coordinator.course;
+
         metadata.coordinator = {
           userId: coordinator.id,
-          courseId: coordinator.courseId,
           isActive: coordinator.isActive,
+          course: course ? CourseResponseDto.fromEntity(course) : undefined,
+          department: course?.department ? DepartmentResponseDto.fromEntity(course.department) : undefined,
         };
       }
     }

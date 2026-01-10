@@ -1,4 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CourseResponseDto } from '../../../courses/presentation/dtos';
+import { DepartmentResponseDto } from '../../../departments/presentation/dtos';
+import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
 export class UserStudentDataDto {
   @ApiProperty({ description: 'ID do usuário do estudante' })
@@ -7,33 +10,42 @@ export class UserStudentDataDto {
   @ApiProperty({ description: 'Matrícula do estudante' })
   registration: string;
 
-  @ApiProperty({ description: 'ID do curso' })
-  courseId: string;
+  @ApiProperty({ required: false, description: 'Dados completos do curso' })
+  course?: CourseResponseDto;
+
+  @ApiProperty({ required: false, type: [DefenseResponseDto], description: 'Defesas do estudante' })
+  defenses?: DefenseResponseDto[];
 }
 
 export class UserAdvisorDataDto {
   @ApiProperty({ description: 'ID do usuário do orientador' })
   userId: string;
 
-  @ApiProperty({ required: false, description: 'ID do departamento' })
-  departmentId?: string;
-
   @ApiProperty({ required: false, description: 'Área de especialização' })
   specialization?: string;
 
-  @ApiProperty({ required: false, description: 'ID do curso' })
-  courseId?: string;
+  @ApiProperty({ required: false, description: 'Dados completos do departamento' })
+  department?: DepartmentResponseDto;
+
+  @ApiProperty({ required: false, description: 'Dados completos do curso' })
+  course?: CourseResponseDto;
+
+  @ApiProperty({ required: false, type: [DefenseResponseDto], description: 'Defesas que o orientador participa' })
+  defenses?: DefenseResponseDto[];
 }
 
 export class UserCoordinatorDataDto {
   @ApiProperty({ description: 'ID do usuário do coordenador' })
   userId: string;
 
-  @ApiProperty({ description: 'ID do curso' })
-  courseId: string;
-
   @ApiProperty({ description: 'Status ativo/inativo' })
   isActive: boolean;
+
+  @ApiProperty({ required: false, description: 'Dados completos do curso' })
+  course?: CourseResponseDto;
+
+  @ApiProperty({ required: false, description: 'Dados completos do departamento (através do curso)' })
+  department?: DepartmentResponseDto;
 }
 
 export class UserMetadataDto {

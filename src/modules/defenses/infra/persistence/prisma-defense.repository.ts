@@ -81,6 +81,21 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     return defenses.map(DefenseMapper.toDomain);
   }
 
+  async findByStudentId(studentId: string): Promise<Defense[]> {
+    const defenses = await this.prisma.defense.findMany({
+      where: {
+        students: {
+          some: {
+            studentId,
+          },
+        },
+      },
+      include: this.includeRelations,
+      orderBy: { createdAt: 'desc' },
+    });
+    return defenses.map(DefenseMapper.toDomain);
+  }
+
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     const where: any = {};
     if (options?.advisorId) where.advisorId = options.advisorId;

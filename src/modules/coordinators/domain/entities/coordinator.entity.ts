@@ -1,8 +1,10 @@
 import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
+import { Course } from '../../../courses/domain/entities';
 
 export interface CoordinatorProps extends UserBaseProps {
   courseId: string;
   isActive?: boolean;
+  course?: Course;
 }
 
 export class Coordinator extends UserBase {
@@ -30,6 +32,10 @@ export class Coordinator extends UserBase {
 
   get isActive(): boolean {
     return (this.props as CoordinatorProps).isActive ?? true;
+  }
+
+  get course(): Course | undefined {
+    return (this.props as CoordinatorProps).course;
   }
 
   deactivate(): void {

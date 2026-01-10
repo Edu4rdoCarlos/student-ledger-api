@@ -1,5 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Course } from '../../../domain/entities';
+import { DepartmentResponseDto } from '../../../../departments/presentation/dtos';
+
+export class CoordinatorBasicDto {
+  @ApiProperty({ description: 'ID do usuário' })
+  id: string;
+
+  @ApiProperty({ description: 'Email do coordenador' })
+  email: string;
+
+  @ApiProperty({ description: 'Nome do coordenador' })
+  name: string;
+
+  @ApiProperty({ description: 'Role do usuário', enum: ['ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT'] })
+  role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+}
 
 export class CourseResponseDto {
   @ApiProperty()
@@ -11,14 +26,11 @@ export class CourseResponseDto {
   @ApiProperty({ description: 'Nome do curso' })
   name: string;
 
-  @ApiProperty({ required: false, description: 'ID do departamento' })
-  departmentId?: string;
+  @ApiProperty({ required: false, description: 'Informações do departamento' })
+  department?: DepartmentResponseDto;
 
-  @ApiProperty({ description: 'Indica se o curso está ativo' })
-  active: boolean;
-
-  @ApiProperty({ required: false, description: 'ID do coordenador' })
-  coordinatorId?: string;
+  @ApiProperty({ required: false, description: 'Informações do coordenador' })
+  coordinator?: CoordinatorBasicDto;
 
   @ApiProperty({ description: 'Data de criação' })
   createdAt: Date;
@@ -31,9 +43,13 @@ export class CourseResponseDto {
     dto.id = course.id;
     dto.code = course.code;
     dto.name = course.name;
-    dto.departmentId = course.departmentId;
-    dto.active = course.active;
-    dto.coordinatorId = course.coordinatorId;
+    dto.department = course.department ? DepartmentResponseDto.fromEntity(course.department) : undefined;
+    dto.coordinator = course.coordinator ? {
+      id: course.coordinator.id,
+      email: course.coordinator.email,
+      name: course.coordinator.name,
+      role: course.coordinator.role as 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT',
+    } : undefined;
     dto.createdAt = course.createdAt;
     dto.updatedAt = course.updatedAt;
     return dto;

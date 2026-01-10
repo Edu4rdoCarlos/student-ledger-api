@@ -1,9 +1,14 @@
+import { Department } from '../../../departments/domain/entities';
+import { UserBase } from '../../../user/domain/entities';
+
 export interface CourseProps {
   code: string;
   name: string;
   departmentId?: string;
   active: boolean;
   coordinatorId?: string;
+  department?: Department;
+  coordinator?: UserBase;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -50,6 +55,14 @@ export class Course {
 
   get coordinatorId(): string | undefined {
     return this.props.coordinatorId;
+  }
+
+  get department(): Department | undefined {
+    return this.props.department;
+  }
+
+  get coordinator(): UserBase | undefined {
+    return this.props.coordinator;
   }
 
   get createdAt(): Date {

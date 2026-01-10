@@ -1,5 +1,7 @@
 import { Advisor as PrismaAdvisor, User as PrismaUser, Department as PrismaDepartment, Course as PrismaCourse } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
+import { DepartmentMapper } from '../../../departments/infra/persistence/department.mapper';
+import { CourseMapper } from '../../../courses/infra/persistence/course.mapper';
 
 type PrismaAdvisorWithRelations = PrismaAdvisor & {
   user: PrismaUser;
@@ -16,21 +18,10 @@ export class AdvisorMapper {
       role: prisma.user.role,
       isFirstAccess: prisma.user.isFirstAccess,
       departmentId: prisma.departmentId || undefined,
-      department: prisma.department
-        ? {
-            id: prisma.department.id,
-            name: prisma.department.name,
-          }
-        : undefined,
+      department: prisma.department ? DepartmentMapper.toDomain(prisma.department) : undefined,
       specialization: prisma.specialization || undefined,
       courseId: prisma.courseId || undefined,
-      course: prisma.course
-        ? {
-            id: prisma.course.id,
-            code: prisma.course.code,
-            name: prisma.course.name,
-          }
-        : undefined,
+      course: prisma.course ? CourseMapper.toDomain(prisma.course) : undefined,
       createdAt: prisma.createdAt,
       updatedAt: prisma.updatedAt,
     });

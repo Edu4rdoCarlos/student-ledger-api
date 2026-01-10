@@ -1,15 +1,6 @@
 import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
-
-export interface Department {
-  id: string;
-  name: string;
-}
-
-export interface Course {
-  id: string;
-  code: string;
-  name: string;
-}
+import { Department } from '../../../departments/domain/entities';
+import { Course } from '../../../courses/domain/entities';
 
 export interface AdvisorProps extends UserBaseProps {
   departmentId?: string;
