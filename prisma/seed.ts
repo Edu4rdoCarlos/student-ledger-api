@@ -45,10 +45,10 @@ async function main() {
   });
 
   const coordinator1 = await prisma.coordinator.upsert({
-    where: { userId: coordUser1.id },
+    where: { id: coordUser1.id },
     update: {},
     create: {
-      userId: coordUser1.id,
+      id: coordUser1.id,
     },
   });
 
@@ -64,10 +64,10 @@ async function main() {
   });
 
   const coordinator2 = await prisma.coordinator.upsert({
-    where: { userId: coordUser2.id },
+    where: { id: coordUser2.id },
     update: {},
     create: {
-      userId: coordUser2.id,
+      id: coordUser2.id,
     },
   });
 

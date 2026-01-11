@@ -13,7 +13,7 @@ export class CoordinatorMapper {
     const courseId = firstCourse?.id || '';
 
     return Coordinator.create({
-      id: prisma.userId, // O ID real é o userId (que vem do User)
+      id: prisma.id,
       email: prisma.user.email,
       name: prisma.user.name,
       role: prisma.user.role,
@@ -36,7 +36,7 @@ export class CoordinatorMapper {
 
   static toPrisma(coordinator: Coordinator) {
     return {
-      userId: coordinator.id,
+      id: coordinator.id,
       isActive: coordinator.isActive,
     };
   }

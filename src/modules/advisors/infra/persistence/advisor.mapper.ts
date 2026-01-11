@@ -22,6 +22,7 @@ export class AdvisorMapper {
       specialization: prisma.specialization || undefined,
       courseId: prisma.courseId || undefined,
       course: prisma.course ? CourseMapper.toDomain(prisma.course) : undefined,
+      isActive: prisma.isActive,
       createdAt: prisma.createdAt,
       updatedAt: prisma.updatedAt,
     });
@@ -33,6 +34,7 @@ export class AdvisorMapper {
       departmentId: advisor.departmentId || null,
       specialization: advisor.specialization || null,
       courseId: advisor.courseId || null,
+      isActive: advisor.isActive,
       createdAt: advisor.createdAt,
       updatedAt: advisor.updatedAt,
     };

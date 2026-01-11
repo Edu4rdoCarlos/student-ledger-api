@@ -40,6 +40,7 @@ export class CreateAdvisorUseCase {
       departmentId: dto.departmentId,
       specialization: dto.specialization,
       courseId: dto.courseId,
+      isActive: true,
     });
 
     const created = await this.advisorRepository.create(advisor);

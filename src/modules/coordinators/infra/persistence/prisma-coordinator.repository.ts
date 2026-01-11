@@ -9,22 +9,33 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(coordinator: Coordinator): Promise<Coordinator> {
-    const data = CoordinatorMapper.toPrisma(coordinator);
-
-    const created = await this.prisma.coordinator.create({
+    await this.prisma.coordinator.create({
       data: {
-        ...data,
-        courses: {
-          connect: { id: coordinator.courseId },
-        },
+        id: coordinator.id,
+        isActive: coordinator.isActive,
+      } as any,
+      include: {
+        user: true,
+        courses: false,
       },
+    });
+
+    await this.prisma.course.update({
+      where: { id: coordinator.courseId },
+      data: {
+        coordinatorId: coordinator.id,
+      },
+    });
+
+    const found = await this.prisma.coordinator.findUnique({
+      where: { id: coordinator.id },
       include: {
         user: true,
         courses: true,
       },
     });
 
-    return CoordinatorMapper.toDomain(created);
+    return CoordinatorMapper.toDomain(found!);
   }
 
   async findById(id: string): Promise<Coordinator | null> {
@@ -40,7 +51,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
 
   async findByUserId(userId: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findUnique({
-      where: { userId },
+      where: { id: userId },
       include: {
         user: true,
         courses: true
@@ -78,8 +89,10 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async update(coordinator: Coordinator): Promise<Coordinator> {
     const data = CoordinatorMapper.toPrisma(coordinator);
     const updated = await this.prisma.coordinator.update({
-      where: { userId: coordinator.id },
-      data,
+      where: { id: coordinator.id },
+      data: {
+        isActive: data.isActive,
+      },
       include: {
         user: true,
         courses: true
@@ -89,7 +102,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   }
 
   async existsByUserId(userId: string): Promise<boolean> {
-    const count = await this.prisma.coordinator.count({ where: { userId } });
+    const count = await this.prisma.coordinator.count({ where: { id: userId } });
     return count > 0;
   }
 }

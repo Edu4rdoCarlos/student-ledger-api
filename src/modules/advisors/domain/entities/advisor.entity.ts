@@ -8,6 +8,7 @@ export interface AdvisorProps extends UserBaseProps {
   specialization?: string;
   courseId?: string;
   course?: Course;
+  isActive: boolean;
 }
 
 export class Advisor extends UserBase {
@@ -47,10 +48,15 @@ export class Advisor extends UserBase {
     return (this.props as AdvisorProps).course;
   }
 
-  update(data: Partial<Pick<AdvisorProps, 'departmentId' | 'specialization' | 'courseId'>>): void {
+  get isActive(): boolean {
+    return (this.props as AdvisorProps).isActive;
+  }
+
+  update(data: Partial<Pick<AdvisorProps, 'departmentId' | 'specialization' | 'courseId' | 'isActive'>>): void {
     if (data.departmentId !== undefined) (this.props as any).departmentId = data.departmentId;
     if (data.specialization !== undefined) (this.props as any).specialization = data.specialization;
     if (data.courseId !== undefined) (this.props as any).courseId = data.courseId;
+    if (data.isActive !== undefined) (this.props as any).isActive = data.isActive;
     (this.props as any).updatedAt = new Date();
   }
 }
