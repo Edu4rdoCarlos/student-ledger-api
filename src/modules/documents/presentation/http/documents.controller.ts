@@ -5,13 +5,13 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { ICurrentUser } from '../../../../shared/types';
-import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase, ListDocumentVersionsUseCase } from '../../application/use-cases';
-import { CreateDocumentVersionResponseDto } from '../dtos/response';
+import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase, ListDocumentVersionsUseCase, GetDocumentsSummaryUseCase } from '../../application/use-cases';
+import { CreateDocumentVersionResponseDto, DocumentsSummaryResponseDto } from '../dtos/response';
 import { CreateDocumentVersionDto } from '../dtos/request';
 import { ValidateDocumentSerializer, CreateDocumentVersionSerializer } from '../serializers';
 import { PdfContentValidator } from '../../../../shared/validators';
 import { sanitizeFilename } from '../../../../shared/utils';
-import { DownloadDocumentDocs, ValidateDocumentDocs, CreateDocumentVersionDocs } from '../docs';
+import { DownloadDocumentDocs, ValidateDocumentDocs, CreateDocumentVersionDocs, GetDocumentsSummaryDocs } from '../docs';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
@@ -22,6 +22,7 @@ export class DocumentsController {
     private readonly downloadDocument: DownloadDocumentUseCase,
     private readonly createDocumentVersion: CreateDocumentVersionUseCase,
     private readonly listDocumentVersions: ListDocumentVersionsUseCase,
+    private readonly getDocumentsSummary: GetDocumentsSummaryUseCase,
   ) {}
 
   @Get(':id/download')
@@ -96,5 +97,12 @@ export class DocumentsController {
     };
 
     return CreateDocumentVersionSerializer.serialize(responseData);
+  }
+
+  @Get('summary')
+  @Roles('ADMIN', 'COORDINATOR')
+  @GetDocumentsSummaryDocs()
+  async getSummary(): Promise<DocumentsSummaryResponseDto> {
+    return this.getDocumentsSummary.execute();
   }
 }

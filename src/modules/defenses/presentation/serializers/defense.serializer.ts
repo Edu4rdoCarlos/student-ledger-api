@@ -86,12 +86,12 @@ export class DefenseSerializer {
     defenses: Defense[],
     currentUser: CurrentUser,
     page: number,
-    limit: number,
+    perPage: number,
     total: number,
   ): ListDefensesResponseDto {
     return {
       data: this.serializeList(defenses, currentUser),
-      metadata: new PaginationMetadata({ page, perPage: limit, total }),
+      metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }
 }

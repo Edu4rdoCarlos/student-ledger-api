@@ -11,6 +11,7 @@ import {
   DownloadDocumentUseCase,
   CreateDocumentVersionUseCase,
   ListDocumentVersionsUseCase,
+  GetDocumentsSummaryUseCase,
 } from './application/use-cases';
 import { HashUtil } from './infra/utils/hash.util';
 import { EncryptionUtil } from './infra/utils/encryption.util';
@@ -38,6 +39,7 @@ import { ApprovalsModule } from '../approvals/approvals.module';
     DownloadDocumentUseCase,
     CreateDocumentVersionUseCase,
     ListDocumentVersionsUseCase,
+    GetDocumentsSummaryUseCase,
   ],
   exports: [DOCUMENT_REPOSITORY, ListDocumentVersionsUseCase],
 })

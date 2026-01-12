@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
-import { Approval } from '../../domain/entities';
+import { IApprovalRepository, APPROVAL_REPOSITORY, ApprovalWithDetails } from '../ports';
 
 interface ListPendingApprovalsRequest {
   userId: string;
@@ -8,7 +7,7 @@ interface ListPendingApprovalsRequest {
 }
 
 interface ListPendingApprovalsResponse {
-  approvals: Approval[];
+  approvals: ApprovalWithDetails[];
 }
 
 @Injectable()
@@ -19,12 +18,12 @@ export class ListPendingApprovalsUseCase {
   ) {}
 
   async execute(request: ListPendingApprovalsRequest): Promise<ListPendingApprovalsResponse> {
-    let approvals: Approval[];
+    let approvals: ApprovalWithDetails[];
 
     if (request.userRole === 'COORDINATOR' || request.userRole === 'ADMIN') {
-      approvals = await this.approvalRepository.findAllPending();
+      approvals = await this.approvalRepository.findAllPendingWithDetails();
     } else {
-      approvals = await this.approvalRepository.findPendingByUserId(request.userId);
+      approvals = await this.approvalRepository.findPendingByUserIdWithDetails(request.userId);
     }
 
     return { approvals };

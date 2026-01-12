@@ -8,7 +8,7 @@ import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/applicati
 export interface ListAdvisorsQuery {
   courseId?: string;
   page?: number;
-  limit?: number;
+  perPage?: number;
 }
 
 export interface ListAdvisorsResponse {
@@ -27,8 +27,8 @@ export class ListAdvisorsUseCase {
 
   async execute(query: ListAdvisorsQuery = {}, currentUser?: ICurrentUser): Promise<ListAdvisorsResponse> {
     const page = query?.page || 1;
-    const limit = query?.limit || 10;
-    const skip = (page - 1) * limit;
+    const perPage = query?.perPage || 10;
+    const skip = (page - 1) * perPage;
 
     let courseId = query?.courseId;
     let courseIds: string[] | undefined;
@@ -42,14 +42,14 @@ export class ListAdvisorsUseCase {
 
     const { items, total } = await this.advisorRepository.findAll({
       skip,
-      take: limit,
+      take: perPage,
       courseId,
       courseIds,
     });
 
     return {
       data: items.map(advisor => AdvisorResponseDto.fromEntity(advisor, advisor.activeAdvisorshipsCount)),
-      metadata: new PaginationMetadata({ page, perPage: limit, total }),
+      metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }
 }

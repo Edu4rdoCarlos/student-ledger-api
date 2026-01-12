@@ -17,9 +17,7 @@ export class DefenseNotificationScheduler {
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async checkDefensesScheduledForToday() {
     try {
-      const { items: defenses } = await this.defenseRepository.findAll({
-        result: 'PENDING',
-      });
+      const { items: defenses } = await this.defenseRepository.findAll();
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -31,8 +29,8 @@ export class DefenseNotificationScheduler {
         const defenseDate = new Date(defense.defenseDate);
         defenseDate.setHours(0, 0, 0, 0);
 
-        // Check if defense is today and hasn't been notified yet
         if (
+          defense.result === 'PENDING' &&
           defenseDate >= today &&
           defenseDate < tomorrow &&
           !this.notifiedDefenses.has(defense.id)
@@ -53,9 +51,6 @@ export class DefenseNotificationScheduler {
     }
   }
 
-  /**
-   * Clear the notified defenses set every day at midnight
-   */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async clearNotifiedDefenses() {
     this.notifiedDefenses.clear();

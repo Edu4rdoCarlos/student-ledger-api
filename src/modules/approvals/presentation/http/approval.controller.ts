@@ -41,7 +41,7 @@ export class ApprovalController {
       userRole: user.role,
     });
 
-    return ApprovalSerializer.toHttpResponseList(approvals);
+    return ApprovalSerializer.toHttpResponsePendingList(approvals);
   }
 
   @Post(':id/approve')

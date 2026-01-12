@@ -1,5 +1,6 @@
 import { Approval } from '../../domain/entities';
-import { ApprovalResponseDto } from '../dtos/response';
+import { ApprovalResponseDto, PendingApprovalResponseDto } from '../dtos/response';
+import { ApprovalWithDetails } from '../../application/ports';
 import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 
@@ -28,5 +29,28 @@ export class ApprovalSerializer {
 
   static toHttpResponseList(approvals: Approval[]): HttpResponse<ApprovalResponseDto[]> {
     return HttpResponseSerializer.serialize(this.toDtoList(approvals));
+  }
+
+  static toPendingApprovalDto(approvalWithDetails: ApprovalWithDetails): PendingApprovalResponseDto {
+    return {
+      id: approvalWithDetails.approval.id!,
+      role: approvalWithDetails.approval.role,
+      status: approvalWithDetails.approval.status,
+      createdAt: approvalWithDetails.approval.createdAt!,
+      documentId: approvalWithDetails.approval.documentId,
+      documentTitle: approvalWithDetails.documentTitle,
+      students: approvalWithDetails.students,
+      courseName: approvalWithDetails.courseName,
+      signatures: approvalWithDetails.allSignatures,
+      approverId: approvalWithDetails.approval.approverId,
+    };
+  }
+
+  static toPendingApprovalDtoList(approvalsWithDetails: ApprovalWithDetails[]): PendingApprovalResponseDto[] {
+    return approvalsWithDetails.map(this.toPendingApprovalDto);
+  }
+
+  static toHttpResponsePendingList(approvalsWithDetails: ApprovalWithDetails[]): HttpResponse<PendingApprovalResponseDto[]> {
+    return HttpResponseSerializer.serialize(this.toPendingApprovalDtoList(approvalsWithDetails));
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma';
-import { IApprovalRepository } from '../../application/ports';
-import { Approval } from '../../domain/entities';
+import { IApprovalRepository, ApprovalWithDetails } from '../../application/ports';
+import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { ApprovalMapper } from './approval.mapper';
 
 @Injectable()
@@ -124,6 +124,142 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.approval.delete({
       where: { id },
+    });
+  }
+
+  async findAllPendingWithDetails(): Promise<ApprovalWithDetails[]> {
+    // Buscar documentos que têm pelo menos uma aprovação pendente
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: 'PENDING',
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => {
+      // Pegar a primeira aprovação pendente para usar como referência
+      const firstPendingApproval = doc.approvals.find((a) => a.status === 'PENDING')!;
+
+      return {
+        approval: ApprovalMapper.toDomain(firstPendingApproval),
+        documentTitle: doc.defense.title,
+        students: doc.defense.students.map((ds) => ({
+          name: ds.student.user.name,
+          email: ds.student.user.email,
+          registration: ds.student.registration,
+        })),
+        courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+        allSignatures: doc.approvals.map((sig) => ({
+          role: sig.role as ApprovalRole,
+          status: sig.status as ApprovalStatus,
+          approverName: sig.approver?.name,
+          approvedAt: sig.approvedAt || undefined,
+          justification: sig.justification || undefined,
+        })),
+      };
+    });
+  }
+
+  async findPendingByUserIdWithDetails(userId: string): Promise<ApprovalWithDetails[]> {
+    // Buscar documentos que têm pelo menos uma aprovação pendente relacionada ao usuário
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: 'PENDING',
+            OR: [
+              { approverId: userId },
+              {
+                approverId: null,
+                document: {
+                  defense: {
+                    OR: [
+                      { advisorId: userId },
+                      { students: { some: { studentId: userId } } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => {
+      // Pegar a primeira aprovação pendente relacionada ao usuário
+      const firstPendingApproval = doc.approvals.find(
+        (a) =>
+          a.status === 'PENDING' &&
+          (a.approverId === userId || a.approverId === null),
+      )!;
+
+      return {
+        approval: ApprovalMapper.toDomain(firstPendingApproval),
+        documentTitle: doc.defense.title,
+        students: doc.defense.students.map((ds) => ({
+          name: ds.student.user.name,
+          email: ds.student.user.email,
+          registration: ds.student.registration,
+        })),
+        courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+        allSignatures: doc.approvals.map((sig) => ({
+          role: sig.role as ApprovalRole,
+          status: sig.status as ApprovalStatus,
+          approverName: sig.approver?.name,
+          approvedAt: sig.approvedAt || undefined,
+          justification: sig.justification || undefined,
+        })),
+      };
     });
   }
 }

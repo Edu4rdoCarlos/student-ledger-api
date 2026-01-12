@@ -17,7 +17,7 @@ import {
   MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
@@ -96,21 +96,26 @@ export class DefenseController {
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'List all defenses' })
   @ApiDefenseListResponse()
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Ordenação por data de criação',
+    schema: { default: 'desc' },
+  })
   async findAll(
     @CurrentUser() user: ICurrentUser,
     @Query() pagination: PaginationDto,
-    @Query('advisorId') advisorId?: string,
-    @Query('result') result?: 'PENDING' | 'APPROVED' | 'FAILED',
+    @Query('order') order?: 'asc' | 'desc',
   ): Promise<ListDefensesResponseDto> {
-    const { page = 1, limit = 10 } = pagination;
+    const { page = 1, perPage = 10 } = pagination;
     const { items, total } = await this.listDefensesUseCase.execute({
-      advisorId,
-      result,
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (page - 1) * perPage,
+      take: perPage,
+      order: order || 'desc',
     }, user);
 
-    return DefenseSerializer.serializeListToResponse(items, user, page, limit, total);
+    return DefenseSerializer.serializeListToResponse(items, user, page, perPage, total);
   }
 
   @Get(':id')

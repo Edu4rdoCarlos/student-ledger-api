@@ -409,6 +409,28 @@ async function main() {
     },
   });
 
+  // Estudante 12: TCC aguardando aprovações iniciais - nenhum orientador ou coordenador assinou
+  const studentUser12 = await prisma.user.upsert({
+    where: { email: 'aluno12@ufrgs.edu.br' },
+    update: {},
+    create: {
+      email: 'aluno12@ufrgs.edu.br',
+      password: defaultPassword,
+      name: 'Isabela Mendes Carvalho',
+      role: Role.STUDENT,
+        },
+  });
+
+  const student12 = await prisma.student.upsert({
+    where: { registration: '01234567' },
+    update: {},
+    create: {
+      id: studentUser12.id,
+      registration: '01234567',
+      courseId: courseCC.id,
+    },
+  });
+
   console.log(`  ✓ ${studentUser1.email} (${student1.registration}) - TCC Aprovado`);
   console.log(`  ✓ ${studentUser2.email} (${student2.registration}) - TCC Reprovado`);
   console.log(`  ✓ ${studentUser3.email} (${student3.registration}) - TCC Pendente`);
@@ -420,6 +442,7 @@ async function main() {
   console.log(`  ✓ ${studentUser9.email} (${student9.registration}) - TCC Aprovado (Nota Mínima)`);
   console.log(`  ✓ ${studentUser10.email} (${student10.registration}) - TCC com Versão Ajustada`);
   console.log(`  ✓ ${studentUser11.email} (${student11.registration}) - Múltiplas Defesas (Cancelada + Completa)`);
+  console.log(`  ✓ ${studentUser12.email} (${student12.registration}) - TCC Aguardando Aprovações Iniciais`);
 
   console.log('\n📝 Creating Defenses...');
 
@@ -710,6 +733,39 @@ async function main() {
     },
   });
 
+  // Defesa 9: Aguardando aprovações iniciais - aluno12
+  const defenseAguardandoAprovacoes = await prisma.defense.upsert({
+    where: { id: 'defense-aguardando-aprovacoes' },
+    update: {},
+    create: {
+      id: 'defense-aguardando-aprovacoes',
+      title: 'Aplicação Mobile para Gestão de Tarefas com Sincronização Cloud',
+      defenseDate: new Date('2024-12-18T14:00:00Z'),
+      location: 'Sala 103 - Bloco II',
+      finalGrade: 8.0,
+      result: DefenseResult.APPROVED,
+      status: DefenseStatus.COMPLETED,
+      advisorId: advisor1.id,
+      students: {
+        create: {
+          studentId: student12.id,
+        },
+      },
+      examBoard: {
+        create: [
+          {
+            name: 'Prof. Dr. Roberto Silva',
+            email: 'roberto.silva@ufrgs.edu.br',
+          },
+          {
+            name: 'Profa. Dra. Cristina Moreira',
+            email: 'cristina.moreira@ufrgs.edu.br',
+          },
+        ],
+      },
+    },
+  });
+
   console.log(`  ✓ "${defenseAprovada.title.substring(0, 50)}..." (APROVADO)`);
   console.log(`  ✓ "${defenseReprovada.title.substring(0, 50)}..." (REPROVADO)`);
   console.log(`  ✓ "${defensePendente.title.substring(0, 50)}..." (PENDENTE)`);
@@ -718,6 +774,7 @@ async function main() {
   console.log(`  ✓ "${defenseCancelada.title.substring(0, 50)}..." (CANCELADA)`);
   console.log(`  ✓ "${defenseNotaMinima.title.substring(0, 50)}..." (NOTA MÍNIMA)`);
   console.log(`  ✓ "${defenseVersaoAjustada.title.substring(0, 50)}..." (VERSÃO AJUSTADA)`);
+  console.log(`  ✓ "${defenseAguardandoAprovacoes.title.substring(0, 50)}..." (AGUARDANDO APROVAÇÕES)`);
 
   console.log('\n📄 Creating Documents...');
 
@@ -845,6 +902,21 @@ async function main() {
     },
   });
 
+  // Documento 9: ATA aguardando aprovações - defesa9
+  const docHash9 = crypto.createHash('sha256').update('ata-defense-aguardando-v1').digest('hex');
+  const docAguardandoAprovacoes = await prisma.document.upsert({
+    where: { id: 'doc-ata-aguardando' },
+    update: {},
+    create: {
+      id: 'doc-ata-aguardando',
+
+      version: 1,
+      documentHash: docHash9,
+      status: DocumentStatus.PENDING,
+      defenseId: defenseAguardandoAprovacoes.id,
+    },
+  });
+
   console.log(`  ✓ ATA - Defense 1 (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Reprovada (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Dupla (APROVADO, na blockchain)`);
@@ -852,6 +924,7 @@ async function main() {
   console.log(`  ✓ ATA - Defense Nota Mínima (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Ajustada v1 (INATIVO - rejeitado)`);
   console.log(`  ✓ ATA - Defense Ajustada v2 (APROVADO - versão corrigida, na blockchain)`);
+  console.log(`  ✓ ATA - Defense Aguardando (PENDENTE - sem aprovações)`);
 
   console.log('\n✅ Creating Approvals...');
 
@@ -1138,6 +1211,37 @@ async function main() {
     },
   });
 
+  // Aprovações para documento aguardando (estudante aprovou, orientador e coordenador pendentes)
+  await prisma.approval.upsert({
+    where: { documentId_role_approverId: { documentId: docAguardandoAprovacoes.id, role: ApprovalRole.STUDENT, approverId: studentUser12.id as string } },
+    update: {},
+    create: {
+      documentId: docAguardandoAprovacoes.id,
+      role: ApprovalRole.STUDENT,
+      status: ApprovalStatus.APPROVED,
+      approverId: studentUser12.id,
+      approvedAt: new Date('2024-12-18T16:00:00Z'),
+    },
+  });
+
+  // Aprovação do orientador ainda pendente (sem approverId definido)
+  await prisma.approval.create({
+    data: {
+      documentId: docAguardandoAprovacoes.id,
+      role: ApprovalRole.ADVISOR,
+      status: ApprovalStatus.PENDING,
+    },
+  });
+
+  // Aprovação do coordenador ainda pendente (sem approverId definido)
+  await prisma.approval.create({
+    data: {
+      documentId: docAguardandoAprovacoes.id,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.PENDING,
+    },
+  });
+
   console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Reprovada (todas APPROVED - defesa FAILED)`);
   console.log(`  ✓ 4 aprovações para ATA Defense Dupla (todas APPROVED - TCC em dupla)`);
@@ -1145,6 +1249,7 @@ async function main() {
   console.log(`  ✓ 3 aprovações para ATA Defense Nota Mínima (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v1 (2 APPROVED, 1 REJECTED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v2 (todas APPROVED)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Aguardando (1 APPROVED, 2 PENDING)`);
 
   console.log('\n' + '='.repeat(50));
   console.log('🎉 Seed completed successfully!');
@@ -1166,6 +1271,7 @@ async function main() {
   console.log(`  STUDENT:     ${studentUser8.email} - TCC Cancelado`);
   console.log(`  STUDENT:     ${studentUser9.email} - TCC Nota Mínima`);
   console.log(`  STUDENT:     ${studentUser10.email} - TCC Versão Ajustada`);
+  console.log(`  STUDENT:     ${studentUser12.email} - TCC Aguardando Aprovações`);
   console.log('─'.repeat(50));
 }
 

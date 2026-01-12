@@ -92,4 +92,20 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     });
     return count > 0;
   }
+
+  async getSummary() {
+    const [totalDocuments, pendingDocuments, approvedDocuments, totalStudents] = await Promise.all([
+      this.prisma.document.count(),
+      this.prisma.document.count({ where: { status: 'PENDING' } }),
+      this.prisma.document.count({ where: { status: 'APPROVED' } }),
+      this.prisma.student.count(),
+    ]);
+
+    return {
+      totalDocuments,
+      pendingDocuments,
+      approvedDocuments,
+      totalStudents,
+    };
+  }
 }

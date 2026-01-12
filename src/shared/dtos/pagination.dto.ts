@@ -25,9 +25,9 @@ export class PaginationDto {
     required: false,
   })
   @Type(() => Number)
-  @IsInt({ message: 'Limit deve ser um número inteiro' })
-  @Min(1, { message: 'Limit deve ser no mínimo 1' })
-  @Max(100, { message: 'Limit deve ser no máximo 100' })
+  @IsInt({ message: 'perPage deve ser um número inteiro' })
+  @Min(1, { message: 'perPage deve ser no mínimo 1' })
+  @Max(100, { message: 'perPage deve ser no máximo 100' })
   @IsOptional()
-  limit?: number = 10;
+  perPage?: number = 10;
 }

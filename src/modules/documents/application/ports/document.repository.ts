@@ -2,8 +2,15 @@ import { Document, DocumentStatus } from '../../domain/entities';
 
 export interface DocumentFilters {
   status?: DocumentStatus;
-  
+
   defenseId?: string;
+}
+
+export interface DocumentSummary {
+  totalDocuments: number;
+  pendingDocuments: number;
+  approvedDocuments: number;
+  totalStudents: number;
 }
 
 export interface IDocumentRepository {
@@ -17,6 +24,7 @@ export interface IDocumentRepository {
   update(document: Document): Promise<Document>;
   delete(id: string): Promise<void>;
   existsByHash(hash: string): Promise<boolean>;
+  getSummary(): Promise<DocumentSummary>;
 }
 
 export const DOCUMENT_REPOSITORY = Symbol('IDocumentRepository');

@@ -104,8 +104,6 @@ export class PrismaDefenseRepository implements IDefenseRepository {
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     const where: any = {};
-    if (options?.advisorId) where.advisorId = options.advisorId;
-    if (options?.result) where.result = options.result;
     if (options?.courseId) {
       where.students = {
         some: {
@@ -122,7 +120,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
         skip: options?.skip,
         take: options?.take,
         include: this.includeRelations,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: options?.order || 'desc' },
       }),
       this.prisma.defense.count({ where }),
     ]);

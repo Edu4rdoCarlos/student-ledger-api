@@ -1,38 +1,76 @@
-import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { applyDecorators } from '@nestjs/common';
+import { ApiOperation, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
 import {
   ApiUnauthorizedErrorResponse,
   ApiForbiddenErrorResponse,
 } from '../../../../shared/decorators';
-import { ApprovalResponseDto } from '../dtos/response';
+import { PendingApprovalResponseDto, SignatureDto, StudentDto } from '../dtos/response';
 
 export function ListPendingApprovalsDocs() {
   return applyDecorators(
-    ApiExtraModels(ApprovalResponseDto),
+    ApiExtraModels(PendingApprovalResponseDto, SignatureDto, StudentDto),
     ApiOperation({
-      summary: 'List pending approvals',
+      summary: 'List pending approvals with details',
       description: `
-Lists pending approvals for the authenticated user.
+Lists pending approvals for the authenticated user with detailed information including document title, students, and all signatures.
 
 **Permissions:**
 - COORDINATOR/ADMIN: view all pending approvals
-- ADVISOR: view only approvals where they are the advisor
+- ADVISOR: view only approvals where they are the approver
 - STUDENT: view only their own approvals
 
-**Use cases:**
-- Coordinator needs to see all documents awaiting approval
-- Advisor needs to approve documents from their students
-- Student needs to approve minutes from their defense
+**Response includes:**
+- Document title (defense title)
+- List of students (name and registration)
+- Course name
+- All signatures for the document with their current status
       `,
     }),
-    ApiOkResponse({
+    ApiResponse({
+      status: 200,
       description: 'List of pending approvals returned successfully',
       schema: {
         type: 'object',
         properties: {
           data: {
             type: 'array',
-            items: { $ref: getSchemaPath(ApprovalResponseDto) },
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440000' },
+                role: { type: 'string', enum: ['COORDINATOR', 'ADVISOR', 'STUDENT'], example: 'ADVISOR' },
+                status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'PENDING' },
+                createdAt: { type: 'string', format: 'date-time', example: '2026-01-05T10:00:00Z' },
+                documentId: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440001' },
+                documentTitle: { type: 'string', example: 'Ata de Defesa - TCC Final' },
+                students: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', example: 'Maria Santos' },
+                      email: { type: 'string', example: 'maria.santos@example.com' },
+                      registration: { type: 'string', example: '2021001' },
+                    },
+                  },
+                },
+                courseName: { type: 'string', example: 'Engenharia de Software' },
+                signatures: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      role: { type: 'string', enum: ['COORDINATOR', 'ADVISOR', 'STUDENT'], example: 'COORDINATOR' },
+                      status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'APPROVED' },
+                      approverName: { type: 'string', example: 'João Silva' },
+                      approvedAt: { type: 'string', format: 'date-time', example: '2026-01-12T10:00:00Z' },
+                      justification: { type: 'string', example: 'Documento aprovado' },
+                    },
+                  },
+                },
+                approverId: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440002' },
+              },
+            },
           },
         },
       },

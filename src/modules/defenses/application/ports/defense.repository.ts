@@ -3,8 +3,7 @@ import { Defense } from '../../domain/entities';
 export interface FindAllOptions {
   skip?: number;
   take?: number;
-  advisorId?: string;
-  result?: 'PENDING' | 'APPROVED' | 'FAILED';
+  order?: 'asc' | 'desc';
   courseId?: string;
 }
 
