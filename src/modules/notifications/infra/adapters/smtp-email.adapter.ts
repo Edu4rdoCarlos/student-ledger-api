@@ -17,8 +17,8 @@ export class SmtpEmailAdapter implements IEmailProvider {
     private readonly emailTemplateService: EmailTemplateService,
   ) {
     const host = this.configService.get<string>('GOOGLE_SMTP_HOST', 'smtp.gmail.com');
-    const port = this.configService.get<number>('GOOGLE_SMTP_PORT', 587);
-    const secure = this.configService.get<boolean>('GOOGLE_SMTP_SECURE', false);
+    const port = parseInt(this.configService.get<string>('GOOGLE_SMTP_PORT', '587'));
+    const secure = this.configService.get<string>('GOOGLE_SMTP_SECURE', 'false') === 'true';
     const user = this.configService.get<string>('GOOGLE_SMTP_USER');
     const password = this.configService.get<string>('GOOGLE_SMTP_PASSWORD');
 
