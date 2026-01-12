@@ -6,7 +6,6 @@ import { PaginationMetadata } from '../../../../shared/dtos';
 export interface ListCoursesQuery {
   page?: number;
   perPage?: number;
-  departmentId?: string;
 }
 
 export interface ListCoursesResponse {
@@ -29,7 +28,6 @@ export class ListCoursesUseCase {
     const { items, total } = await this.courseRepository.findAll({
       skip,
       take: perPage,
-      departmentId: query?.departmentId,
     });
 
     return {

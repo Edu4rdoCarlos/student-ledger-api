@@ -80,7 +80,6 @@ async function bootstrap() {
     .addTag('Approvals', 'Document approval workflow')
     .addTag('Students', 'Student management')
     .addTag('Advisors', 'Advisor management')
-    .addTag('Departments', 'Department management')
     .addTag('Courses', 'Course management')
     .build();
 

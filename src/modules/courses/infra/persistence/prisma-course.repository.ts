@@ -18,7 +18,6 @@ export class PrismaCourseRepository implements ICourseRepository {
     const found = await this.prisma.course.findUnique({
       where: { id },
       include: {
-        department: true,
         coordinator: {
           where: {
             isActive: true,
@@ -36,7 +35,6 @@ export class PrismaCourseRepository implements ICourseRepository {
     const found = await this.prisma.course.findUnique({
       where: { code },
       include: {
-        department: true,
         coordinator: {
           where: {
             isActive: true,
@@ -51,16 +49,12 @@ export class PrismaCourseRepository implements ICourseRepository {
   }
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    const where = options?.departmentId ? { departmentId: options.departmentId } : {};
-
     const [items, total] = await Promise.all([
       this.prisma.course.findMany({
-        where,
         skip: options?.skip,
         take: options?.take,
         orderBy: { createdAt: 'asc' },
         include: {
-          department: true,
           coordinator: {
             where: {
               isActive: true,
@@ -71,7 +65,7 @@ export class PrismaCourseRepository implements ICourseRepository {
           },
         },
       }),
-      this.prisma.course.count({ where }),
+      this.prisma.course.count(),
     ]);
 
     return {

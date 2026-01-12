@@ -2,7 +2,6 @@ import { Inject, Injectable, NotFoundException, BadRequestException } from '@nes
 import { ICourseRepository, COURSE_REPOSITORY } from '../ports';
 import { CourseNotFoundError } from '../../domain/errors';
 import { UpdateCourseDto, CourseResponseDto } from '../../presentation/dtos';
-import { IDepartmentRepository, DEPARTMENT_REPOSITORY } from '../../../departments/application/ports';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 
 @Injectable()
@@ -10,8 +9,6 @@ export class UpdateCourseUseCase {
   constructor(
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
-    @Inject(DEPARTMENT_REPOSITORY)
-    private readonly departmentRepository: IDepartmentRepository,
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
   ) {}
@@ -20,13 +17,6 @@ export class UpdateCourseUseCase {
     const course = await this.courseRepository.findByCode(code);
     if (!course) {
       throw new CourseNotFoundError(code);
-    }
-
-    if (dto.departmentId !== undefined) {
-      const department = await this.departmentRepository.findById(dto.departmentId);
-      if (!department) {
-        throw new NotFoundException(`Departamento não encontrado: ${dto.departmentId}`);
-      }
     }
 
     if (dto.coordinatorId !== undefined) {
@@ -50,7 +40,6 @@ export class UpdateCourseUseCase {
 
     course.update({
       name: dto.name,
-      departmentId: dto.departmentId,
       active: dto.active,
       coordinatorId: dto.coordinatorId,
     });

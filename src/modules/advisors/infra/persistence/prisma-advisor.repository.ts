@@ -14,7 +14,6 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       data,
       include: {
         user: true,
-        department: true,
         course: true,
       }
     });
@@ -26,7 +25,6 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       where: { id },
       include: {
         user: true,
-        department: true,
         course: true,
       },
     });
@@ -38,7 +36,6 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       where: { id: userId },
       include: {
         user: true,
-        department: true,
         course: true,
       },
     });
@@ -50,7 +47,6 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       where: { courseId },
       include: {
         user: true,
-        department: true,
         course: true,
       },
       orderBy: { createdAt: 'asc' },
@@ -68,8 +64,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
         take: options?.take,
         include: {
           user: true,
-          department: true,
-          course: true,
+            course: true,
         },
         orderBy: { createdAt: 'asc' },
       }),
@@ -89,7 +84,6 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       data,
       include: {
         user: true,
-        department: true,
         course: true,
       }
     });

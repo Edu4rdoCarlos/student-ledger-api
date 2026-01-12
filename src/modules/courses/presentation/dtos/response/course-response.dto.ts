@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Course } from '../../../domain/entities';
-import { DepartmentResponseDto } from '../../../../departments/presentation/dtos';
 
 export class CoordinatorBasicDto {
   @ApiProperty({ description: 'ID do usuário' })
@@ -26,9 +25,6 @@ export class CourseResponseDto {
   @ApiProperty({ description: 'Nome do curso' })
   name: string;
 
-  @ApiProperty({ required: false, description: 'Informações do departamento' })
-  department?: DepartmentResponseDto;
-
   @ApiProperty({ required: false, description: 'Informações do coordenador' })
   coordinator?: CoordinatorBasicDto;
 
@@ -43,7 +39,6 @@ export class CourseResponseDto {
     dto.id = course.id;
     dto.code = course.code;
     dto.name = course.name;
-    dto.department = course.department ? DepartmentResponseDto.fromEntity(course.department) : undefined;
     dto.coordinator = course.coordinator ? {
       id: course.coordinator.id,
       email: course.coordinator.email,

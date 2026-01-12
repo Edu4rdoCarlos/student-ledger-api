@@ -9,11 +9,6 @@ export class UpdateAdvisorDto {
   @MaxLength(200, { message: 'Nome deve ter no máximo 200 caracteres' })
   name?: string;
 
-  @ApiProperty({ example: 'uuid-do-departamento', description: 'ID do departamento', required: false })
-  @IsUUID()
-  @IsOptional()
-  departmentId?: string;
-
   @ApiProperty({ example: 'Machine Learning', description: 'Área de especialização do orientador', required: false })
   @IsString()
   @IsOptional()

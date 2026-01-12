@@ -3,7 +3,6 @@ import { Course } from '../../domain/entities';
 export interface FindAllOptions {
   skip?: number;
   take?: number;
-  departmentId?: string;
 }
 
 export interface FindAllResult {

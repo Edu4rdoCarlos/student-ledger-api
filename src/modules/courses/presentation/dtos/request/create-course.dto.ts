@@ -16,11 +16,6 @@ export class CreateCourseDto {
   @MaxLength(200, { message: 'Nome do curso deve ter no máximo 200 caracteres' })
   name: string;
 
-  @ApiProperty({ example: 'uuid-do-departamento', description: 'ID do departamento', required: false })
-  @IsUUID()
-  @IsOptional()
-  departmentId?: string;
-
   @ApiProperty({ example: true, description: 'Indica se o curso está ativo', default: true })
   @IsBoolean()
   @IsOptional()

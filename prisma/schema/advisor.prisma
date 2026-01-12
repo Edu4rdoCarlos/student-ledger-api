@@ -9,13 +9,9 @@ model Advisor {
 
   user User @relation(fields: [id], references: [id])
 
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-
   courseId String?
   course   Course?   @relation(fields: [courseId], references: [id])
   defenses Defense[]
 
-  @@index([departmentId])
   @@index([courseId])
 }

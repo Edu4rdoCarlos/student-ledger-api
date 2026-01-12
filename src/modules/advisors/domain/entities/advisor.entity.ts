@@ -1,10 +1,7 @@
 import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
-import { Department } from '../../../departments/domain/entities';
 import { Course } from '../../../courses/domain/entities';
 
 export interface AdvisorProps extends UserBaseProps {
-  departmentId?: string;
-  department?: Department;
   specialization?: string;
   courseId?: string;
   course?: Course;
@@ -28,14 +25,6 @@ export class Advisor extends UserBase {
     return this.id;
   }
 
-  get departmentId(): string | undefined {
-    return (this.props as AdvisorProps).departmentId;
-  }
-
-  get department(): Department | undefined {
-    return (this.props as AdvisorProps).department;
-  }
-
   get specialization(): string | undefined {
     return (this.props as AdvisorProps).specialization;
   }
@@ -52,8 +41,7 @@ export class Advisor extends UserBase {
     return (this.props as AdvisorProps).isActive;
   }
 
-  update(data: Partial<Pick<AdvisorProps, 'departmentId' | 'specialization' | 'courseId' | 'isActive'>>): void {
-    if (data.departmentId !== undefined) (this.props as any).departmentId = data.departmentId;
+  update(data: Partial<Pick<AdvisorProps, 'specialization' | 'courseId' | 'isActive'>>): void {
     if (data.specialization !== undefined) (this.props as any).specialization = data.specialization;
     if (data.courseId !== undefined) (this.props as any).courseId = data.courseId;
     if (data.isActive !== undefined) (this.props as any).isActive = data.isActive;

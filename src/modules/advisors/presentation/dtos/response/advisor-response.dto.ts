@@ -1,14 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Advisor } from '../../../domain/entities';
 
-class DepartmentInfo {
-  @ApiProperty({ description: 'ID do departamento' })
-  id: string;
-
-  @ApiProperty({ description: 'Nome do departamento' })
-  name: string;
-}
-
 class CourseInfo {
   @ApiProperty({ description: 'ID do curso' })
   id: string;
@@ -23,9 +15,6 @@ class CourseInfo {
 export class AdvisorResponseDto {
   @ApiProperty({ description: 'ID do usuário do orientador' })
   userId: string;
-
-  @ApiProperty({ required: false, type: DepartmentInfo, description: 'Informações do departamento' })
-  department?: DepartmentInfo;
 
   @ApiProperty({ required: false, description: 'Área de especialização' })
   specialization?: string;
@@ -45,14 +34,6 @@ export class AdvisorResponseDto {
     dto.specialization = advisor.specialization;
     dto.createdAt = advisor.createdAt!;
     dto.updatedAt = advisor.updatedAt!;
-
-    // Incluir informações do departamento se disponível
-    if (advisor.department) {
-      dto.department = {
-        id: advisor.department.id,
-        name: advisor.department.name,
-      };
-    }
 
     // Incluir informações do curso se disponível
     if (advisor.course) {

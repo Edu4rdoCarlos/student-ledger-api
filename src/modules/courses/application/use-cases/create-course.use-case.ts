@@ -20,7 +20,6 @@ export class CreateCourseUseCase {
     const course = Course.create({
       code: dto.code,
       name: dto.name,
-      departmentId: dto.departmentId,
       active: dto.active ?? true,
       coordinatorId: dto.coordinatorId,
     });

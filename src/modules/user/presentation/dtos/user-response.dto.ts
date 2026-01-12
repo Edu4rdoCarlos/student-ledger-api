@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseResponseDto } from '../../../courses/presentation/dtos';
-import { DepartmentResponseDto } from '../../../departments/presentation/dtos';
 import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
 export class UserStudentDataDto {
@@ -24,9 +23,6 @@ export class UserAdvisorDataDto {
   @ApiProperty({ required: false, description: 'Área de especialização' })
   specialization?: string;
 
-  @ApiProperty({ required: false, description: 'Dados completos do departamento' })
-  department?: DepartmentResponseDto;
-
   @ApiProperty({ required: false, description: 'Dados completos do curso' })
   course?: CourseResponseDto;
 
@@ -43,9 +39,6 @@ export class UserCoordinatorDataDto {
 
   @ApiProperty({ required: false, description: 'Dados completos do curso' })
   course?: CourseResponseDto;
-
-  @ApiProperty({ required: false, description: 'Dados completos do departamento (através do curso)' })
-  department?: DepartmentResponseDto;
 }
 
 export class UserMetadataDto {

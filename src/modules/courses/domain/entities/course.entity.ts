@@ -1,13 +1,10 @@
-import { Department } from '../../../departments/domain/entities';
 import { UserBase } from '../../../user/domain/entities';
 
 export interface CourseProps {
   code: string;
   name: string;
-  departmentId?: string;
   active: boolean;
   coordinatorId?: string;
-  department?: Department;
   coordinator?: UserBase;
   createdAt?: Date;
   updatedAt?: Date;
@@ -45,20 +42,12 @@ export class Course {
     return this.props.name;
   }
 
-  get departmentId(): string | undefined {
-    return this.props.departmentId;
-  }
-
   get active(): boolean {
     return this.props.active;
   }
 
   get coordinatorId(): string | undefined {
     return this.props.coordinatorId;
-  }
-
-  get department(): Department | undefined {
-    return this.props.department;
   }
 
   get coordinator(): UserBase | undefined {
@@ -73,9 +62,8 @@ export class Course {
     return this.props.updatedAt!;
   }
 
-  update(data: Partial<Pick<CourseProps, 'name' | 'departmentId' | 'active' | 'coordinatorId'>>): void {
+  update(data: Partial<Pick<CourseProps, 'name' | 'active' | 'coordinatorId'>>): void {
     if (data.name !== undefined) this.props.name = data.name;
-    if (data.departmentId !== undefined) this.props.departmentId = data.departmentId;
     if (data.active !== undefined) this.props.active = data.active;
     if (data.coordinatorId !== undefined) this.props.coordinatorId = data.coordinatorId;
     this.props.updatedAt = new Date();

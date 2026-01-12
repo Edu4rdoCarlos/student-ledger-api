@@ -37,7 +37,6 @@ export class CreateAdvisorUseCase {
       email: user.email,
       name: user.name,
       role: user.role,
-      departmentId: dto.departmentId,
       specialization: dto.specialization,
       courseId: dto.courseId,
       isActive: true,

@@ -7,15 +7,11 @@ model Course {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-
   coordinatorId String?
   coordinator   Coordinator? @relation("CourseCoordinator", fields: [coordinatorId], references: [id])
 
   students Student[]
   advisors Advisor[]
 
-  @@index([departmentId])
   @@index([coordinatorId])
 }

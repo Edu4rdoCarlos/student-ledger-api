@@ -23,7 +23,6 @@ export class CoordinatorMapper {
       course: firstCourse ? Course.create({
         code: firstCourse.code,
         name: firstCourse.name,
-        departmentId: firstCourse.departmentId || undefined,
         active: firstCourse.active,
         coordinatorId: firstCourse.coordinatorId || undefined,
         createdAt: firstCourse.createdAt,

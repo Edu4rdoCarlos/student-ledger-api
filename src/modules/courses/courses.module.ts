@@ -9,11 +9,10 @@ import {
   ListCoursesUseCase,
   UpdateCourseUseCase,
 } from './application/use-cases';
-import { DepartmentsModule } from '../departments/departments.module';
 import { CoordinatorsModule } from '../coordinators/coordinators.module';
 
 @Module({
-  imports: [PrismaModule, DepartmentsModule, forwardRef(() => CoordinatorsModule)],
+  imports: [PrismaModule, forwardRef(() => CoordinatorsModule)],
   controllers: [CoursesController],
   providers: [
     {

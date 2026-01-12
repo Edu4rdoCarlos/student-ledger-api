@@ -7,7 +7,6 @@ import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/applicati
 import { DEFENSE_REPOSITORY, IDefenseRepository } from '../../../defenses/application/ports';
 import { UserResponseDto, UserMetadataDto } from '../../presentation/dtos';
 import { CourseResponseDto } from '../../../courses/presentation/dtos';
-import { DepartmentResponseDto } from '../../../departments/presentation/dtos';
 import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
 @Injectable()
@@ -65,7 +64,6 @@ export class GetUserUseCase {
         metadata.advisor = {
           userId: advisor.id,
           specialization: advisor.specialization,
-          department: advisor.department ? DepartmentResponseDto.fromEntity(advisor.department) : undefined,
           course: advisor.course ? CourseResponseDto.fromEntity(advisor.course) : undefined,
           defenses: defenses.map(DefenseResponseDto.fromEntity),
         };
@@ -79,7 +77,6 @@ export class GetUserUseCase {
           userId: coordinator.id,
           isActive: coordinator.isActive,
           course: course ? CourseResponseDto.fromEntity(course) : undefined,
-          department: course?.department ? DepartmentResponseDto.fromEntity(course.department) : undefined,
         };
       }
     }

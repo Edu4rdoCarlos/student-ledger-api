@@ -1,6 +1,5 @@
-import { Course as PrismaCourse, Department as PrismaDepartment, Coordinator as PrismaCoordinator, User as PrismaUser } from '@prisma/client';
+import { Course as PrismaCourse, Coordinator as PrismaCoordinator, User as PrismaUser } from '@prisma/client';
 import { Course } from '../../domain/entities';
-import { DepartmentMapper } from '../../../departments/infra/persistence/department.mapper';
 import { UserBase } from '../../../user/domain/entities';
 
 type CoordinatorWithUser = PrismaCoordinator & {
@@ -8,7 +7,6 @@ type CoordinatorWithUser = PrismaCoordinator & {
 };
 
 type CourseWithRelations = PrismaCourse & {
-  department?: PrismaDepartment | null;
   coordinator?: CoordinatorWithUser | null;
 };
 
@@ -18,10 +16,8 @@ export class CourseMapper {
       {
         code: prisma.code,
         name: prisma.name,
-        departmentId: prisma.departmentId || undefined,
         active: prisma.active,
         coordinatorId: prisma.coordinatorId || undefined,
-        department: prisma.department ? DepartmentMapper.toDomain(prisma.department) : undefined,
         coordinator: prisma.coordinator ? new UserBase({
           id: prisma.coordinator.user.id,
           email: prisma.coordinator.user.email,
@@ -43,7 +39,6 @@ export class CourseMapper {
       id: course.id,
       code: course.code,
       name: course.name,
-      departmentId: course.departmentId || null,
       active: course.active,
       coordinatorId: course.coordinatorId || null,
       createdAt: course.createdAt,
