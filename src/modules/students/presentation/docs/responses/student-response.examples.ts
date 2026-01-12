@@ -11,6 +11,12 @@ export const STUDENT_RESPONSE_EXAMPLE = {
   reason: '',
   registeredBy: 'coordinator@ifal.local',
   status: 'APPROVED',
+  advisor: {
+    id: 'advisor-uuid-123',
+    name: 'Prof. Dr. João Silva',
+    email: 'joao.silva@ifal.local',
+    specialization: 'Engenharia de Software',
+  },
   examBoard: [
     {
       name: 'Prof. Dr. Carlos Alberto Silva',

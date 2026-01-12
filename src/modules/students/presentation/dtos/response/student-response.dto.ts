@@ -26,6 +26,20 @@ export class DefenseSignature {
   justification?: string;
 }
 
+export class AdvisorInDefense {
+  @ApiProperty({ description: 'ID do orientador', example: 'advisor-uuid-123' })
+  id: string;
+
+  @ApiProperty({ description: 'Nome do orientador', example: 'Prof. Dr. João Silva' })
+  name: string;
+
+  @ApiProperty({ description: 'Email do orientador', example: 'joao.silva@ifal.local' })
+  email: string;
+
+  @ApiPropertyOptional({ description: 'Especialização do orientador', example: 'Engenharia de Software' })
+  specialization?: string;
+}
+
 export class DefenseRecordDto {
   @ApiProperty({ description: 'ID do documento', example: 'DOC_202301_1_1704459600000' })
   documentId: string;
@@ -64,6 +78,12 @@ export class DefenseRecordDto {
   status: 'APPROVED';
 
   @ApiPropertyOptional({
+    description: 'Orientador da defesa',
+    type: AdvisorInDefense
+  })
+  advisor?: AdvisorInDefense;
+
+  @ApiPropertyOptional({
     description: 'Banca examinadora',
     type: [ExamBoardMember],
     isArray: true
@@ -94,6 +114,12 @@ export interface DefenseRecord {
   reason: string;
   registeredBy: string;
   status: 'APPROVED';
+  advisor?: {
+    id: string;
+    name: string;
+    email: string;
+    specialization?: string;
+  };
   examBoard?: Array<{
     name: string;
     email: string;
@@ -112,6 +138,13 @@ export interface CourseInfo {
   id: string;
   name: string;
   code: string;
+}
+
+export interface AdvisorInfo {
+  id: string;
+  name: string;
+  email: string;
+  specialization?: string;
 }
 
 export class StudentResponseDto {

@@ -43,7 +43,6 @@ export class GetStudentUseCase {
       throw new NotFoundException('Curso não encontrado');
     }
 
-    // Buscar defesas do banco de dados
     const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
     let defenses: DefenseRecord[] = [];
 
@@ -140,6 +139,12 @@ export class GetStudentUseCase {
         reason: '',
         registeredBy: defense.advisor?.email || '',
         status: 'APPROVED' as const,
+        advisor: defense.advisor ? {
+          id: defense.advisor.id,
+          name: defense.advisor.name,
+          email: defense.advisor.email,
+          specialization: defense.advisor.specialization,
+        } : undefined,
         examBoard: defense.examBoard?.map((member: any) => ({
           name: member.name,
           email: member.email,
