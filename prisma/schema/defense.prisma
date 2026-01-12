@@ -14,6 +14,7 @@ model Defense {
   students     DefenseStudent[]
   documents    Document[]
   examBoard    ExamBoardMember[]
+  events       DefenseEvent[]
 
   @@index([advisorId])
   @@index([result])
@@ -48,6 +49,20 @@ model ExamBoardMember {
   @@index([email])
 }
 
+model DefenseEvent {
+  id        String            @id @default(uuid())
+  type      DefenseEventType
+  reason    String
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  defenseId String
+  defense   Defense @relation(fields: [defenseId], references: [id], onDelete: Cascade)
+
+  @@index([defenseId])
+  @@index([type])
+}
+
 enum DefenseResult {
   PENDING
   APPROVED
@@ -58,4 +73,9 @@ enum DefenseStatus {
   SCHEDULED
   CANCELED
   COMPLETED
+}
+
+enum DefenseEventType {
+  CANCELED
+  RESCHEDULED
 }

@@ -38,6 +38,7 @@ import {
   UpdateDefenseDto,
   SubmitDefenseResultDto,
   RescheduleDefenseDto,
+  CancelDefenseDto,
 } from '../dtos/request';
 import { DefenseResponseDto, SubmitDefenseResultResponseDto, ListDefensesResponseDto } from '../dtos/response';
 import { DocumentResponseDto } from '../../../documents/presentation/dtos/response';
@@ -206,8 +207,14 @@ export class DefenseController {
   @Roles('ADMIN', 'COORDINATOR')
   @ApiOperation({ summary: 'Cancel a defense (coordinator only)' })
   @ApiDefenseCancelResponse()
-  async cancel(@Param('id') id: string): Promise<HttpResponse<DefenseResponseDto>> {
-    const defense = await this.cancelDefenseUseCase.execute(id);
+  async cancel(
+    @Param('id') id: string,
+    @Body() cancelDto: CancelDefenseDto,
+  ): Promise<HttpResponse<DefenseResponseDto>> {
+    const defense = await this.cancelDefenseUseCase.execute({
+      defenseId: id,
+      cancellationReason: cancelDto.cancellationReason,
+    });
     return DefenseSerializer.serializeToHttpResponse(defense);
   }
 
@@ -222,6 +229,7 @@ export class DefenseController {
     const defense = await this.rescheduleDefenseUseCase.execute({
       defenseId: id,
       newDate: new Date(rescheduleDto.defenseDate),
+      rescheduleReason: rescheduleDto.rescheduleReason,
     });
     return DefenseSerializer.serializeToHttpResponse(defense);
   }

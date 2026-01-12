@@ -158,23 +158,25 @@ export class Defense {
     this.props.updatedAt = new Date();
   }
 
-  cancel(): void {
+  cancel(reason: string): void {
     if (this.props.status === 'COMPLETED') {
       throw new Error('Não é possível cancelar uma defesa já concluída');
     }
-    if (this.props.status === 'CANCELED') {
-      throw new Error('Defesa já está cancelada');
+    if (!reason || reason.trim().length === 0) {
+      throw new Error('Motivo do cancelamento é obrigatório');
     }
     this.props.status = 'CANCELED';
+    this.props.result = 'FAILED';
+    this.props.finalGrade = 0;
     this.props.updatedAt = new Date();
   }
 
-  reschedule(newDate: Date): void {
+  reschedule(newDate: Date, reason: string): void {
     if (this.props.status === 'COMPLETED') {
       throw new Error('Não é possível reagendar uma defesa já concluída');
     }
-    if (this.props.status === 'CANCELED') {
-      throw new Error('Não é possível reagendar uma defesa cancelada');
+    if (!reason || reason.trim().length === 0) {
+      throw new Error('Motivo do reagendamento é obrigatório');
     }
     this.props.defenseDate = newDate;
     this.props.updatedAt = new Date();

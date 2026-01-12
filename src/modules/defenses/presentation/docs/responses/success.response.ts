@@ -63,7 +63,7 @@ export const ApiDefenseCancelResponse = () =>
   applyDecorators(
     ApiExtraModels(DefenseResponseDto, AdvisorInDefenseDto, StudentInDefenseDto, DocumentInDefenseDto, ExamBoardMemberResponseDto),
     ApiOkResponse({
-      description: 'Defesa cancelada com sucesso. O status da defesa é atualizado para CANCELED. Não é possível cancelar defesas já concluídas.',
+      description: 'Defesa cancelada com sucesso. O status da defesa é atualizado para CANCELED e um evento de cancelamento é registrado no histórico com o motivo fornecido. Não é possível cancelar defesas já concluídas.',
       schema: {
         type: 'object',
         properties: {
@@ -79,7 +79,7 @@ export const ApiDefenseRescheduleResponse = () =>
   applyDecorators(
     ApiExtraModels(DefenseResponseDto, AdvisorInDefenseDto, StudentInDefenseDto, DocumentInDefenseDto, ExamBoardMemberResponseDto),
     ApiOkResponse({
-      description: 'Defesa reagendada com sucesso. A data da defesa é atualizada. Não é possível reagendar defesas canceladas ou já concluídas.',
+      description: 'Defesa reagendada com sucesso. A data da defesa é atualizada e um evento de reagendamento é registrado no histórico com o motivo fornecido e as datas antiga e nova. Não é possível reagendar defesas já concluídas.',
       schema: {
         type: 'object',
         properties: {

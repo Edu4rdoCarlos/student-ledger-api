@@ -587,7 +587,8 @@ async function main() {
       title: 'Análise de Performance em Aplicações Web Modernas',
       defenseDate: new Date('2024-09-15T14:00:00Z'),
       location: 'Sala 203 - Prédio Central',
-      result: DefenseResult.PENDING,
+      finalGrade: 0,
+      result: DefenseResult.FAILED,
       status: DefenseStatus.CANCELED,
       advisorId: advisor1.id,
       students: {
@@ -603,6 +604,17 @@ async function main() {
           },
         ],
       },
+    },
+  });
+
+  await prisma.defenseEvent.upsert({
+    where: { id: 'event-defense-cancelada' },
+    update: {},
+    create: {
+      id: 'event-defense-cancelada',
+      defenseId: defenseCancelada.id,
+      type: 'CANCELED',
+      reason: 'Estudante solicitou trancamento de matrícula',
     },
   });
 

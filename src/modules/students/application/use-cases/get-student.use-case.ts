@@ -44,23 +44,6 @@ export class GetStudentUseCase {
     }
 
     const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
-    this.logger.log(`[GET STUDENT] Matrícula: ${student.matricula}, StudentId: ${student.id}`);
-    this.logger.log(`[GET STUDENT] Defesas encontradas no DB: ${dbDefenses.length}`);
-    dbDefenses.forEach((defense, index) => {
-      this.logger.log(`[GET STUDENT] Defesa ${index + 1}: ${JSON.stringify({
-        id: defense.id,
-        title: defense.title,
-        result: defense.result,
-        status: defense.status,
-        documentsCount: defense.documents?.length || 0,
-        documents: defense.documents?.map(doc => ({
-          id: doc.id,
-          status: doc.status,
-          version: doc.version,
-          type: doc.type,
-        })),
-      })}`);
-    });
     let defenses: DefenseRecord[] = [];
 
     try {
@@ -141,14 +124,10 @@ export class GetStudentUseCase {
   }
 
   private mapDBDefensesToRecords(dbDefenses: any[], currentStudentId?: string): DefenseRecord[] {
-    this.logger.log(`[MAP DB DEFENSES] Mapeando ${dbDefenses.length} defesas do DB`);
-
-    const mapped = dbDefenses.map((defense, index) => {
+    const mapped = dbDefenses.map((defense) => {
       const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
       const latestDoc = defense.documents?.[0];
       const doc = approvedDoc || latestDoc;
-
-      this.logger.log(`[MAP DB DEFENSES] Defesa ${index + 1} - "${defense.title}": approvedDoc=${approvedDoc ? 'ENCONTRADO' : 'NÃO ENCONTRADO'}, usando doc=${doc ? doc.status : 'NENHUM'}, documentId=${doc?.id || 'VAZIO'}`);
 
       const coStudents = defense.students
         ?.filter((s: any) => s.id !== currentStudentId)
@@ -189,10 +168,7 @@ export class GetStudentUseCase {
       };
     });
 
-    const filtered = mapped.filter(defense => defense.documentId !== '');
-    this.logger.log(`[MAP DB DEFENSES] Após filtrar por documentId: ${filtered.length} defesas`);
-
-    return filtered;
+    return mapped;
   }
 
   private compareDefensesWithDB(
