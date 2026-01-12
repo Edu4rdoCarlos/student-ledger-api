@@ -61,6 +61,13 @@ export class PrismaCourseRepository implements ICourseRepository {
             },
             include: {
               user: true,
+              courses: {
+                select: {
+                  code: true,
+                  name: true,
+                  active: true,
+                },
+              },
             },
           },
         },

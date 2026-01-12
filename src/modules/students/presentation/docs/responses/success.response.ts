@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOkResponse, ApiCreatedResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
-import { StudentResponseDto } from '../../dtos';
+import { StudentResponseDto, StudentListItemDto } from '../../dtos';
 import { PaginationMetadata } from '../../../../../shared/dtos';
 
 export const ApiStudentCreatedResponse = () =>
@@ -54,7 +54,7 @@ export const ApiStudentOkResponse = () =>
 
 export const ApiStudentListResponse = () =>
   applyDecorators(
-    ApiExtraModels(StudentResponseDto, PaginationMetadata),
+    ApiExtraModels(StudentListItemDto, PaginationMetadata),
     ApiOkResponse({
       description: 'Lista de estudantes com metadados de paginação',
       schema: {
@@ -62,7 +62,7 @@ export const ApiStudentListResponse = () =>
         properties: {
           data: {
             type: 'array',
-            items: { $ref: getSchemaPath(StudentResponseDto) },
+            items: { $ref: getSchemaPath(StudentListItemDto) },
           },
           metadata: {
             $ref: getSchemaPath(PaginationMetadata),

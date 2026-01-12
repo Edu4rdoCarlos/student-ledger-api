@@ -4,12 +4,27 @@ export const STUDENT_RESPONSE_EXAMPLE = {
   studentRegistration: '202301',
   title: 'Sistema de Gerenciamento de TCC com Blockchain',
   defenseDate: '2024-01-05T10:00:00.000Z',
+  location: 'Sala 301 - Prédio da Computação',
   finalGrade: 8.5,
   result: 'APPROVED',
   version: 1,
   reason: '',
   registeredBy: 'coordinator@ifal.local',
   status: 'APPROVED',
+  examBoard: [
+    {
+      name: 'Prof. Dr. Carlos Alberto Silva',
+      email: 'carlos.silva@ifal.local',
+    },
+    {
+      name: 'Profa. Dra. Maria Fernanda Costa',
+      email: 'maria.costa@ifal.local',
+    },
+    {
+      name: 'Prof. Dr. João Pedro Santos',
+      email: 'joao.santos@ifal.local',
+    },
+  ],
   signatures: [
     {
       role: 'coordinator',

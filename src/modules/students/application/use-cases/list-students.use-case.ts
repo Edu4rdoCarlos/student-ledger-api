@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
-import { StudentResponseDto } from '../../presentation/dtos';
+import { StudentListItemDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
 import { ICurrentUser } from '../../../../shared/types';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { StudentListItemSerializer } from '../../presentation/serializers';
 
 export interface ListStudentsQuery {
   page?: number;
@@ -11,7 +13,7 @@ export interface ListStudentsQuery {
 }
 
 export interface ListStudentsResponse {
-  data: StudentResponseDto[];
+  data: StudentListItemDto[];
   metadata: PaginationMetadata;
 }
 
@@ -22,6 +24,8 @@ export class ListStudentsUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
   ) {}
 
   async execute(currentUser: ICurrentUser, query?: ListStudentsQuery): Promise<ListStudentsResponse> {
@@ -53,26 +57,20 @@ export class ListStudentsUseCase {
       fetchedCourses.filter(course => course !== null).map(course => [course!.id, course!]),
     );
 
-    const data = items.map((student) => {
+    const defensesPromises = items.map(student =>
+      this.defenseRepository.findByStudentId(student.id)
+    );
+    const defensesResults = await Promise.all(defensesPromises);
+
+    const data = items.map((student, index) => {
       const course = courseMap.get(student.courseId);
 
       if (!course) {
         throw new Error(`Course with ID ${student.courseId} not found for student ${student.id}`);
       }
 
-      return {
-        userId: student.id,
-        registration: student.matricula,
-        name: student.name,
-        email: student.email,
-        course: {
-          id: course.id,
-          name: course.name,
-          code: course.code,
-        },
-        createdAt: student.createdAt!,
-        updatedAt: student.updatedAt!,
-      };
+      const defenses = defensesResults[index];
+      return StudentListItemSerializer.serialize(student, course, defenses);
     });
 
     return {

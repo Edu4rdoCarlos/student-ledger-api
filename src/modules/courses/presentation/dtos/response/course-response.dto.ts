@@ -1,6 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Course } from '../../../domain/entities';
 
+export class CourseBasicDto {
+  @ApiProperty({ description: 'Código do curso' })
+  code: string;
+
+  @ApiProperty({ description: 'Nome do curso' })
+  name: string;
+
+  @ApiProperty({ description: 'Status do curso' })
+  active: boolean;
+}
+
 export class CoordinatorBasicDto {
   @ApiProperty({ description: 'ID do usuário' })
   id: string;
@@ -13,6 +24,9 @@ export class CoordinatorBasicDto {
 
   @ApiProperty({ description: 'Role do usuário', enum: ['ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT'] })
   role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+
+  @ApiProperty({ description: 'Cursos coordenados', type: [CourseBasicDto], required: false })
+  courses?: CourseBasicDto[];
 }
 
 export class CourseResponseDto {
@@ -44,6 +58,7 @@ export class CourseResponseDto {
       email: course.coordinator.email,
       name: course.coordinator.name,
       role: course.coordinator.role as 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT',
+      courses: course.coordinator.courses,
     } : undefined;
     dto.createdAt = course.createdAt;
     dto.updatedAt = course.updatedAt;

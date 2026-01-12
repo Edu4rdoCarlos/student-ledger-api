@@ -235,6 +235,7 @@ async function main() {
       id: 'defense-aprovada',
       title: 'Sistema Distribuído para Gerenciamento de Documentos Acadêmicos usando Blockchain',
       defenseDate: new Date('2024-12-15T14:00:00Z'),
+      location: 'Sala 301 - Prédio da Computação',
       finalGrade: 9.5,
       result: DefenseResult.APPROVED,
       advisorId: advisor1.id,
@@ -242,6 +243,22 @@ async function main() {
         create: {
           studentId: student1.id,
         },
+      },
+      examBoard: {
+        create: [
+          {
+            name: 'Prof. Dr. Carlos Alberto Silva',
+            email: 'carlos.silva@ufrgs.edu.br',
+          },
+          {
+            name: 'Profa. Dra. Maria Fernanda Costa',
+            email: 'maria.costa@ufrgs.edu.br',
+          },
+          {
+            name: 'Prof. Dr. João Pedro Santos',
+            email: 'joao.santos@ufrgs.edu.br',
+          },
+        ],
       },
     },
   });
@@ -253,6 +270,7 @@ async function main() {
       id: 'defense-reprovada',
       title: 'Análise de Algoritmos de Machine Learning para Detecção de Fraudes',
       defenseDate: new Date('2024-11-20T10:00:00Z'),
+      location: 'Auditório Central',
       finalGrade: 4.0,
       result: DefenseResult.FAILED,
       advisorId: advisor2.id,
@@ -260,6 +278,18 @@ async function main() {
         create: {
           studentId: student2.id,
         },
+      },
+      examBoard: {
+        create: [
+          {
+            name: 'Prof. Dr. Roberto Andrade',
+            email: 'roberto.andrade@ufrgs.edu.br',
+          },
+          {
+            name: 'Profa. Dra. Ana Paula Oliveira',
+            email: 'ana.oliveira@ufrgs.edu.br',
+          },
+        ],
       },
     },
   });
@@ -271,12 +301,29 @@ async function main() {
       id: 'defense-pendente',
       title: 'Desenvolvimento de API RESTful com Arquitetura Hexagonal',
       defenseDate: new Date('2025-02-10T09:00:00Z'),
+      location: 'Sala 205 - Bloco IV',
       result: DefenseResult.PENDING,
       advisorId: advisor1.id,
       students: {
         create: {
           studentId: student3.id,
         },
+      },
+      examBoard: {
+        create: [
+          {
+            name: 'Prof. Dr. Fernando Lima',
+            email: 'fernando.lima@ufrgs.edu.br',
+          },
+          {
+            name: 'Prof. Dr. Ricardo Soares',
+            email: 'ricardo.soares@ufrgs.edu.br',
+          },
+          {
+            name: 'Profa. Dra. Juliana Martins',
+            email: 'juliana.martins@ufrgs.edu.br',
+          },
+        ],
       },
     },
   });

@@ -4,6 +4,7 @@ import { StudentNotFoundError } from '../../domain/errors';
 import { StudentResponseDto, DefenseRecord } from '../../presentation/dtos';
 import { IFabricGateway, FABRIC_GATEWAY, FabricUser } from '../../../fabric/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 
 export interface GetStudentRequest {
   matricula: string;
@@ -25,6 +26,8 @@ export class GetStudentUseCase {
     private readonly fabricGateway: IFabricGateway,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
   ) {}
 
   async execute(request: GetStudentRequest): Promise<StudentResponseDto> {
@@ -40,6 +43,8 @@ export class GetStudentUseCase {
       throw new NotFoundException('Curso não encontrado');
     }
 
+    // Buscar defesas do banco de dados
+    const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
     let defenses: DefenseRecord[] = [];
 
     try {
@@ -49,10 +54,25 @@ export class GetStudentUseCase {
         role: request.currentUser.role,
       };
 
+      // Tentar buscar defesas do blockchain
       const blockchainRecords = await this.fabricGateway.getDocumentHistory(fabricUser, student.matricula);
-      defenses = blockchainRecords.map(record => this.mapToDefenseRecord(record));
+
+      if (blockchainRecords && blockchainRecords.length > 0) {
+        // Blockchain tem dados - usar como fonte de verdade
+        defenses = blockchainRecords.map(record => this.mapToDefenseRecord(record));
+
+        // Comparar com dados do DB e logar inconsistências
+        this.compareDefensesWithDB(defenses, dbDefenses, student.matricula);
+      } else {
+        // Blockchain vazio - usar dados do DB
+        defenses = this.mapDBDefensesToRecords(dbDefenses);
+      }
     } catch (error) {
-      this.logger.warn(`Erro ao buscar defesas: ${error.message}`);
+      // Erro ao acessar blockchain - usar dados do DB
+      this.logger.warn(
+        `Erro ao buscar defesas do blockchain para matrícula ${student.matricula}: ${error.message}. Usando dados do banco.`
+      );
+      defenses = this.mapDBDefensesToRecords(dbDefenses);
     }
 
     return {
@@ -84,12 +104,14 @@ export class GetStudentUseCase {
       studentRegistration: record.matricula,
       title: record.titulo || '',
       defenseDate: record.defenseDate,
+      location: record.location || record.local,
       finalGrade: record.notaFinal,
       result: record.resultado === 'APROVADO' ? 'APPROVED' : 'FAILED',
       version: record.versao,
       reason: record.motivo || '',
       registeredBy: record.registeredBy,
       status: 'APPROVED',
+      examBoard: record.examBoard || record.bancaExaminadora,
       signatures: (record.signatures || []).map((sig: any) => ({
         role: roleMap[sig.role] || sig.role,
         email: sig.email,
@@ -99,5 +121,66 @@ export class GetStudentUseCase {
       })),
       validatedAt: record.validatedAt,
     };
+  }
+
+  private mapDBDefensesToRecords(dbDefenses: any[]): DefenseRecord[] {
+    return dbDefenses.map(defense => {
+      const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
+
+      return {
+        documentId: approvedDoc?.id || '',
+        ipfsCid: approvedDoc?.documentCid || '',
+        studentRegistration: defense.students?.[0]?.registration || '',
+        title: defense.title,
+        defenseDate: defense.defenseDate.toISOString(),
+        location: defense.location,
+        finalGrade: defense.finalGrade || 0,
+        result: defense.result as 'APPROVED' | 'FAILED',
+        version: approvedDoc?.version || 1,
+        reason: '',
+        registeredBy: defense.advisor?.email || '',
+        status: 'APPROVED' as const,
+        examBoard: defense.examBoard?.map((member: any) => ({
+          name: member.name,
+          email: member.email,
+        })),
+        signatures: [],
+        validatedAt: approvedDoc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
+      };
+    }).filter(defense => defense.documentId !== '');
+  }
+
+  private compareDefensesWithDB(
+    blockchainDefenses: DefenseRecord[],
+    dbDefenses: any[],
+    matricula: string,
+  ): void {
+    const dbDefensesCount = dbDefenses.filter(d =>
+      d.documents?.some((doc: any) => doc.status === 'APPROVED')
+    ).length;
+
+    if (blockchainDefenses.length !== dbDefensesCount) {
+      this.logger.warn(
+        `Inconsistência detectada para matrícula ${matricula}: ` +
+        `Blockchain tem ${blockchainDefenses.length} defesa(s), ` +
+        `DB tem ${dbDefensesCount} defesa(s) com documentos aprovados`
+      );
+    }
+
+    blockchainDefenses.forEach(bcDefense => {
+      const dbDefense = dbDefenses.find(d => d.title === bcDefense.title);
+
+      if (!dbDefense) {
+        this.logger.warn(
+          `Defesa "${bcDefense.title}" existe no blockchain mas não foi encontrada no DB ` +
+          `para matrícula ${matricula}`
+        );
+      } else if (dbDefense.finalGrade !== bcDefense.finalGrade) {
+        this.logger.warn(
+          `Nota divergente para defesa "${bcDefense.title}" (matrícula ${matricula}): ` +
+          `Blockchain=${bcDefense.finalGrade}, DB=${dbDefense.finalGrade}`
+        );
+      }
+    });
   }
 }

@@ -1,3 +1,9 @@
+export interface CourseBasic {
+  code: string;
+  name: string;
+  active: boolean;
+}
+
 export interface UserBaseProps {
   id: string;
   email: string;
@@ -6,6 +12,7 @@ export interface UserBaseProps {
   isFirstAccess?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  courses?: CourseBasic[];
 }
 
 export class UserBase {
@@ -37,5 +44,9 @@ export class UserBase {
 
   get updatedAt(): Date | undefined {
     return this.props.updatedAt;
+  }
+
+  get courses(): CourseBasic[] | undefined {
+    return this.props.courses;
   }
 }

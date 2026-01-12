@@ -1,18 +1,103 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { STUDENT_RESPONSE_EXAMPLE } from '../../docs/responses';
 
+export class ExamBoardMember {
+  @ApiProperty({ description: 'Nome do membro da banca', example: 'Prof. Dr. Carlos Alberto Silva' })
+  name: string;
+
+  @ApiProperty({ description: 'Email do membro da banca', example: 'carlos.silva@ifal.local' })
+  email: string;
+}
+
+export class DefenseSignature {
+  @ApiProperty({ description: 'Papel do signatário', example: 'coordinator', enum: ['coordinator', 'advisor', 'student'] })
+  role: string;
+
+  @ApiProperty({ description: 'Email do signatário', example: 'coordinator@ifal.local' })
+  email: string;
+
+  @ApiProperty({ description: 'Data e hora da assinatura', example: '2024-01-05T10:30:00.000Z' })
+  timestamp: string;
+
+  @ApiProperty({ description: 'Status da assinatura', example: 'APPROVED', enum: ['APPROVED', 'REJECTED', 'PENDING'] })
+  status: 'APPROVED' | 'REJECTED' | 'PENDING';
+
+  @ApiPropertyOptional({ description: 'Justificativa para rejeição', example: 'Document does not meet minimum formatting requirements' })
+  justification?: string;
+}
+
+export class DefenseRecordDto {
+  @ApiProperty({ description: 'ID do documento', example: 'DOC_202301_1_1704459600000' })
+  documentId: string;
+
+  @ApiProperty({ description: 'CID do documento no IPFS', example: 'QmX1234567890abcdefghijklmnop' })
+  ipfsCid: string;
+
+  @ApiProperty({ description: 'Matrícula do estudante', example: '202301' })
+  studentRegistration: string;
+
+  @ApiProperty({ description: 'Título do trabalho', example: 'Sistema de Gerenciamento de TCC com Blockchain' })
+  title: string;
+
+  @ApiProperty({ description: 'Data da defesa', example: '2024-01-05T10:00:00.000Z' })
+  defenseDate: string;
+
+  @ApiPropertyOptional({ description: 'Local da defesa', example: 'Sala 301 - Prédio da Computação' })
+  location?: string;
+
+  @ApiProperty({ description: 'Nota final', example: 8.5, minimum: 0, maximum: 10 })
+  finalGrade: number;
+
+  @ApiProperty({ description: 'Resultado da defesa', example: 'APPROVED', enum: ['APPROVED', 'FAILED'] })
+  result: 'APPROVED' | 'FAILED';
+
+  @ApiProperty({ description: 'Versão do documento', example: 1 })
+  version: number;
+
+  @ApiProperty({ description: 'Motivo (se reprovado)', example: '' })
+  reason: string;
+
+  @ApiProperty({ description: 'Email de quem registrou', example: 'coordinator@ifal.local' })
+  registeredBy: string;
+
+  @ApiProperty({ description: 'Status do documento', example: 'APPROVED', enum: ['APPROVED'] })
+  status: 'APPROVED';
+
+  @ApiPropertyOptional({
+    description: 'Banca examinadora',
+    type: [ExamBoardMember],
+    isArray: true
+  })
+  examBoard?: ExamBoardMember[];
+
+  @ApiProperty({
+    description: 'Assinaturas do documento',
+    type: [DefenseSignature],
+    isArray: true
+  })
+  signatures: DefenseSignature[];
+
+  @ApiProperty({ description: 'Data de validação no blockchain', example: '2024-01-05T10:30:00.000Z' })
+  validatedAt: string;
+}
+
 export interface DefenseRecord {
   documentId: string;
   ipfsCid: string;
   studentRegistration: string;
   title: string;
   defenseDate: string;
+  location?: string;
   finalGrade: number;
   result: 'APPROVED' | 'FAILED';
   version: number;
   reason: string;
   registeredBy: string;
   status: 'APPROVED';
+  examBoard?: Array<{
+    name: string;
+    email: string;
+  }>;
   signatures: Array<{
     role: string;
     email: string;
@@ -61,7 +146,8 @@ export class StudentResponseDto {
 
   @ApiPropertyOptional({
     description: 'Histórico de defesas registradas no blockchain (apenas no GET /:registration)',
-    type: 'array',
+    type: DefenseRecordDto,
+    isArray: true,
     example: [STUDENT_RESPONSE_EXAMPLE],
   })
   defenses?: DefenseRecord[];

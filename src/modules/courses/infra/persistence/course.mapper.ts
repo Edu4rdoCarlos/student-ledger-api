@@ -2,8 +2,15 @@ import { Course as PrismaCourse, Coordinator as PrismaCoordinator, User as Prism
 import { Course } from '../../domain/entities';
 import { UserBase } from '../../../user/domain/entities';
 
+type CourseBasic = {
+  code: string;
+  name: string;
+  active: boolean;
+};
+
 type CoordinatorWithUser = PrismaCoordinator & {
   user: PrismaUser;
+  courses?: CourseBasic[];
 };
 
 type CourseWithRelations = PrismaCourse & {
@@ -18,7 +25,7 @@ export class CourseMapper {
         name: prisma.name,
         active: prisma.active,
         coordinatorId: prisma.coordinatorId || undefined,
-        coordinator: prisma.coordinator ? new UserBase({
+        coordinator: prisma.coordinator && prisma.coordinator.user ? new UserBase({
           id: prisma.coordinator.user.id,
           email: prisma.coordinator.user.email,
           name: prisma.coordinator.user.name,
@@ -26,6 +33,7 @@ export class CourseMapper {
           isFirstAccess: prisma.coordinator.user.isFirstAccess,
           createdAt: prisma.coordinator.user.createdAt,
           updatedAt: prisma.coordinator.user.updatedAt,
+          courses: prisma.coordinator.courses,
         }) : undefined,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,

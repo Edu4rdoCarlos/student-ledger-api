@@ -52,7 +52,6 @@ export class CoursesController {
   @ApiOperation({ summary: 'List courses' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
-  @ApiQuery({ name: 'departmentId', required: false, type: String, description: 'Filter by department ID' })
   @ApiCourseListResponse()
   @ApiCourseErrorResponses()
   async findAll(@Query() query: ListCoursesQuery): Promise<ListCoursesResponse> {
@@ -74,7 +73,7 @@ export class CoursesController {
   @Roles('ADMIN')
   @ApiOperation({
     summary: 'Update course data',
-    description: 'Updates name, department, active status and/or course coordinator. Only admins can update.'
+    description: 'Updates name, active status and/or course coordinator. Only admins can update.'
   })
   @ApiCourseOkResponse()
   @ApiCourseUpdateErrorResponses()

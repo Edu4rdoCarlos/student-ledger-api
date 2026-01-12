@@ -253,7 +253,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
           JSON.stringify(signatures),
           validatedAt,
         );
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('registerDocument', error.message);
       }
@@ -264,7 +264,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('verifyDocument', ipfsCid);
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('verifyDocument', error.message);
       }
@@ -275,7 +275,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('getLatestDocument', matricula);
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('getLatestDocument', error.message);
       }
@@ -290,7 +290,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
           matricula,
           versao.toString(),
         );
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('getDocument', error.message);
       }
@@ -301,7 +301,13 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('getDocumentHistory', matricula);
-        return JSON.parse(result.toString());
+        const resultString = Buffer.from(result).toString('utf-8');
+
+        if (!resultString || resultString.trim().length === 0) {
+          return [];
+        }
+
+        return JSON.parse(resultString);
       } catch (error) {
         throw new FabricTransactionError('getDocumentHistory', error.message);
       }
@@ -320,7 +326,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
           matricula,
           versao.toString(),
         );
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('getDocumentModificationHistory', error.message);
       }
@@ -331,7 +337,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('getApprovedDocument', matricula);
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('getApprovedDocument', error.message);
       }
@@ -342,7 +348,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('documentExists', matricula);
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('documentExists', error.message);
       }
@@ -353,7 +359,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
     return this.withConnection(user, async (connection) => {
       try {
         const result = await connection.contract.evaluateTransaction('getVersionCount', matricula);
-        return JSON.parse(result.toString());
+        return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
         throw new FabricTransactionError('getVersionCount', error.message);
       }

@@ -1,0 +1,7 @@
+export enum StudentStatus {
+  NO_DEFENSE = 'NO_DEFENSE',
+  APPROVED = 'APPROVED',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING',
+  UNDER_APPROVAL = 'UNDER_APPROVAL',
+}
