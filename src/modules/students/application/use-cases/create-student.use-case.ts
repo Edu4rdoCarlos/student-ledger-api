@@ -8,6 +8,8 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
 import { ICurrentUser } from '../../../../shared/types';
+import { SendEmailUseCase } from '../../../notifications/application/use-cases';
+import { EmailTemplate } from '../../../notifications/domain/enums';
 
 @Injectable()
 export class CreateStudentUseCase {
@@ -18,6 +20,7 @@ export class CreateStudentUseCase {
     private readonly userRepository: IUserRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
+    private readonly sendEmailUseCase: SendEmailUseCase,
   ) {}
 
   async execute(dto: CreateStudentDto, currentUser?: ICurrentUser): Promise<StudentResponseDto> {
@@ -64,6 +67,27 @@ export class CreateStudentUseCase {
     });
 
     const created = await this.studentRepository.create(student);
+
+    // Send welcome email with credentials
+    try {
+      await this.sendEmailUseCase.execute({
+        userId: created.id,
+        to: created.email,
+        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+        template: {
+          id: EmailTemplate.USER_CREDENTIALS,
+          data: {
+            name: created.name,
+            email: created.email,
+            temporaryPassword: randomPassword,
+            role: 'STUDENT',
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao enviar email de boas-vindas:', error);
+      // Don't throw error, user was created successfully
+    }
 
     return {
       userId: created.id,

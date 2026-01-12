@@ -15,6 +15,7 @@ export interface ICourseRepository {
   findById(id: string): Promise<Course | null>;
   findByCode(code: string): Promise<Course | null>;
   findAll(options?: FindAllOptions): Promise<FindAllResult>;
+  findByCoordinatorId(coordinatorId: string): Promise<Course[]>;
   update(course: Course): Promise<Course>;
   existsByCode(code: string): Promise<boolean>;
 }

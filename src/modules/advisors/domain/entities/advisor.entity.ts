@@ -1,11 +1,14 @@
 import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base.entity';
 import { Course } from '../../../courses/domain/entities';
+import { Defense } from '../../../defenses/domain/entities';
 
 export interface AdvisorProps extends UserBaseProps {
-  specialization?: string;
+  specialization: string;
   courseId?: string;
   course?: Course;
   isActive: boolean;
+  activeAdvisorshipsCount?: number;
+  defenses?: Defense[];
 }
 
 export class Advisor extends UserBase {
@@ -25,7 +28,7 @@ export class Advisor extends UserBase {
     return this.id;
   }
 
-  get specialization(): string | undefined {
+  get specialization(): string {
     return (this.props as AdvisorProps).specialization;
   }
 
@@ -39,6 +42,14 @@ export class Advisor extends UserBase {
 
   get isActive(): boolean {
     return (this.props as AdvisorProps).isActive;
+  }
+
+  get activeAdvisorshipsCount(): number {
+    return (this.props as AdvisorProps).activeAdvisorshipsCount ?? 0;
+  }
+
+  get defenses(): Defense[] | undefined {
+    return (this.props as AdvisorProps).defenses;
   }
 
   update(data: Partial<Pick<AdvisorProps, 'specialization' | 'courseId' | 'isActive'>>): void {

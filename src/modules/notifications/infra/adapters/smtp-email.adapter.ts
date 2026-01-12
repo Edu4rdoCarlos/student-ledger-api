@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import { IEmailProvider, SendEmailParams } from '../../application/ports';
+import { EmailTemplateService } from '../../application/services';
 
 @Injectable()
 export class SmtpEmailAdapter implements IEmailProvider {
@@ -11,7 +12,10 @@ export class SmtpEmailAdapter implements IEmailProvider {
   private readonly fromEmail: string;
   private readonly fromName: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly emailTemplateService: EmailTemplateService,
+  ) {
     const host = this.configService.get<string>('GOOGLE_SMTP_HOST', 'smtp.gmail.com');
     const port = this.configService.get<number>('GOOGLE_SMTP_PORT', 587);
     const secure = this.configService.get<boolean>('GOOGLE_SMTP_SECURE', false);
@@ -38,13 +42,29 @@ export class SmtpEmailAdapter implements IEmailProvider {
 
   async sendEmail(params: SendEmailParams): Promise<void> {
     try {
+      let subject = params.subject;
+      let html = params.html;
+      let text = params.text;
+
+      // If template is provided, generate content from template
+      if (params.template) {
+        const templateResult = this.emailTemplateService.generateTemplate(
+          params.template.id as any,
+          params.template.data,
+        );
+        subject = templateResult.subject;
+        html = templateResult.html;
+      }
+
       await this.transporter.sendMail({
         from: `${this.fromName} <${this.fromEmail}>`,
         to: params.to,
-        subject: params.subject,
-        text: params.text,
-        html: params.html,
+        subject,
+        text,
+        html,
       });
+
+      this.logger.log(`Email sent successfully to ${params.to}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       this.logger.error(`Failed to send email to ${params.to}: ${errorMessage}`, error instanceof Error ? error.stack : undefined);

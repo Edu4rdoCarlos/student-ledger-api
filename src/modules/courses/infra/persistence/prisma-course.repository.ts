@@ -90,6 +90,23 @@ export class PrismaCourseRepository implements ICourseRepository {
     return CourseMapper.toDomain(updated);
   }
 
+  async findByCoordinatorId(coordinatorId: string): Promise<Course[]> {
+    const courses = await this.prisma.course.findMany({
+      where: { coordinatorId },
+      include: {
+        coordinator: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+    return courses.map(CourseMapper.toDomain);
+  }
+
   async existsByCode(code: string): Promise<boolean> {
     const count = await this.prisma.course.count({ where: { code } });
     return count > 0;

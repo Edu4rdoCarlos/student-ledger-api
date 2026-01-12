@@ -127,9 +127,13 @@ async function main() {
 
   const advisor1 = await prisma.advisor.upsert({
     where: { id: advisorUser1.id },
-    update: {},
+    update: {
+      specialization: 'Sistemas Distribuídos e Blockchain',
+      courseId: courseCC.id,
+    },
     create: {
       id: advisorUser1.id,
+      specialization: 'Sistemas Distribuídos e Blockchain',
       courseId: courseCC.id,
     },
   });
@@ -147,9 +151,13 @@ async function main() {
 
   const advisor2 = await prisma.advisor.upsert({
     where: { id: advisorUser2.id },
-    update: {},
+    update: {
+      specialization: 'Inteligência Artificial e Machine Learning',
+      courseId: courseSI.id,
+    },
     create: {
       id: advisorUser2.id,
+      specialization: 'Inteligência Artificial e Machine Learning',
       courseId: courseSI.id,
     },
   });

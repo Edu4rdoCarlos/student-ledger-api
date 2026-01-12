@@ -6,6 +6,8 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { CreateAdvisorDto, AdvisorResponseDto } from '../../presentation/dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
+import { SendEmailUseCase } from '../../../notifications/application/use-cases';
+import { EmailTemplate } from '../../../notifications/domain/enums';
 
 @Injectable()
 export class CreateAdvisorUseCase {
@@ -14,6 +16,7 @@ export class CreateAdvisorUseCase {
     private readonly advisorRepository: IAdvisorRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
+    private readonly sendEmailUseCase: SendEmailUseCase,
   ) {}
 
   async execute(dto: CreateAdvisorDto): Promise<AdvisorResponseDto> {
@@ -43,6 +46,28 @@ export class CreateAdvisorUseCase {
     });
 
     const created = await this.advisorRepository.create(advisor);
+
+    // Send welcome email with credentials
+    try {
+      await this.sendEmailUseCase.execute({
+        userId: created.id,
+        to: created.email,
+        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+        template: {
+          id: EmailTemplate.USER_CREDENTIALS,
+          data: {
+            name: created.name,
+            email: created.email,
+            temporaryPassword: randomPassword,
+            role: 'ADVISOR',
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao enviar email de boas-vindas:', error);
+      // Don't throw error, user was created successfully
+    }
+
     return AdvisorResponseDto.fromEntity(created);
   }
 }

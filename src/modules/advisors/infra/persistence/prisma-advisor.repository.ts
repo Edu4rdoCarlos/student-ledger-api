@@ -26,6 +26,20 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       include: {
         user: true,
         course: true,
+        defenses: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+            examBoard: true,
+          },
+        },
       },
     });
     return found ? AdvisorMapper.toDomain(found) : null;
@@ -55,7 +69,13 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   }
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    const where = options?.courseId ? { courseId: options.courseId } : {};
+    let where = {};
+
+    if (options?.courseIds && options.courseIds.length > 0) {
+      where = { courseId: { in: options.courseIds } };
+    } else if (options?.courseId) {
+      where = { courseId: options.courseId };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.advisor.findMany({
@@ -64,7 +84,26 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
         take: options?.take,
         include: {
           user: true,
-            course: true,
+          course: true,
+          defenses: {
+            where: {
+              status: {
+                in: ['SCHEDULED', 'COMPLETED']
+              }
+            },
+            include: {
+              students: {
+                include: {
+                  student: {
+                    include: {
+                      user: true,
+                    },
+                  },
+                },
+              },
+              examBoard: true,
+            },
+          }
         },
         orderBy: { createdAt: 'asc' },
       }),
@@ -85,6 +124,20 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       include: {
         user: true,
         course: true,
+        defenses: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+            examBoard: true,
+          },
+        },
       }
     });
     return AdvisorMapper.toDomain(updated);

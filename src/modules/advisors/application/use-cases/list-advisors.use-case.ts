@@ -3,6 +3,7 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { AdvisorResponseDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
 import { ICurrentUser } from '../../../../shared/types';
+import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 
 export interface ListAdvisorsQuery {
   courseId?: string;
@@ -20,6 +21,8 @@ export class ListAdvisorsUseCase {
   constructor(
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
+    @Inject(COURSE_REPOSITORY)
+    private readonly courseRepository: ICourseRepository,
   ) {}
 
   async execute(query: ListAdvisorsQuery = {}, currentUser?: ICurrentUser): Promise<ListAdvisorsResponse> {
@@ -28,7 +31,12 @@ export class ListAdvisorsUseCase {
     const skip = (page - 1) * limit;
 
     let courseId = query?.courseId;
-    if (currentUser?.role === 'COORDINATOR' && currentUser.courseId) {
+    let courseIds: string[] | undefined;
+
+    if (currentUser?.role === 'COORDINATOR' && currentUser.id) {
+      const courses = await this.courseRepository.findByCoordinatorId(currentUser.id);
+      courseIds = courses.map(course => course.id);
+    } else if (currentUser?.role === 'COORDINATOR' && currentUser.courseId) {
       courseId = currentUser.courseId;
     }
 
@@ -36,10 +44,11 @@ export class ListAdvisorsUseCase {
       skip,
       take: limit,
       courseId,
+      courseIds,
     });
 
     return {
-      data: items.map(AdvisorResponseDto.fromEntity),
+      data: items.map(advisor => AdvisorResponseDto.fromEntity(advisor, advisor.activeAdvisorshipsCount)),
       metadata: new PaginationMetadata({ page, perPage: limit, total }),
     };
   }

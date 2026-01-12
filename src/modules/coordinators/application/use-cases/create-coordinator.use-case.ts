@@ -8,6 +8,8 @@ import { CreateCoordinatorDto, CoordinatorResponseDto } from '../../presentation
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
+import { SendEmailUseCase } from '../../../notifications/application/use-cases';
+import { EmailTemplate } from '../../../notifications/domain/enums';
 
 @Injectable()
 export class CreateCoordinatorUseCase {
@@ -18,6 +20,7 @@ export class CreateCoordinatorUseCase {
     private readonly userRepository: IUserRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
+    private readonly sendEmailUseCase: SendEmailUseCase,
   ) {}
 
   async execute(dto: CreateCoordinatorDto): Promise<CoordinatorResponseDto> {
@@ -63,6 +66,28 @@ export class CreateCoordinatorUseCase {
     });
 
     const created = await this.coordinatorRepository.create(coordinator);
+
+    // Send welcome email with credentials
+    try {
+      await this.sendEmailUseCase.execute({
+        userId: created.id,
+        to: created.email,
+        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+        template: {
+          id: EmailTemplate.USER_CREDENTIALS,
+          data: {
+            name: created.name,
+            email: created.email,
+            temporaryPassword: randomPassword,
+            role: 'COORDINATOR',
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao enviar email de boas-vindas:', error);
+      // Don't throw error, user was created successfully
+    }
+
     return CoordinatorResponseDto.fromEntity(created);
   }
 }

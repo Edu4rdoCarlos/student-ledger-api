@@ -35,6 +35,9 @@ export class EmailTemplateService {
       case EmailTemplate.DOCUMENT_REJECTED:
         return this.documentRejected(data);
 
+      case EmailTemplate.USER_CREDENTIALS:
+        return this.userCredentials(data);
+
       default:
         throw new Error(`Template não encontrado: ${template}`);
     }
@@ -230,5 +233,56 @@ export class EmailTemplateService {
         <p>Atenciosamente,<br>Student Ledger</p>
       `,
     };
+  }
+
+  private userCredentials(data: EmailTemplateData): EmailTemplateResult {
+    const accessUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const roleLabel = this.getRoleLabel(data.role);
+
+    return {
+      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+      html: `
+        <h2>Bem-vindo ao Student Ledger!</h2>
+        <p>Olá, ${data.name}!</p>
+        <p>Sua conta foi criada com sucesso no sistema Student Ledger.</p>
+
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Suas Credenciais de Acesso</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin: 10px 0;"><strong>Tipo de Usuário:</strong> ${roleLabel}</li>
+            <li style="margin: 10px 0;"><strong>Email:</strong> ${data.email}</li>
+            <li style="margin: 10px 0;"><strong>Senha Temporária:</strong> <code style="background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-size: 14px;">${data.temporaryPassword}</code></li>
+          </ul>
+        </div>
+
+        <div style="margin: 30px 0;">
+          <a href="${accessUrl}"
+             style="background-color: #3b82f6; color: white; padding: 14px 28px;
+                    text-decoration: none; border-radius: 6px; font-weight: bold;
+                    display: inline-block;">
+            Acessar o Sistema
+          </a>
+        </div>
+
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>⚠️ Importante:</strong></p>
+          <p style="margin: 8px 0 0 0;">Por motivos de segurança, recomendamos que você altere sua senha no primeiro acesso ao sistema.</p>
+        </div>
+
+        <p>Se você tiver alguma dúvida ou precisar de ajuda, entre em contato com o suporte.</p>
+        <br>
+        <p>Atenciosamente,<br>Equipe Student Ledger</p>
+      `,
+    };
+  }
+
+  private getRoleLabel(role: string): string {
+    const roleLabels: Record<string, string> = {
+      STUDENT: 'Aluno',
+      ADVISOR: 'Orientador',
+      COORDINATOR: 'Coordenador',
+      ADMIN: 'Administrador',
+    };
+    return roleLabels[role] || role;
   }
 }

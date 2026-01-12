@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../database/prisma';
 import { AuthModule } from '../auth/auth.module';
+import { CoursesModule } from '../courses/courses.module';
 import { ADVISOR_REPOSITORY } from './application/ports';
 import { PrismaAdvisorRepository } from './infra/persistence';
 import { AdvisorsController } from './presentation/http';
@@ -12,7 +13,7 @@ import {
 } from './application/use-cases';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, CoursesModule],
   controllers: [AdvisorsController],
   providers: [
     {

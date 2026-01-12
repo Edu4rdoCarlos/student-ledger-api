@@ -2,7 +2,7 @@
 
 model Advisor {
   id             String   @id
-  specialization String?
+  specialization String
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
