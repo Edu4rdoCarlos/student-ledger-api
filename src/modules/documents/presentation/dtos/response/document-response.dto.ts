@@ -1,12 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Document, DocumentType, DocumentStatus } from '../../../domain/entities';
+import { Document, DocumentStatus } from '../../../domain/entities';
 
 export class DocumentResponseDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ enum: DocumentType })
-  type: DocumentType;
 
   @ApiProperty()
   version: number;
@@ -41,7 +39,6 @@ export class DocumentResponseDto {
   static fromEntity(doc: Document): DocumentResponseDto {
     return {
       id: doc.id,
-      type: doc.type,
       version: doc.version,
       documentHash: doc.documentHash,
       documentCid: doc.documentCid,
@@ -60,8 +57,6 @@ export class SimpleDocumentDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ enum: DocumentType })
-  type: DocumentType;
 
   @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
   documentHash?: string;

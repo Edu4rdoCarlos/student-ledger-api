@@ -1,22 +1,19 @@
 export const STUDENT_RESPONSE_EXAMPLE = {
-  documentId: 'DOC_202301_1_1704459600000',
-  ipfsCid: 'QmX1234567890abcdefghijklmnop',
   studentRegistration: '202301',
   title: 'Sistema de Gerenciamento de TCC com Blockchain',
   defenseDate: '2024-01-05T10:00:00.000Z',
   location: 'Sala 301 - Prédio da Computação',
   finalGrade: 8.5,
   result: 'APPROVED',
-  version: 1,
   reason: '',
   registeredBy: 'coordinator@ifal.local',
   defenseStatus: 'COMPLETED',
-  documentStatus: 'APPROVED',
   advisor: {
     id: 'advisor-uuid-123',
     name: 'Prof. Dr. João Silva',
     email: 'joao.silva@ifal.local',
     specialization: 'Engenharia de Software',
+    isActive: true,
   },
   examBoard: [
     {
@@ -62,4 +59,28 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     },
   ],
   validatedAt: '2024-01-05T10:30:00.000Z',
+  documents: [
+    {
+      id: 'doc-uuid-v2',
+      version: 2,
+      status: 'APPROVED',
+      changeReason: 'Correção de nota final após revisão',
+      documentCid: 'QmX1234567890abcdefghijklmnop',
+      blockchainTxId: 'tx_abc123def456',
+      blockchainRegisteredAt: '2024-01-05T10:30:00.000Z',
+      createdAt: '2024-01-05T10:00:00.000Z',
+      downloadUrl: '/api/documents/doc-uuid-v2/download',
+    },
+    {
+      id: 'doc-uuid-v1',
+      version: 1,
+      status: 'INACTIVE',
+      changeReason: undefined,
+      documentCid: 'QmY9876543210zyxwvutsrqponml',
+      blockchainTxId: 'tx_xyz789ghi012',
+      blockchainRegisteredAt: '2024-01-04T15:00:00.000Z',
+      createdAt: '2024-01-04T14:30:00.000Z',
+      downloadUrl: '/api/documents/doc-uuid-v1/download',
+    },
+  ],
 };

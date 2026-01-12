@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DocumentStatus, DocumentType } from '../../domain/entities';
+import { DocumentStatus } from '../../domain/entities';
 import { IDocumentRepository, DOCUMENT_REPOSITORY, DocumentFilters } from '../ports';
 import { DocumentResponseDto } from '../../presentation/dtos';
 

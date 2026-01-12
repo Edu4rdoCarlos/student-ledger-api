@@ -1,11 +1,10 @@
 import { Document as PrismaDocument } from '@prisma/client';
-import { Document, DocumentType, DocumentStatus } from '../../domain/entities';
+import { Document, DocumentStatus } from '../../domain/entities';
 
 export class DocumentMapper {
   static toDomain(prisma: PrismaDocument): Document {
     return Document.create(
       {
-        type: prisma.type as DocumentType,
         version: prisma.version,
         documentHash: prisma.documentHash ?? undefined,
         documentCid: prisma.documentCid ?? undefined,
@@ -27,7 +26,6 @@ export class DocumentMapper {
   static toPrisma(doc: Document) {
     return {
       id: doc.id,
-      type: doc.type,
       version: doc.version,
       documentHash: doc.documentHash ?? null,
       documentCid: doc.documentCid ?? null,

@@ -23,10 +23,11 @@ export class UpdateAdvisorUseCase {
       await this.userRepository.updateName(advisor.userId, dto.name);
     }
 
-    if (dto.specialization !== undefined || dto.courseId !== undefined) {
+    if (dto.specialization !== undefined || dto.courseId !== undefined || dto.isActive !== undefined) {
       advisor.update({
         specialization: dto.specialization,
         courseId: dto.courseId,
+        isActive: dto.isActive,
       });
       await this.advisorRepository.update(advisor);
     }

@@ -1,14 +1,13 @@
-import { Document, DocumentType, DocumentStatus } from './document.entity';
+import { Document, DocumentStatus } from './document.entity';
 
 describe('Document Entity', () => {
   describe('create', () => {
     it('deve criar um documento com status PENDING e versão 1 por padrão', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
-      expect(document.type).toBe(DocumentType.ATA);
       expect(document.defenseId).toBe('defense-123');
       expect(document.status).toBe(DocumentStatus.PENDING);
       expect(document.version).toBe(1);
@@ -20,7 +19,7 @@ describe('Document Entity', () => {
 
     it('deve criar documento com campos opcionais', () => {
       const document = Document.create({
-        type: DocumentType.FICHA,
+        
         defenseId: 'defense-456',
         version: 3,
         documentHash: 'abc123hash',
@@ -36,7 +35,7 @@ describe('Document Entity', () => {
 
     it('deve gerar ID automático', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -46,7 +45,7 @@ describe('Document Entity', () => {
 
     it('deve definir createdAt e updatedAt automaticamente', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -58,7 +57,7 @@ describe('Document Entity', () => {
   describe('approve', () => {
     it('deve aprovar um documento pendente', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -73,7 +72,7 @@ describe('Document Entity', () => {
 
     it('deve atualizar updatedAt ao aprovar', async () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -90,7 +89,7 @@ describe('Document Entity', () => {
   describe('inactivate', () => {
     it('deve inativar um documento com razão', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -105,7 +104,7 @@ describe('Document Entity', () => {
 
     it('deve permitir inativar documento já inativo', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -123,7 +122,7 @@ describe('Document Entity', () => {
   describe('registerOnBlockchain', () => {
     it('deve registrar informações da blockchain', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -136,7 +135,7 @@ describe('Document Entity', () => {
 
     it('deve atualizar updatedAt ao registrar na blockchain', async () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -153,7 +152,7 @@ describe('Document Entity', () => {
   describe('setDocumentHash', () => {
     it('deve definir hash do documento', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -165,7 +164,7 @@ describe('Document Entity', () => {
 
     it('deve atualizar updatedAt ao definir hash', async () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -182,7 +181,7 @@ describe('Document Entity', () => {
   describe('setDocumentCid', () => {
     it('deve definir CID do documento', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -194,7 +193,7 @@ describe('Document Entity', () => {
 
     it('deve atualizar updatedAt ao definir CID', async () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -211,7 +210,7 @@ describe('Document Entity', () => {
   describe('createNewVersion', () => {
     it('deve criar nova versão incrementando version number', () => {
       const originalDocument = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
         version: 1,
         documentHash: 'old-hash',
@@ -230,7 +229,7 @@ describe('Document Entity', () => {
 
     it('deve criar nova versão com version number correto para versão 2', () => {
       const document = Document.create({
-        type: DocumentType.FICHA,
+        
         defenseId: 'defense-456',
         version: 2,
       });
@@ -244,20 +243,19 @@ describe('Document Entity', () => {
 
     it('deve criar nova versão mantendo o type do documento original', () => {
       const fichaDocument = Document.create({
-        type: DocumentType.FICHA,
+        
         defenseId: 'defense-789',
       });
 
       const newVersion = fichaDocument.createNewVersion('hash-123', 'Revisão');
 
-      expect(newVersion.type).toBe(DocumentType.FICHA);
     });
   });
 
   describe('status helpers', () => {
     it('isPending deve retornar true para documento pendente', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -268,7 +266,7 @@ describe('Document Entity', () => {
 
     it('isApproved deve retornar true para documento aprovado', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -281,7 +279,7 @@ describe('Document Entity', () => {
 
     it('isInactive deve retornar true para documento inativo', () => {
       const document = Document.create({
-        type: DocumentType.ATA,
+        
         defenseId: 'defense-123',
       });
 
@@ -297,7 +295,7 @@ describe('Document Entity', () => {
     it('deve retornar todos os campos via getters', () => {
       const now = new Date();
       const document = Document.create({
-        type: DocumentType.FICHA,
+        
         defenseId: 'defense-abc',
         version: 5,
         documentHash: 'hash-xyz',
@@ -314,7 +312,6 @@ describe('Document Entity', () => {
       }, 'custom-id-123');
 
       expect(document.id).toBe('custom-id-123');
-      expect(document.type).toBe(DocumentType.FICHA);
       expect(document.defenseId).toBe('defense-abc');
       expect(document.version).toBe(5);
       expect(document.documentHash).toBe('hash-xyz');

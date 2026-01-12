@@ -1,8 +1,3 @@
-export enum DocumentType {
-  ATA = 'ATA',
-  FICHA = 'FICHA',
-}
-
 export enum DocumentStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
@@ -10,7 +5,6 @@ export enum DocumentStatus {
 }
 
 export interface DocumentProps {
-  type: DocumentType;
   version: number;
   documentHash?: string; // SHA-256 hash of the file content
   documentCid?: string; // IPFS CID - filled when submitted to IPFS
@@ -37,14 +31,12 @@ export class Document {
 
   static create(
     props: Partial<DocumentProps> & {
-      type: DocumentType;
       defenseId: string;
     },
     id?: string,
   ): Document {
     return new Document(
       {
-        type: props.type,
         version: props.version ?? 1,
         documentHash: props.documentHash,
         documentCid: props.documentCid,
@@ -65,10 +57,6 @@ export class Document {
 
   get id(): string {
     return this._id;
-  }
-
-  get type(): DocumentType {
-    return this.props.type;
   }
 
   get version(): number {
@@ -165,7 +153,6 @@ export class Document {
 
   createNewVersion(hash: string, reason: string): Document {
     return Document.create({
-      type: this.props.type,
       version: this.props.version + 1,
       documentHash: hash,
       defenseId: this.props.defenseId,

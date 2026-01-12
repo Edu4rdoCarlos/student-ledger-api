@@ -6,7 +6,7 @@ import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/applic
 import { HashUtil } from '../../infra/utils/hash.util';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
-import { Document, DocumentType, DocumentStatus } from '../../domain/entities';
+import { Document, DocumentStatus } from '../../domain/entities';
 import { Defense } from '../../../defenses/domain/entities/defense.entity';
 import { DocumentNotFoundError } from '../../domain/errors';
 
@@ -89,7 +89,7 @@ describe('CreateDocumentVersionUseCase', () => {
     it('deve criar nova versão com sucesso', async () => {
       const mockCurrentDocument = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-456',
           version: 1,
           documentHash: mockOriginalHash,
@@ -123,7 +123,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const mockNewVersion = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-456',
           version: 2,
           documentHash: mockNewHash,
@@ -177,7 +177,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se documento estiver PENDING', async () => {
       const mockPendingDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         status: DocumentStatus.PENDING,
       });
@@ -207,7 +207,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se documento estiver INACTIVE', async () => {
       const mockInactiveDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         status: DocumentStatus.INACTIVE,
       });
@@ -228,7 +228,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se documento não estiver registrado na blockchain', async () => {
       const mockDocumentWithoutBlockchain = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         status: DocumentStatus.APPROVED,
         documentHash: mockOriginalHash,
@@ -250,7 +250,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se nova versão tiver mesmo conteúdo', async () => {
       const mockCurrentDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         version: 1,
         documentHash: mockOriginalHash,
@@ -274,7 +274,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se IPFS retornar queued', async () => {
       const mockCurrentDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         version: 1,
         documentHash: mockOriginalHash,
@@ -299,7 +299,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
     it('deve lançar erro se IPFS falhar', async () => {
       const mockCurrentDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         defenseId: 'defense-456',
         version: 1,
         documentHash: mockOriginalHash,
@@ -325,7 +325,7 @@ describe('CreateDocumentVersionUseCase', () => {
     it('deve lançar erro se Defense não for encontrada', async () => {
       const mockCurrentDocument = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-inexistente',
           version: 1,
           documentHash: mockOriginalHash,
@@ -346,7 +346,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const mockNewVersion = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-inexistente',
           version: 2,
           documentHash: mockNewHash,
@@ -373,7 +373,7 @@ describe('CreateDocumentVersionUseCase', () => {
     it('deve criar aprovações de forma assíncrona sem bloquear execução', async () => {
       const mockCurrentDocument = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-456',
           version: 1,
           documentHash: mockOriginalHash,
@@ -406,7 +406,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const mockNewVersion = Document.create(
         {
-          type: DocumentType.ATA,
+          type: ATA,
           defenseId: 'defense-456',
           version: 2,
           documentHash: mockNewHash,

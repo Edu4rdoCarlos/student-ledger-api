@@ -60,7 +60,7 @@ export class DownloadDocumentUseCase {
       }
     }
 
-    const filename = `documento-${document.type}-${document.id}.pdf`;
+    const filename = `documento-${document.id}.pdf`;
 
     if (!document.documentCid) {
       throw new NotFoundException('Documento não possui CID do IPFS');

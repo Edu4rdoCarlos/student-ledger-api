@@ -42,6 +42,7 @@ export class DefenseSerializer {
         name: defense.advisor?.name ?? '',
         email: showSensitiveData ? defense.advisor?.email : undefined,
         specialization: defense.advisor?.specialization,
+        isActive: defense.advisor?.isActive ?? true,
       },
       students:
         defense.students?.map((s) => ({
@@ -60,17 +61,13 @@ export class DefenseSerializer {
       documents: showDocuments
         ? defense.documents?.map((d) => ({
             id: d.id,
-            type: d.type,
             version: d.version,
-            documentHash: d.documentHash,
-            documentCid: d.documentCid,
             status: d.status,
+            changeReason: d.changeReason,
+            documentCid: d.documentCid,
             blockchainTxId: d.blockchainTxId,
             blockchainRegisteredAt: d.blockchainRegisteredAt,
-            defenseId: d.defenseId,
-            previousVersionId: d.previousVersionId,
             createdAt: d.createdAt,
-            updatedAt: d.updatedAt,
             downloadUrl: canDownloadDocuments ? d.downloadUrl : undefined,
           }))
         : undefined,

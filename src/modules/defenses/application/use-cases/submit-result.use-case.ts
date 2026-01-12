@@ -4,7 +4,6 @@ import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
 import {
   Document,
-  DocumentType
 } from '../../../documents/domain/entities';
 import {
   IDocumentRepository,
@@ -86,7 +85,7 @@ export class SubmitDefenseResultUseCase {
     }
 
     const document = Document.create({
-      type: DocumentType.ATA,
+      
       documentHash,
       documentCid,
       defenseId: request.id,

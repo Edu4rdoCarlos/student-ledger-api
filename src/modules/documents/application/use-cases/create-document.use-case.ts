@@ -20,7 +20,6 @@ export class CreateDocumentUseCase {
     }
 
     const document = Document.create({
-      type: dto.type,
       documentHash: dto.documentHash,
       documentCid: dto.documentCid,
       defenseId: dto.defenseId,

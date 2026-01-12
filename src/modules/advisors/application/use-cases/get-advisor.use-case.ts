@@ -15,6 +15,6 @@ export class GetAdvisorUseCase {
     if (!advisor) {
       throw new AdvisorNotFoundError(id);
     }
-    return AdvisorResponseDto.fromEntity(advisor);
+    return AdvisorResponseDto.fromEntity(advisor, advisor.activeAdvisorshipsCount);
   }
 }

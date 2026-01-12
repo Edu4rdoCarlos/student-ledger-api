@@ -3,7 +3,6 @@ import {
   Role,
   DefenseResult,
   DefenseStatus,
-  DocumentType,
   DocumentStatus,
   ApprovalRole,
   ApprovalStatus,
@@ -388,6 +387,28 @@ async function main() {
     },
   });
 
+  // Estudante 11: Com múltiplas defesas - uma cancelada e uma completa
+  const studentUser11 = await prisma.user.upsert({
+    where: { email: 'aluno11@ufrgs.edu.br' },
+    update: {},
+    create: {
+      email: 'aluno11@ufrgs.edu.br',
+      password: defaultPassword,
+      name: 'Rodrigo Almeida Santos',
+      role: Role.STUDENT,
+        },
+  });
+
+  const student11 = await prisma.student.upsert({
+    where: { registration: '01123456' },
+    update: {},
+    create: {
+      id: studentUser11.id,
+      registration: '01123456',
+      courseId: courseCC.id,
+    },
+  });
+
   console.log(`  ✓ ${studentUser1.email} (${student1.registration}) - TCC Aprovado`);
   console.log(`  ✓ ${studentUser2.email} (${student2.registration}) - TCC Reprovado`);
   console.log(`  ✓ ${studentUser3.email} (${student3.registration}) - TCC Pendente`);
@@ -398,6 +419,7 @@ async function main() {
   console.log(`  ✓ ${studentUser8.email} (${student8.registration}) - TCC Cancelado`);
   console.log(`  ✓ ${studentUser9.email} (${student9.registration}) - TCC Aprovado (Nota Mínima)`);
   console.log(`  ✓ ${studentUser10.email} (${student10.registration}) - TCC com Versão Ajustada`);
+  console.log(`  ✓ ${studentUser11.email} (${student11.registration}) - Múltiplas Defesas (Cancelada + Completa)`);
 
   console.log('\n📝 Creating Defenses...');
 
@@ -706,7 +728,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-1',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash1,
       status: DocumentStatus.APPROVED,
@@ -723,7 +745,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-reprovada',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash2,
       status: DocumentStatus.APPROVED,
@@ -742,7 +764,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-dupla',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash4,
       status: DocumentStatus.APPROVED,
@@ -759,7 +781,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-parcial',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash5,
       status: DocumentStatus.PENDING,
@@ -774,7 +796,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-minima',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash6,
       status: DocumentStatus.APPROVED,
@@ -792,7 +814,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-ajustada-v1',
-      type: DocumentType.ATA,
+      
       version: 1,
       documentHash: docHash7,
       status: DocumentStatus.INACTIVE,
@@ -809,7 +831,7 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-ajustada-v2',
-      type: DocumentType.ATA,
+      
       version: 2,
       documentHash: docHash8,
       status: DocumentStatus.APPROVED,

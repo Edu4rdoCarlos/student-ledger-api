@@ -85,6 +85,9 @@ export class AdvisorResponseDto {
   @ApiProperty({ description: 'Área de especialização' })
   specialization: string;
 
+  @ApiProperty({ description: 'Indica se o orientador está ativo' })
+  isActive: boolean;
+
   @ApiProperty({ required: false, type: CourseInfo, description: 'Informações do curso' })
   course?: CourseInfo;
 
@@ -109,6 +112,7 @@ export class AdvisorResponseDto {
     dto.name = advisor.name;
     dto.email = advisor.email;
     dto.specialization = advisor.specialization;
+    dto.isActive = advisor.isActive;
     dto.createdAt = advisor.createdAt!;
     dto.updatedAt = advisor.updatedAt!;
 

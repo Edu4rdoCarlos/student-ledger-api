@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { STUDENT_RESPONSE_EXAMPLE } from '../../docs/responses';
+import { DocumentVersionDto } from '../../../../defenses/presentation/dtos/response/document-version.dto';
 
 export class ExamBoardMember {
   @ApiProperty({ description: 'Nome do membro da banca', example: 'Prof. Dr. Carlos Alberto Silva' })
@@ -38,6 +39,9 @@ export class AdvisorInDefense {
 
   @ApiPropertyOptional({ description: 'Especialização do orientador', example: 'Engenharia de Software' })
   specialization?: string;
+
+  @ApiProperty({ description: 'Indica se o orientador está ativo', example: true })
+  isActive: boolean;
 }
 
 export class CoStudent {
@@ -55,12 +59,6 @@ export class CoStudent {
 }
 
 export class DefenseRecordDto {
-  @ApiProperty({ description: 'ID do documento', example: 'DOC_202301_1_1704459600000' })
-  documentId: string;
-
-  @ApiProperty({ description: 'CID do documento no IPFS', example: 'QmX1234567890abcdefghijklmnop' })
-  ipfsCid: string;
-
   @ApiProperty({ description: 'Matrícula do estudante', example: '202301' })
   studentRegistration: string;
 
@@ -79,9 +77,6 @@ export class DefenseRecordDto {
   @ApiProperty({ description: 'Resultado da defesa', example: 'APPROVED', enum: ['APPROVED', 'FAILED'] })
   result: 'APPROVED' | 'FAILED';
 
-  @ApiProperty({ description: 'Versão do documento', example: 1 })
-  version: number;
-
   @ApiProperty({ description: 'Motivo (se reprovado)', example: '' })
   reason: string;
 
@@ -90,9 +85,6 @@ export class DefenseRecordDto {
 
   @ApiProperty({ description: 'Status da defesa', example: 'COMPLETED', enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'] })
   defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
-
-  @ApiProperty({ description: 'Status do documento', example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'INACTIVE'] })
-  documentStatus: 'PENDING' | 'APPROVED' | 'INACTIVE';
 
   @ApiPropertyOptional({
     description: 'Orientador da defesa',
@@ -123,27 +115,31 @@ export class DefenseRecordDto {
 
   @ApiProperty({ description: 'Data de validação no blockchain', example: '2024-01-05T10:30:00.000Z' })
   validatedAt: string;
+
+  @ApiProperty({
+    description: 'Histórico de versões do documento, ordenadas da mais recente para a mais antiga',
+    type: [DocumentVersionDto],
+    isArray: true
+  })
+  documents: DocumentVersionDto[];
 }
 
 export interface DefenseRecord {
-  documentId: string;
-  ipfsCid: string;
   studentRegistration: string;
   title: string;
   defenseDate: string;
   location?: string;
   finalGrade: number;
   result: 'APPROVED' | 'FAILED';
-  version: number;
   reason: string;
   registeredBy: string;
   defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
-  documentStatus: 'PENDING' | 'APPROVED' | 'INACTIVE';
   advisor?: {
     id: string;
     name: string;
     email: string;
     specialization?: string;
+    isActive: boolean;
   };
   examBoard?: Array<{
     name: string;
@@ -163,6 +159,17 @@ export interface DefenseRecord {
     justification?: string;
   }>;
   validatedAt: string;
+  documents: Array<{
+    id: string;
+    version: number;
+    status: string;
+    changeReason?: string;
+    documentCid?: string;
+    blockchainTxId?: string;
+    blockchainRegisteredAt?: Date;
+    createdAt: Date;
+    downloadUrl?: string;
+  }>;
 }
 
 export interface CourseInfo {
@@ -176,6 +183,7 @@ export interface AdvisorInfo {
   name: string;
   email: string;
   specialization?: string;
+  isActive: boolean;
 }
 
 export class StudentResponseDto {

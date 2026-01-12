@@ -12,4 +12,7 @@ export class AdvisorInDefenseDto {
 
   @ApiProperty({ required: false })
   specialization?: string;
+
+  @ApiProperty()
+  isActive: boolean;
 }

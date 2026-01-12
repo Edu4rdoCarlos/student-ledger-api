@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Document as PrismaDocument } from '@prisma/client';
 import { PrismaService } from '../../../../database/prisma';
-import { Document, DocumentType } from '../../domain/entities';
+import { Document } from '../../domain/entities';
 import { IDocumentRepository, DocumentFilters } from '../../application/ports';
 import { DocumentMapper } from './document.mapper';
 
@@ -31,14 +31,14 @@ export class PrismaDocumentRepository implements IDocumentRepository {
   async findByDefenseId(defenseId: string): Promise<Document[]> {
     const documents = await this.prisma.document.findMany({
       where: { defenseId },
-      orderBy: [{ type: 'asc' }, { version: 'desc' }],
+      orderBy: { version: 'desc' },
     });
     return documents.map(DocumentMapper.toDomain);
   }
 
-  async findLatestVersion(defenseId: string, type: DocumentType): Promise<Document | null> {
+  async findLatestVersion(defenseId: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
-      where: { defenseId, type },
+      where: { defenseId },
       orderBy: { version: 'desc' },
     });
     return found ? DocumentMapper.toDomain(found) : null;
@@ -48,7 +48,6 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     const documents = await this.prisma.document.findMany({
       where: {
         status: filters?.status,
-        type: filters?.type,
         defenseId: filters?.defenseId,
       },
       orderBy: { createdAt: 'desc' },

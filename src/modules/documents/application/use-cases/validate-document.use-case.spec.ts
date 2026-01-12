@@ -4,7 +4,7 @@ import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { HashUtil } from '../../infra/utils/hash.util';
 import { FabricService } from '../../../fabric/fabric.service';
 import { IpfsService } from '../../../ipfs/ipfs.service';
-import { Document, DocumentType, DocumentStatus } from '../../domain/entities';
+import { Document, DocumentStatus } from '../../domain/entities';
 import { ICurrentUser } from '../../../../shared/types';
 import { UserRole } from '../../../../shared/enums';
 
@@ -78,7 +78,7 @@ describe('ValidateDocumentUseCase', () => {
   describe('execute', () => {
     it('deve validar documento aprovado encontrado no Postgres', async () => {
       const mockDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         documentHash: mockHash,
         documentCid: mockCid,
         defenseId: 'defense-123',
@@ -100,7 +100,7 @@ describe('ValidateDocumentUseCase', () => {
 
     it('deve retornar inválido para documento pendente', async () => {
       const mockDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         documentHash: mockHash,
         defenseId: 'defense-123',
         status: DocumentStatus.PENDING,
@@ -117,7 +117,7 @@ describe('ValidateDocumentUseCase', () => {
 
     it('deve retornar inválido para documento inativo', async () => {
       const mockDocument = Document.create({
-        type: DocumentType.ATA,
+        type: ATA,
         documentHash: mockHash,
         defenseId: 'defense-123',
         status: DocumentStatus.INACTIVE,

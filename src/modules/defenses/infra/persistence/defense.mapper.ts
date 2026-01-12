@@ -36,6 +36,7 @@ export class DefenseMapper {
           name: prisma.advisor.user.name,
           email: prisma.advisor.user.email,
           specialization: prisma.advisor.specialization ?? undefined,
+          isActive: prisma.advisor.isActive,
         },
         students: prisma.students.map((s) => ({
           id: s.student.id,
@@ -45,11 +46,11 @@ export class DefenseMapper {
         })),
         documents: prisma.documents.map((d) => ({
           id: d.id,
-          type: d.type,
           version: d.version,
           documentHash: d.documentHash ?? '',
           documentCid: d.documentCid ?? undefined,
           status: d.status,
+          changeReason: d.changeReason ?? undefined,
           blockchainTxId: d.blockchainTxId ?? undefined,
           blockchainRegisteredAt: d.blockchainRegisteredAt ?? undefined,
           defenseId: d.defenseId,

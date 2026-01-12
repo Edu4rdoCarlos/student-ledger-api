@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUUID, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsUUID, MinLength, MaxLength, IsBoolean } from 'class-validator';
 
 export class UpdateAdvisorDto {
   @ApiProperty({ example: 'Prof. Dr. João Silva Santos', description: 'Nome completo do orientador', required: false })
@@ -20,4 +20,9 @@ export class UpdateAdvisorDto {
   @IsUUID()
   @IsOptional()
   courseId?: string;
+
+  @ApiProperty({ example: true, description: 'Indica se o orientador está ativo', required: false })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

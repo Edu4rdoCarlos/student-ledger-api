@@ -27,6 +27,11 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
         user: true,
         course: true,
         defenses: {
+          where: {
+            status: {
+              in: ['SCHEDULED', 'COMPLETED']
+            }
+          },
           include: {
             students: {
               include: {

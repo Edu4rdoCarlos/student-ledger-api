@@ -1,6 +1,5 @@
 model Document {
   id                     String         @id @default(uuid())
-  type                   DocumentType
   version                Int            @default(1)
   documentHash           String?        @db.VarChar(64) // SHA-256 hash of the file content
   documentCid            String?        @db.VarChar(64) // IPFS CID (content-addressed identifier)
@@ -21,15 +20,10 @@ model Document {
   nextVersion       Document?  @relation("DocumentVersions")
   approvals         Approval[]
 
-  @@unique([defenseId, type, version])
+  @@unique([defenseId, version])
   @@index([defenseId])
   @@index([documentHash])
   @@index([status])
-}
-
-enum DocumentType {
-  ATA
-  FICHA
 }
 
 enum DocumentStatus {

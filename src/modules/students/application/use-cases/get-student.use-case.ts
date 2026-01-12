@@ -98,19 +98,15 @@ export class GetStudentUseCase {
     };
 
     return {
-      documentId: record.documentId,
-      ipfsCid: record.ipfsCid,
       studentRegistration: record.matricula,
       title: record.titulo || '',
       defenseDate: record.defenseDate,
       location: record.location || record.local,
       finalGrade: record.notaFinal,
       result: record.resultado === 'APROVADO' ? 'APPROVED' : 'FAILED',
-      version: record.versao,
       reason: record.motivo || '',
       registeredBy: record.registeredBy,
       defenseStatus: 'COMPLETED',
-      documentStatus: 'APPROVED',
       examBoard: record.examBoard || record.bancaExaminadora,
       signatures: (record.signatures || []).map((sig: any) => ({
         role: roleMap[sig.role] || sig.role,
@@ -120,15 +116,20 @@ export class GetStudentUseCase {
         justification: sig.justification,
       })),
       validatedAt: record.validatedAt,
+      documents: [{
+        id: record.documentId,
+        version: record.versao,
+        status: 'APPROVED',
+        documentCid: record.ipfsCid,
+        blockchainTxId: record.blockchainTxId,
+        blockchainRegisteredAt: record.validatedAt ? new Date(record.validatedAt) : undefined,
+        createdAt: record.validatedAt ? new Date(record.validatedAt) : new Date(),
+      }],
     };
   }
 
   private mapDBDefensesToRecords(dbDefenses: any[], currentStudentId?: string): DefenseRecord[] {
     const mapped = dbDefenses.map((defense) => {
-      const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
-      const latestDoc = defense.documents?.[0];
-      const doc = approvedDoc || latestDoc;
-
       const coStudents = defense.students
         ?.filter((s: any) => s.id !== currentStudentId)
         .map((s: any) => ({
@@ -138,25 +139,26 @@ export class GetStudentUseCase {
           email: s.email,
         })) || [];
 
+      const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
+      const latestDoc = defense.documents?.[0];
+      const referenceDoc = approvedDoc || latestDoc;
+
       return {
-        documentId: doc?.id || '',
-        ipfsCid: doc?.documentCid || '',
         studentRegistration: defense.students?.[0]?.registration || '',
         title: defense.title,
         defenseDate: defense.defenseDate.toISOString(),
         location: defense.location,
         finalGrade: defense.finalGrade || 0,
         result: defense.result as 'APPROVED' | 'FAILED',
-        version: doc?.version || 1,
         reason: '',
         registeredBy: defense.advisor?.email || '',
         defenseStatus: defense.status,
-        documentStatus: doc?.status || 'PENDING',
         advisor: defense.advisor ? {
           id: defense.advisor.id,
           name: defense.advisor.name,
           email: defense.advisor.email,
           specialization: defense.advisor.specialization,
+          isActive: defense.advisor.isActive,
         } : undefined,
         examBoard: defense.examBoard?.map((member: any) => ({
           name: member.name,
@@ -164,7 +166,18 @@ export class GetStudentUseCase {
         })),
         coStudents: coStudents.length > 0 ? coStudents : undefined,
         signatures: [],
-        validatedAt: doc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
+        validatedAt: referenceDoc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
+        documents: defense.documents?.map((doc: any) => ({
+          id: doc.id,
+          version: doc.version,
+          status: doc.status,
+          changeReason: doc.changeReason,
+          documentCid: doc.documentCid,
+          blockchainTxId: doc.blockchainTxId,
+          blockchainRegisteredAt: doc.blockchainRegisteredAt,
+          createdAt: doc.createdAt,
+          downloadUrl: doc.downloadUrl,
+        })) || [],
       };
     });
 

@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../../presentation/dtos';
 import { HashUtil } from '../../infra/utils/hash.util';
-import { Document, DocumentType, DocumentStatus } from '../../domain/entities';
+import { Document, DocumentStatus } from '../../domain/entities';
 import { FabricService } from '../../../fabric/fabric.service';
 import { FabricUser } from '../../../fabric/application/ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
@@ -23,7 +23,6 @@ export class ValidateDocumentUseCase {
   private toSimpleDto(document: Document): SimpleDocumentDto {
     return {
       id: document.id,
-      type: document.type,
       documentHash: document.documentHash,
       documentCid: document.documentCid,
       status: document.status,
@@ -77,7 +76,6 @@ export class ValidateDocumentUseCase {
           isValid: true,
           document: {
             id: fabricResult.document.documentId,
-            type: DocumentType.ATA,
             documentHash: hash,
             documentCid: cid,
             status: DocumentStatus.APPROVED,

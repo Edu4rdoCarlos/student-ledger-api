@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Defense } from '../../../domain/entities';
 import { AdvisorInDefenseDto } from './advisor-in-defense.dto';
 import { StudentInDefenseDto } from './student-in-defense.dto';
-import { DocumentInDefenseDto } from './document-in-defense.dto';
+import { DocumentVersionDto } from './document-version.dto';
 
 export class ExamBoardMemberResponseDto {
   @ApiProperty()
@@ -46,8 +46,12 @@ export class DefenseResponseDto {
   @ApiProperty({ type: [ExamBoardMemberResponseDto], required: false })
   examBoard?: ExamBoardMemberResponseDto[];
 
-  @ApiProperty({ type: [DocumentInDefenseDto], required: false })
-  documents?: DocumentInDefenseDto[];
+  @ApiProperty({
+    type: [DocumentVersionDto],
+    required: false,
+    description: 'Array with all document versions, ordered from newest to oldest'
+  })
+  documents?: DocumentVersionDto[];
 
   @ApiProperty({ required: false })
   createdAt?: Date;
@@ -71,7 +75,17 @@ export class DefenseResponseDto {
         name: member.name,
         email: member.email,
       })),
-      documents: defense.documents,
+      documents: defense.documents?.map(doc => ({
+        id: doc.id,
+        version: doc.version,
+        status: doc.status,
+        changeReason: doc.changeReason,
+        documentCid: doc.documentCid,
+        blockchainTxId: doc.blockchainTxId,
+        blockchainRegisteredAt: doc.blockchainRegisteredAt,
+        createdAt: doc.createdAt,
+        downloadUrl: doc.downloadUrl,
+      })),
       createdAt: defense.createdAt,
       updatedAt: defense.updatedAt,
     };
