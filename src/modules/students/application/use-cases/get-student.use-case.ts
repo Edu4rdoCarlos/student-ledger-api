@@ -121,7 +121,6 @@ export class GetStudentUseCase {
         version: record.versao,
         status: 'APPROVED',
         documentCid: record.ipfsCid,
-        blockchainTxId: record.blockchainTxId,
         blockchainRegisteredAt: record.validatedAt ? new Date(record.validatedAt) : undefined,
         createdAt: record.validatedAt ? new Date(record.validatedAt) : new Date(),
       }],
@@ -142,6 +141,20 @@ export class GetStudentUseCase {
       const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
       const latestDoc = defense.documents?.[0];
       const referenceDoc = approvedDoc || latestDoc;
+
+      const roleMap: Record<string, string> = {
+        COORDINATOR: 'coordinator',
+        ADVISOR: 'advisor',
+        STUDENT: 'student',
+      };
+
+      const signatures = referenceDoc?.approvals?.map((approval: any) => ({
+        role: roleMap[approval.role] || approval.role.toLowerCase(),
+        email: approval.approver?.email || '',
+        timestamp: approval.approvedAt?.toISOString() || new Date().toISOString(),
+        status: approval.status,
+        justification: approval.justification || undefined,
+      })) || [];
 
       return {
         studentRegistration: defense.students?.[0]?.registration || '',
@@ -165,7 +178,7 @@ export class GetStudentUseCase {
           email: member.email,
         })),
         coStudents: coStudents.length > 0 ? coStudents : undefined,
-        signatures: [],
+        signatures,
         validatedAt: referenceDoc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
         documents: defense.documents?.map((doc: any) => ({
           id: doc.id,
@@ -173,10 +186,8 @@ export class GetStudentUseCase {
           status: doc.status,
           changeReason: doc.changeReason,
           documentCid: doc.documentCid,
-          blockchainTxId: doc.blockchainTxId,
           blockchainRegisteredAt: doc.blockchainRegisteredAt,
           createdAt: doc.createdAt,
-          downloadUrl: doc.downloadUrl,
         })) || [],
       };
     });

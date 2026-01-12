@@ -12,7 +12,7 @@ model Approval {
   approverId String?
   approver   User?    @relation(fields: [approverId], references: [id])
 
-  @@unique([documentId, role])
+  @@unique([documentId, role, approverId])
   @@index([documentId])
   @@index([approverId])
   @@index([status])

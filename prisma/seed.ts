@@ -814,13 +814,15 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-ajustada-v1',
-      
+
       version: 1,
       documentHash: docHash7,
       status: DocumentStatus.INACTIVE,
-      inactivationReason: 'Documento rejeitado - formatação incorreta e erros nos dados da banca',
-      inactivatedAt: new Date('2024-07-19T10:00:00Z'),
+      inactivationReason: 'Nova versão criada: Correção de formatação e atualização dos dados da banca examinadora',
+      inactivatedAt: new Date('2024-07-22T16:00:00Z'),
       defenseId: defenseVersaoAjustada.id,
+      blockchainTxId: 'tx_ajustada111aaa222',
+      blockchainRegisteredAt: new Date('2024-07-19T10:00:00Z'),
     },
   });
 
@@ -855,7 +857,7 @@ async function main() {
 
   // Aprovações para documento 1 (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta1.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docAta1.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docAta1.id,
@@ -867,7 +869,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta1.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docAta1.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
     update: {},
     create: {
       documentId: docAta1.id,
@@ -879,7 +881,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAta1.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docAta1.id, role: ApprovalRole.STUDENT, approverId: studentUser1.id as string } },
     update: {},
     create: {
       documentId: docAta1.id,
@@ -894,7 +896,7 @@ async function main() {
 
   // Aprovações para documento da defesa reprovada (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docReprovada.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
     update: {},
     create: {
       documentId: docReprovada.id,
@@ -906,7 +908,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docReprovada.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docReprovada.id,
@@ -918,7 +920,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docReprovada.id, role: ApprovalRole.STUDENT, approverId: studentUser2.id as string } },
     update: {},
     create: {
       documentId: docReprovada.id,
@@ -931,7 +933,7 @@ async function main() {
 
   // Aprovações para documento dupla (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docDupla.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docDupla.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docDupla.id,
@@ -943,7 +945,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docDupla.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docDupla.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
     update: {},
     create: {
       documentId: docDupla.id,
@@ -955,7 +957,13 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docDupla.id, role: ApprovalRole.STUDENT } },
+    where: {
+      documentId_role_approverId: {
+        documentId: docDupla.id,
+        role: ApprovalRole.STUDENT,
+        approverId: studentUser5.id as string
+      }
+    },
     update: {},
     create: {
       documentId: docDupla.id,
@@ -966,9 +974,28 @@ async function main() {
     },
   });
 
+  // Segunda aprovação de estudante para TCC em dupla (aluno6)
+  await prisma.approval.upsert({
+    where: {
+      documentId_role_approverId: {
+        documentId: docDupla.id,
+        role: ApprovalRole.STUDENT,
+        approverId: studentUser6.id as string
+      }
+    },
+    update: {},
+    create: {
+      documentId: docDupla.id,
+      role: ApprovalRole.STUDENT,
+      status: ApprovalStatus.APPROVED,
+      approverId: studentUser6.id,
+      approvedAt: new Date('2024-10-25T18:15:00Z'),
+    },
+  });
+
   // Aprovações para documento parcial (orientador e estudante aprovaram, coordenador pendente)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docParcial.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docParcial.id, role: ApprovalRole.ADVISOR, approverId: advisorUser2.id as string } },
     update: {},
     create: {
       documentId: docParcial.id,
@@ -980,7 +1007,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docParcial.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docParcial.id, role: ApprovalRole.STUDENT, approverId: studentUser7.id as string } },
     update: {},
     create: {
       documentId: docParcial.id,
@@ -991,10 +1018,9 @@ async function main() {
     },
   });
 
-  await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docParcial.id, role: ApprovalRole.COORDINATOR } },
-    update: {},
-    create: {
+  // Aprovação do coordenador ainda pendente (sem approverId definido)
+  await prisma.approval.create({
+    data: {
       documentId: docParcial.id,
       role: ApprovalRole.COORDINATOR,
       status: ApprovalStatus.PENDING,
@@ -1003,7 +1029,7 @@ async function main() {
 
   // Aprovações para documento nota mínima (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docNotaMinima.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docNotaMinima.id, role: ApprovalRole.ADVISOR, approverId: advisorUser2.id as string } },
     update: {},
     create: {
       documentId: docNotaMinima.id,
@@ -1015,7 +1041,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docNotaMinima.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docNotaMinima.id, role: ApprovalRole.COORDINATOR, approverId: coordUser2.id as string } },
     update: {},
     create: {
       documentId: docNotaMinima.id,
@@ -1027,7 +1053,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docNotaMinima.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docNotaMinima.id, role: ApprovalRole.STUDENT, approverId: studentUser9.id as string } },
     update: {},
     create: {
       documentId: docNotaMinima.id,
@@ -1040,7 +1066,7 @@ async function main() {
 
   // Aprovações para documento versão 1 (rejeitado pelo coordenador)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV1.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV1.id,
@@ -1052,7 +1078,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV1.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.STUDENT, approverId: studentUser10.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV1.id,
@@ -1064,7 +1090,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV1.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV1.id,
@@ -1077,7 +1103,7 @@ async function main() {
 
   // Aprovações para documento versão 2 (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV2.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV2.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV2.id,
@@ -1089,7 +1115,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV2.id, role: ApprovalRole.STUDENT } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV2.id, role: ApprovalRole.STUDENT, approverId: studentUser10.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV2.id,
@@ -1101,7 +1127,7 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docAjustadaV2.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV2.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV2.id,
@@ -1114,7 +1140,7 @@ async function main() {
 
   console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Reprovada (todas APPROVED - defesa FAILED)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Dupla (todas APPROVED)`);
+  console.log(`  ✓ 4 aprovações para ATA Defense Dupla (todas APPROVED - TCC em dupla)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Parcial (2 APPROVED, 1 PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Nota Mínima (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v1 (2 APPROVED, 1 REJECTED)`);

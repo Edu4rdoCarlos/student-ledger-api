@@ -57,19 +57,6 @@ export class PrismaApprovalRepository implements IApprovalRepository {
     return approvals.map(ApprovalMapper.toDomain);
   }
 
-  async findByDocumentIdAndRole(documentId: string, role: string): Promise<Approval | null> {
-    const approval = await this.prisma.approval.findUnique({
-      where: {
-        documentId_role: {
-          documentId,
-          role: role as any,
-        },
-      },
-    });
-
-    return approval ? ApprovalMapper.toDomain(approval) : null;
-  }
-
   async findPendingByDocumentId(documentId: string): Promise<Approval[]> {
     const approvals = await this.prisma.approval.findMany({
       where: {

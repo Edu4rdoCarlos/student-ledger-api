@@ -20,13 +20,21 @@ export interface DocumentInDefense {
   documentCid?: string;
   status: string;
   changeReason?: string;
-  blockchainTxId?: string;
   blockchainRegisteredAt?: Date;
   defenseId: string;
   previousVersionId?: string;
   createdAt: Date;
   updatedAt: Date;
-  downloadUrl?: string;
+  approvals?: Array<{
+    role: string;
+    status: string;
+    approvedAt?: Date;
+    justification?: string;
+    approver?: {
+      email: string;
+      role: string;
+    };
+  }>;
 }
 
 export interface ExamBoardMember {

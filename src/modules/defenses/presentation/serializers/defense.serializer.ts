@@ -26,9 +26,6 @@ export class DefenseSerializer {
     const showFinalGrade = hasFullAccess || (isApproved && (isAdvisor || isStudent));
     const showDocuments = hasFullAccess || isApproved;
 
-    // Only ADMIN, COORDINATOR, or participants can download, and ONLY if defense is APPROVED
-    const canDownloadDocuments = (isAdmin || isCoordinator || isDefenseParticipant) && isApproved;
-
     return {
       id: defense.id,
       title: defense.title,
@@ -65,10 +62,8 @@ export class DefenseSerializer {
             status: d.status,
             changeReason: d.changeReason,
             documentCid: d.documentCid,
-            blockchainTxId: d.blockchainTxId,
             blockchainRegisteredAt: d.blockchainRegisteredAt,
             createdAt: d.createdAt,
-            downloadUrl: canDownloadDocuments ? d.downloadUrl : undefined,
           }))
         : undefined,
       createdAt: showSensitiveData ? defense.createdAt : undefined,

@@ -66,10 +66,8 @@ export const STUDENT_RESPONSE_EXAMPLE = {
       status: 'APPROVED',
       changeReason: 'Correção de nota final após revisão',
       documentCid: 'QmX1234567890abcdefghijklmnop',
-      blockchainTxId: 'tx_abc123def456',
       blockchainRegisteredAt: '2024-01-05T10:30:00.000Z',
       createdAt: '2024-01-05T10:00:00.000Z',
-      downloadUrl: '/api/documents/doc-uuid-v2/download',
     },
     {
       id: 'doc-uuid-v1',
@@ -77,10 +75,8 @@ export const STUDENT_RESPONSE_EXAMPLE = {
       status: 'INACTIVE',
       changeReason: undefined,
       documentCid: 'QmY9876543210zyxwvutsrqponml',
-      blockchainTxId: 'tx_xyz789ghi012',
       blockchainRegisteredAt: '2024-01-04T15:00:00.000Z',
       createdAt: '2024-01-04T14:30:00.000Z',
-      downloadUrl: '/api/documents/doc-uuid-v1/download',
     },
   ],
 };

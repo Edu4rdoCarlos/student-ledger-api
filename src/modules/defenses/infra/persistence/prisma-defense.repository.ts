@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DocumentStatus, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../database/prisma';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, FindAllOptions, FindAllResult } from '../../application/ports';
@@ -25,9 +25,16 @@ export class PrismaDefenseRepository implements IDefenseRepository {
       },
     },
     documents: {
-      where: {
-        status: {
-          not: DocumentStatus.INACTIVE,
+      include: {
+        approvals: {
+          include: {
+            approver: {
+              select: {
+                email: true,
+                role: true,
+              },
+            },
+          },
         },
       },
       orderBy: {

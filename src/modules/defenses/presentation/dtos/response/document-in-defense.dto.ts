@@ -20,9 +20,6 @@ export class DocumentInDefenseDto {
   status: string;
 
   @ApiPropertyOptional()
-  blockchainTxId?: string;
-
-  @ApiPropertyOptional()
   blockchainRegisteredAt?: Date;
 
   @ApiProperty()
@@ -36,7 +33,4 @@ export class DocumentInDefenseDto {
 
   @ApiProperty()
   updatedAt: Date;
-
-  @ApiProperty({ required: false, description: 'Download URL (IPFS). Only available for ADMIN, COORDINATOR, or participants when defense is APPROVED' })
-  downloadUrl?: string;
 }

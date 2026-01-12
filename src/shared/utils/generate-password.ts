@@ -1,12 +1,31 @@
 export function generateRandomPassword(): string {
-  const length = 12;
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
-  let password = '';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const specialChars = '!@#$%&*';
 
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    password += charset[randomIndex];
+  const getRandomChar = (chars: string) => {
+    return chars[Math.floor(Math.random() * chars.length)];
+  };
+
+  const password = [
+    getRandomChar(lowercase),
+    getRandomChar(uppercase),
+    getRandomChar(numbers),
+    getRandomChar(specialChars),
+  ];
+
+  const allChars = lowercase + uppercase + numbers + specialChars;
+  const remainingLength = 12 - password.length;
+
+  for (let i = 0; i < remainingLength; i++) {
+    password.push(getRandomChar(allChars));
   }
 
-  return password;
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+
+  return password.join('');
 }

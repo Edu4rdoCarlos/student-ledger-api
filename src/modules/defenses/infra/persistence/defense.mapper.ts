@@ -1,4 +1,4 @@
-import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document, ExamBoardMember } from '@prisma/client';
+import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document, ExamBoardMember, Approval } from '@prisma/client';
 import { Defense } from '../../domain/entities';
 
 type DefenseWithRelations = PrismaDefense & {
@@ -10,7 +10,14 @@ type DefenseWithRelations = PrismaDefense & {
   advisor: Advisor & {
     user: User;
   };
-  documents: Document[];
+  documents: (Document & {
+    approvals: (Approval & {
+      approver: {
+        email: string;
+        role: string;
+      } | null;
+    })[];
+  })[];
   examBoard: ExamBoardMember[];
 };
 
@@ -51,13 +58,21 @@ export class DefenseMapper {
           documentCid: d.documentCid ?? undefined,
           status: d.status,
           changeReason: d.changeReason ?? undefined,
-          blockchainTxId: d.blockchainTxId ?? undefined,
           blockchainRegisteredAt: d.blockchainRegisteredAt ?? undefined,
           defenseId: d.defenseId,
           previousVersionId: d.previousVersionId ?? undefined,
           createdAt: d.createdAt,
           updatedAt: d.updatedAt,
-          downloadUrl: `/api/documents/${d.id}/download`,
+          approvals: d.approvals?.map((a) => ({
+            role: a.role,
+            status: a.status,
+            approvedAt: a.approvedAt ?? undefined,
+            justification: a.justification ?? undefined,
+            approver: a.approver ? {
+              email: a.approver.email,
+              role: a.approver.role,
+            } : undefined,
+          })),
         })),
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
