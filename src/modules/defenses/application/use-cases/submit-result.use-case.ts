@@ -50,6 +50,10 @@ export class SubmitDefenseResultUseCase {
       throw new DefenseNotFoundError();
     }
 
+    if (defense.status !== 'COMPLETED') {
+      throw new ForbiddenException('Só é possível submeter documentos para defesas que já foram concluídas (status COMPLETED)');
+    }
+
     if (request.currentUser?.role === 'COORDINATOR') {
       if (!request.currentUser.courseId) {
         throw new ForbiddenException('Coordenador não está associado a nenhum curso');

@@ -10,7 +10,8 @@ export const STUDENT_RESPONSE_EXAMPLE = {
   version: 1,
   reason: '',
   registeredBy: 'coordinator@ifal.local',
-  status: 'APPROVED',
+  defenseStatus: 'COMPLETED',
+  documentStatus: 'APPROVED',
   advisor: {
     id: 'advisor-uuid-123',
     name: 'Prof. Dr. João Silva',
@@ -29,6 +30,14 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     {
       name: 'Prof. Dr. João Pedro Santos',
       email: 'joao.santos@ifal.local',
+    },
+  ],
+  coStudents: [
+    {
+      id: 'student-uuid-789',
+      registration: '00678901',
+      name: 'Beatriz Lima Souza',
+      email: 'aluno6@ufrgs.edu.br',
     },
   ],
   signatures: [

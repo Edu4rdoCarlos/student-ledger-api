@@ -40,6 +40,20 @@ export class AdvisorInDefense {
   specialization?: string;
 }
 
+export class CoStudent {
+  @ApiProperty({ description: 'ID do estudante', example: 'student-uuid-456' })
+  id: string;
+
+  @ApiProperty({ description: 'Matrícula do estudante', example: '00678901' })
+  registration: string;
+
+  @ApiProperty({ description: 'Nome do estudante', example: 'Beatriz Lima Souza' })
+  name: string;
+
+  @ApiProperty({ description: 'Email do estudante', example: 'aluno6@ufrgs.edu.br' })
+  email: string;
+}
+
 export class DefenseRecordDto {
   @ApiProperty({ description: 'ID do documento', example: 'DOC_202301_1_1704459600000' })
   documentId: string;
@@ -74,8 +88,11 @@ export class DefenseRecordDto {
   @ApiProperty({ description: 'Email de quem registrou', example: 'coordinator@ifal.local' })
   registeredBy: string;
 
-  @ApiProperty({ description: 'Status do documento', example: 'APPROVED', enum: ['APPROVED'] })
-  status: 'APPROVED';
+  @ApiProperty({ description: 'Status da defesa', example: 'COMPLETED', enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'] })
+  defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+
+  @ApiProperty({ description: 'Status do documento', example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'INACTIVE'] })
+  documentStatus: 'PENDING' | 'APPROVED' | 'INACTIVE';
 
   @ApiPropertyOptional({
     description: 'Orientador da defesa',
@@ -89,6 +106,13 @@ export class DefenseRecordDto {
     isArray: true
   })
   examBoard?: ExamBoardMember[];
+
+  @ApiPropertyOptional({
+    description: 'Outros estudantes participantes da defesa (TCC em dupla/grupo)',
+    type: [CoStudent],
+    isArray: true
+  })
+  coStudents?: CoStudent[];
 
   @ApiProperty({
     description: 'Assinaturas do documento',
@@ -113,7 +137,8 @@ export interface DefenseRecord {
   version: number;
   reason: string;
   registeredBy: string;
-  status: 'APPROVED';
+  defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+  documentStatus: 'PENDING' | 'APPROVED' | 'INACTIVE';
   advisor?: {
     id: string;
     name: string;
@@ -121,6 +146,12 @@ export interface DefenseRecord {
     specialization?: string;
   };
   examBoard?: Array<{
+    name: string;
+    email: string;
+  }>;
+  coStudents?: Array<{
+    id: string;
+    registration: string;
     name: string;
     email: string;
   }>;

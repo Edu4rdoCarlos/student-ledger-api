@@ -51,7 +51,13 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    const where = options?.courseId ? { courseId: options.courseId } : {};
+    let where = {};
+
+    if (options?.courseIds && options.courseIds.length > 0) {
+      where = { courseId: { in: options.courseIds } };
+    } else if (options?.courseId) {
+      where = { courseId: options.courseId };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.student.findMany({

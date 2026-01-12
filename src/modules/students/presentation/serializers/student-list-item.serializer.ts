@@ -2,7 +2,6 @@ import { StudentListItemDto } from '../dtos';
 import { Student } from '../../domain/entities';
 import { Course } from '../../../courses/domain/entities';
 import { Defense } from '../../../defenses/domain/entities';
-import { StudentStatus } from '@/shared/enums';
 
 export class StudentListItemSerializer {
   static serialize(
@@ -10,6 +9,8 @@ export class StudentListItemSerializer {
     course: Course,
     defenses: Defense[]
   ): StudentListItemDto {
+    const latestDefense = this.getLatestDefense(defenses);
+
     return {
       userId: student.id,
       registration: student.matricula,
@@ -21,39 +22,13 @@ export class StudentListItemSerializer {
         code: course.code,
       },
       defensesCount: defenses.length,
-      status: this.calculateStatus(defenses),
+      defenseStatus: latestDefense?.status,
     };
   }
 
-  private static calculateStatus(defenses: Defense[]): StudentStatus {
-    if (defenses.length === 0) return StudentStatus.NO_DEFENSE;
-
-    const latestCompletedDefense = this.getLatestCompletedDefense(defenses);
-    if (!latestCompletedDefense) return StudentStatus.PENDING;
-
-    const hasDocumentsPending = this.hasDocumentsPendingApproval(latestCompletedDefense);
-
-    if (latestCompletedDefense.result === 'APPROVED') {
-      return hasDocumentsPending ? StudentStatus.UNDER_APPROVAL : StudentStatus.APPROVED;
-    }
-
-    if (latestCompletedDefense.result === 'FAILED') {
-      return hasDocumentsPending ? StudentStatus.UNDER_APPROVAL : StudentStatus.FAILED;
-    }
-
-    return StudentStatus.PENDING;
-  }
-
-  private static hasDocumentsPendingApproval(defense: Defense): boolean {
-    if (!defense.documents || defense.documents.length === 0) return false;
-    return defense.documents.some(doc => doc.status === 'PENDING');
-  }
-
-  private static getLatestCompletedDefense(defenses: Defense[]): Defense | null {
-    const completedDefenses = defenses.filter(d => d.status === 'COMPLETED');
-    if (completedDefenses.length === 0) return null;
-
-    return completedDefenses.reduce((latest, current) =>
+  private static getLatestDefense(defenses: Defense[]): Defense | null {
+    if (defenses.length === 0) return null;
+    return defenses.reduce((latest, current) =>
       new Date(current.defenseDate) > new Date(latest.defenseDate) ? current : latest
     );
   }

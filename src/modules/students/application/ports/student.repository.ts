@@ -4,6 +4,7 @@ export interface FindAllOptions {
   skip?: number;
   take?: number;
   courseId?: string;
+  courseIds?: string[];
 }
 
 export interface FindAllResult {

@@ -44,6 +44,23 @@ export class GetStudentUseCase {
     }
 
     const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
+    this.logger.log(`[GET STUDENT] Matrícula: ${student.matricula}, StudentId: ${student.id}`);
+    this.logger.log(`[GET STUDENT] Defesas encontradas no DB: ${dbDefenses.length}`);
+    dbDefenses.forEach((defense, index) => {
+      this.logger.log(`[GET STUDENT] Defesa ${index + 1}: ${JSON.stringify({
+        id: defense.id,
+        title: defense.title,
+        result: defense.result,
+        status: defense.status,
+        documentsCount: defense.documents?.length || 0,
+        documents: defense.documents?.map(doc => ({
+          id: doc.id,
+          status: doc.status,
+          version: doc.version,
+          type: doc.type,
+        })),
+      })}`);
+    });
     let defenses: DefenseRecord[] = [];
 
     try {
@@ -64,14 +81,14 @@ export class GetStudentUseCase {
         this.compareDefensesWithDB(defenses, dbDefenses, student.matricula);
       } else {
         // Blockchain vazio - usar dados do DB
-        defenses = this.mapDBDefensesToRecords(dbDefenses);
+        defenses = this.mapDBDefensesToRecords(dbDefenses, student.id);
       }
     } catch (error) {
       // Erro ao acessar blockchain - usar dados do DB
       this.logger.warn(
         `Erro ao buscar defesas do blockchain para matrícula ${student.matricula}: ${error.message}. Usando dados do banco.`
       );
-      defenses = this.mapDBDefensesToRecords(dbDefenses);
+      defenses = this.mapDBDefensesToRecords(dbDefenses, student.id);
     }
 
     return {
@@ -109,7 +126,8 @@ export class GetStudentUseCase {
       version: record.versao,
       reason: record.motivo || '',
       registeredBy: record.registeredBy,
-      status: 'APPROVED',
+      defenseStatus: 'COMPLETED',
+      documentStatus: 'APPROVED',
       examBoard: record.examBoard || record.bancaExaminadora,
       signatures: (record.signatures || []).map((sig: any) => ({
         role: roleMap[sig.role] || sig.role,
@@ -122,23 +140,39 @@ export class GetStudentUseCase {
     };
   }
 
-  private mapDBDefensesToRecords(dbDefenses: any[]): DefenseRecord[] {
-    return dbDefenses.map(defense => {
+  private mapDBDefensesToRecords(dbDefenses: any[], currentStudentId?: string): DefenseRecord[] {
+    this.logger.log(`[MAP DB DEFENSES] Mapeando ${dbDefenses.length} defesas do DB`);
+
+    const mapped = dbDefenses.map((defense, index) => {
       const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
+      const latestDoc = defense.documents?.[0];
+      const doc = approvedDoc || latestDoc;
+
+      this.logger.log(`[MAP DB DEFENSES] Defesa ${index + 1} - "${defense.title}": approvedDoc=${approvedDoc ? 'ENCONTRADO' : 'NÃO ENCONTRADO'}, usando doc=${doc ? doc.status : 'NENHUM'}, documentId=${doc?.id || 'VAZIO'}`);
+
+      const coStudents = defense.students
+        ?.filter((s: any) => s.id !== currentStudentId)
+        .map((s: any) => ({
+          id: s.id,
+          registration: s.registration,
+          name: s.name,
+          email: s.email,
+        })) || [];
 
       return {
-        documentId: approvedDoc?.id || '',
-        ipfsCid: approvedDoc?.documentCid || '',
+        documentId: doc?.id || '',
+        ipfsCid: doc?.documentCid || '',
         studentRegistration: defense.students?.[0]?.registration || '',
         title: defense.title,
         defenseDate: defense.defenseDate.toISOString(),
         location: defense.location,
         finalGrade: defense.finalGrade || 0,
         result: defense.result as 'APPROVED' | 'FAILED',
-        version: approvedDoc?.version || 1,
+        version: doc?.version || 1,
         reason: '',
         registeredBy: defense.advisor?.email || '',
-        status: 'APPROVED' as const,
+        defenseStatus: defense.status,
+        documentStatus: doc?.status || 'PENDING',
         advisor: defense.advisor ? {
           id: defense.advisor.id,
           name: defense.advisor.name,
@@ -149,10 +183,16 @@ export class GetStudentUseCase {
           name: member.name,
           email: member.email,
         })),
+        coStudents: coStudents.length > 0 ? coStudents : undefined,
         signatures: [],
-        validatedAt: approvedDoc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
+        validatedAt: doc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
       };
-    }).filter(defense => defense.documentId !== '');
+    });
+
+    const filtered = mapped.filter(defense => defense.documentId !== '');
+    this.logger.log(`[MAP DB DEFENSES] Após filtrar por documentId: ${filtered.length} defesas`);
+
+    return filtered;
   }
 
   private compareDefensesWithDB(

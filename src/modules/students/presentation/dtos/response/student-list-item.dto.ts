@@ -32,9 +32,10 @@ export class StudentListItemDto {
   defensesCount: number;
 
   @ApiProperty({
-    description: 'Status do estudante em relação às defesas',
-    enum: ['NO_DEFENSE', 'APPROVED', 'FAILED', 'PENDING', 'UNDER_APPROVAL'],
-    example: 'APPROVED'
+    description: 'Status da defesa mais recente',
+    enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'],
+    example: 'COMPLETED',
+    required: false
   })
-  status: 'NO_DEFENSE' | 'APPROVED' | 'FAILED' | 'PENDING' | 'UNDER_APPROVAL';
+  defenseStatus?: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
 }

@@ -33,7 +33,6 @@ export class PrismaDefenseRepository implements IDefenseRepository {
       orderBy: {
         version: Prisma.SortOrder.desc,
       },
-      take: 1,
     },
     examBoard: true,
   };

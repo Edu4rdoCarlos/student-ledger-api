@@ -204,11 +204,11 @@ async function main() {
 
   const student2 = await prisma.student.upsert({
     where: { registration: '00234567' },
-    update: {},
+    update: { courseId: courseCC.id },
     create: {
       id: studentUser2.id,
       registration: '00234567',
-      courseId: courseSI.id,
+      courseId: courseCC.id,
     },
   });
 
@@ -248,11 +248,11 @@ async function main() {
 
   const student4 = await prisma.student.upsert({
     where: { registration: '00456789' },
-    update: {},
+    update: { courseId: courseCC.id },
     create: {
       id: studentUser4.id,
       registration: '00456789',
-      courseId: courseSI.id,
+      courseId: courseCC.id,
     },
   });
 
@@ -314,11 +314,11 @@ async function main() {
 
   const student7 = await prisma.student.upsert({
     where: { registration: '00789012' },
-    update: {},
+    update: { courseId: courseCC.id },
     create: {
       id: studentUser7.id,
       registration: '00789012',
-      courseId: courseSI.id,
+      courseId: courseCC.id,
     },
   });
 
@@ -358,11 +358,11 @@ async function main() {
 
   const student9 = await prisma.student.upsert({
     where: { registration: '00901234' },
-    update: {},
+    update: { courseId: courseCC.id },
     create: {
       id: studentUser9.id,
       registration: '00901234',
-      courseId: courseSI.id,
+      courseId: courseCC.id,
     },
   });
 
@@ -450,7 +450,7 @@ async function main() {
       finalGrade: 4.0,
       result: DefenseResult.FAILED,
       status: DefenseStatus.COMPLETED,
-      advisorId: advisor2.id,
+      advisorId: advisor1.id,
       students: {
         create: {
           studentId: student2.id,
@@ -552,11 +552,12 @@ async function main() {
     create: {
       id: 'defense-aprovacao-parcial',
       title: 'Sistema de Recomendação Baseado em Redes Neurais',
-      defenseDate: new Date('2025-01-20T10:30:00Z'),
+      defenseDate: new Date('2024-12-10T10:30:00Z'),
       location: 'Sala 102 - Bloco III',
-      result: DefenseResult.PENDING,
-      status: DefenseStatus.SCHEDULED,
-      advisorId: advisor2.id,
+      finalGrade: 8.5,
+      result: DefenseResult.APPROVED,
+      status: DefenseStatus.COMPLETED,
+      advisorId: advisor1.id,
       students: {
         create: {
           studentId: student7.id,
@@ -617,7 +618,7 @@ async function main() {
       finalGrade: 7.0,
       result: DefenseResult.APPROVED,
       status: DefenseStatus.COMPLETED,
-      advisorId: advisor2.id,
+      advisorId: advisor1.id,
       students: {
         create: {
           studentId: student9.id,
@@ -703,37 +704,24 @@ async function main() {
     },
   });
 
-  // Documento 2: ATA reprovada (inativa) - defesa2
-  const docHash2 = crypto.createHash('sha256').update('ata-defense-2-v1-inativo').digest('hex');
-  const docInativo = await prisma.document.upsert({
-    where: { id: 'doc-ata-inativo' },
+  // Documento 2: ATA reprovada - defesa2
+  const docHash2 = crypto.createHash('sha256').update('ata-defense-2-v1').digest('hex');
+  const docReprovada = await prisma.document.upsert({
+    where: { id: 'doc-ata-reprovada' },
     update: {},
     create: {
-      id: 'doc-ata-inativo',
+      id: 'doc-ata-reprovada',
       type: DocumentType.ATA,
       version: 1,
       documentHash: docHash2,
-      status: DocumentStatus.INACTIVE,
-      inactivationReason: 'Documento substituído por nova versão corrigida',
-      inactivatedAt: new Date('2024-11-25T15:00:00Z'),
+      status: DocumentStatus.APPROVED,
       defenseId: defenseReprovada.id,
+      blockchainTxId: 'tx_reprovada456xyz',
+      blockchainRegisteredAt: new Date('2024-11-21T11:00:00Z'),
     },
   });
 
-  // Documento 3: ATA pendente - defesa3
-  const docHash3 = crypto.createHash('sha256').update('ata-defense-3-v1').digest('hex');
-  const docPendente = await prisma.document.upsert({
-    where: { id: 'doc-ata-pendente' },
-    update: {},
-    create: {
-      id: 'doc-ata-pendente',
-      type: DocumentType.ATA,
-      version: 1,
-      documentHash: docHash3,
-      status: DocumentStatus.PENDING,
-      defenseId: defensePendente.id,
-    },
-  });
+  // Documento 3: REMOVIDO - defesa3 está SCHEDULED, não pode ter documento ainda
 
   // Documento 4: ATA dupla aprovada - defesa4
   const docHash4 = crypto.createHash('sha256').update('ata-defense-dupla-v1').digest('hex');
@@ -822,8 +810,7 @@ async function main() {
   });
 
   console.log(`  ✓ ATA - Defense 1 (APROVADO, na blockchain)`);
-  console.log(`  ✓ ATA - Defense 2 (INATIVO)`);
-  console.log(`  ✓ ATA - Defense 3 (PENDENTE)`);
+  console.log(`  ✓ ATA - Defense Reprovada (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Dupla (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Parcial (PENDENTE - aprovações parciais)`);
   console.log(`  ✓ ATA - Defense Nota Mínima (APROVADO, na blockchain)`);
@@ -869,47 +856,42 @@ async function main() {
     },
   });
 
-  // Aprovações para documento 3 (todas pendentes)
+  // Aprovações para documento 3: REMOVIDAS - defesa está SCHEDULED, não tem documento
+
+  // Aprovações para documento da defesa reprovada (todas aprovadas)
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.ADVISOR } },
+    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.COORDINATOR } },
     update: {},
     create: {
-      documentId: docPendente.id,
+      documentId: docReprovada.id,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.APPROVED,
+      approverId: coordUser1.id,
+      approvedAt: new Date('2024-11-21T10:00:00Z'),
+    },
+  });
+
+  await prisma.approval.upsert({
+    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.ADVISOR } },
+    update: {},
+    create: {
+      documentId: docReprovada.id,
       role: ApprovalRole.ADVISOR,
-      status: ApprovalStatus.PENDING,
+      status: ApprovalStatus.APPROVED,
+      approverId: advisorUser1.id,
+      approvedAt: new Date('2024-11-21T10:15:00Z'),
     },
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.COORDINATOR } },
+    where: { documentId_role: { documentId: docReprovada.id, role: ApprovalRole.STUDENT } },
     update: {},
     create: {
-      documentId: docPendente.id,
-      role: ApprovalRole.COORDINATOR,
-      status: ApprovalStatus.PENDING,
-    },
-  });
-
-  await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docPendente.id, role: ApprovalRole.STUDENT } },
-    update: {},
-    create: {
-      documentId: docPendente.id,
+      documentId: docReprovada.id,
       role: ApprovalRole.STUDENT,
-      status: ApprovalStatus.PENDING,
-    },
-  });
-
-  // Aprovações para documento inativo (rejeitado pelo coordenador)
-  await prisma.approval.upsert({
-    where: { documentId_role: { documentId: docInativo.id, role: ApprovalRole.COORDINATOR } },
-    update: {},
-    create: {
-      documentId: docInativo.id,
-      role: ApprovalRole.COORDINATOR,
-      status: ApprovalStatus.REJECTED,
-      justification: 'Documento contém erros de formatação e informações incorretas',
-      approverId: coordUser2.id,
+      status: ApprovalStatus.APPROVED,
+      approverId: studentUser2.id,
+      approvedAt: new Date('2024-11-21T10:30:00Z'),
     },
   });
 
@@ -1097,8 +1079,7 @@ async function main() {
   });
 
   console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense 3 (todas PENDING)`);
-  console.log(`  ✓ 1 aprovação para ATA Defense 2 (REJECTED)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Reprovada (todas APPROVED - defesa FAILED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Dupla (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Parcial (2 APPROVED, 1 PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Nota Mínima (todas APPROVED)`);

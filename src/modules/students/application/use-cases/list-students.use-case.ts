@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentListItemDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
@@ -19,6 +19,8 @@ export interface ListStudentsResponse {
 
 @Injectable()
 export class ListStudentsUseCase {
+  private readonly logger = new Logger(ListStudentsUseCase.name);
+
   constructor(
     @Inject(STUDENT_REPOSITORY)
     private readonly studentRepository: IStudentRepository,
@@ -28,16 +30,33 @@ export class ListStudentsUseCase {
     private readonly defenseRepository: IDefenseRepository,
   ) {}
 
+  private async getCoordinatorCourseIds(coordinatorId: string): Promise<string[]> {
+    const courses = await this.courseRepository.findByCoordinatorId(coordinatorId);
+    return courses.map(course => course.id);
+  }
+
   async execute(currentUser: ICurrentUser, query?: ListStudentsQuery): Promise<ListStudentsResponse> {
     const page = query?.page || 1;
     const perPage = query?.perPage || 10;
     const skip = (page - 1) * perPage;
-    const courseId = currentUser?.courseId;
+
+    let courseIds: string[] | undefined;
+    if (currentUser?.role === 'COORDINATOR') {
+      courseIds = await this.getCoordinatorCourseIds(currentUser.id);
+      this.logger.log(`[LIST STUDENTS] Coordinator ${currentUser.email} manages courses: ${courseIds.join(', ')}`);
+    }
+
+    this.logger.log(`[LIST STUDENTS] User: ${currentUser?.email}, Role: ${currentUser?.role}, CourseIds: ${courseIds?.join(', ') || 'ALL'}, Page: ${page}, PerPage: ${perPage}`);
 
     const { items, total } = await this.studentRepository.findAll({
       skip,
       take: perPage,
-      courseId,
+      courseIds,
+    });
+
+    this.logger.log(`[LIST STUDENTS] Found ${items.length} students (total: ${total})`);
+    items.forEach((student, index) => {
+      this.logger.log(`[LIST STUDENTS] Student ${index + 1}: ${student.matricula} - ${student.name} (courseId: ${student.courseId})`);
     });
 
     if (items.length === 0) {
@@ -47,7 +66,7 @@ export class ListStudentsUseCase {
       };
     }
 
-    const uniqueCourseIds = courseId ? [courseId] : [...new Set(items.map(student => student.courseId))];
+    const uniqueCourseIds = [...new Set(items.map(student => student.courseId))];
 
     const fetchedCourses = await Promise.all(
       uniqueCourseIds.map(id => this.courseRepository.findById(id))
