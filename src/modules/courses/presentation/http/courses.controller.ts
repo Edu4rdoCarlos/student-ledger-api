@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
+import { CoordinatorCourseGuard } from '../../../../shared/guards';
 import {
   CreateCourseUseCase,
   GetCourseUseCase,
@@ -68,17 +69,18 @@ export class CoursesController {
     return HttpResponseSerializer.serialize(course);
   }
 
-  @Put(':code')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'COORDINATOR')
+  @UseGuards(CoordinatorCourseGuard)
   @ApiOperation({
     summary: 'Update course data',
-    description: 'Updates name, active status and/or course coordinator. Only admins can update.'
+    description: 'Updates name, active status and/or course coordinator. Admins can update any course, coordinators can only update their own course.'
   })
   @ApiCourseOkResponse()
   @ApiCourseUpdateErrorResponses()
-  async update(@Param('code') code: string, @Body() dto: UpdateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
-    const course = await this.updateCourse.execute(code, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
+    const course = await this.updateCourse.execute(id, dto);
     return HttpResponseSerializer.serialize(course);
   }
 }

@@ -18,6 +18,13 @@ export class CoordinatorCourseGuard implements CanActivate {
       throw new ForbiddenException('Coordenador não está associado a nenhum curso');
     }
 
+    const courseId = request.params.id;
+    if (courseId) {
+      if (user.courseId !== courseId) {
+        throw new ForbiddenException('Coordenador só pode editar o curso do qual é responsável');
+      }
+    }
+
     return true;
   }
 }

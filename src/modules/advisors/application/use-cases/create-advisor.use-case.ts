@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConflictException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
@@ -8,6 +8,7 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { generateRandomPassword } from '../../../../shared/utils';
 import { SendEmailUseCase } from '../../../notifications/application/use-cases';
 import { EmailTemplate } from '../../../notifications/domain/enums';
+import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 
 @Injectable()
 export class CreateAdvisorUseCase {
@@ -16,10 +17,27 @@ export class CreateAdvisorUseCase {
     private readonly advisorRepository: IAdvisorRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
+    @Inject(COORDINATOR_REPOSITORY)
+    private readonly coordinatorRepository: ICoordinatorRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
   ) {}
 
-  async execute(dto: CreateAdvisorDto): Promise<AdvisorResponseDto> {
+  async execute(dto: CreateAdvisorDto, currentUser: any): Promise<AdvisorResponseDto> {
+    if (currentUser.role === Role.COORDINATOR) {
+      const coordinator = await this.coordinatorRepository.findByUserId(currentUser.id);
+
+      if (!coordinator) {
+        throw new ForbiddenException('Coordenador não encontrado');
+      }
+
+      if (dto.courseId && dto.courseId !== coordinator.courseId) {
+        throw new ForbiddenException('Você só pode criar orientadores para o seu curso');
+      }
+
+      if (!dto.courseId) {
+        dto.courseId = coordinator.courseId;
+      }
+    }
     const emailExists = await this.userRepository.existsByEmail(dto.email);
     if (emailExists) {
       throw new ConflictException('Não foi possível criar o orientador. Verifique os dados fornecidos.');

@@ -13,10 +13,10 @@ export class UpdateCourseUseCase {
     private readonly coordinatorRepository: ICoordinatorRepository,
   ) {}
 
-  async execute(code: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
-    const course = await this.courseRepository.findByCode(code);
+  async execute(id: string, dto: UpdateCourseDto): Promise<CourseResponseDto> {
+    const course = await this.courseRepository.findById(id);
     if (!course) {
-      throw new CourseNotFoundError(code);
+      throw new CourseNotFoundError(id);
     }
 
     if (dto.coordinatorId !== undefined) {

@@ -44,8 +44,11 @@ export class AdvisorsController {
     status: 403,
     description: 'No permission. Only coordinators and admins can register advisors.'
   })
-  async create(@Body() dto: CreateAdvisorDto): Promise<HttpResponse<AdvisorResponseDto>> {
-    const advisor = await this.createAdvisor.execute(dto);
+  async create(
+    @Body() dto: CreateAdvisorDto,
+    @CurrentUser() currentUser: any,
+  ): Promise<HttpResponse<AdvisorResponseDto>> {
+    const advisor = await this.createAdvisor.execute(dto, currentUser);
     return HttpResponseSerializer.serialize(advisor);
   }
 
