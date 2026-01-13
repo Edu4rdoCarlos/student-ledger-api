@@ -23,8 +23,6 @@ interface SendEmailRequest {
   contextId?: string;
 }
 
-const EXTERNAL_USER_ID = 'EXTERNAL';
-
 @Injectable()
 export class SendEmailUseCase {
   constructor(
@@ -35,9 +33,8 @@ export class SendEmailUseCase {
   ) {}
 
   async execute(request: SendEmailRequest): Promise<Notification> {
-    // Create notification record
     const notification = Notification.create({
-      userId: request.userId || EXTERNAL_USER_ID,
+      userId: request.userId,
       channel: NotificationChannel.EMAIL,
       to: request.to,
       subject: request.subject,

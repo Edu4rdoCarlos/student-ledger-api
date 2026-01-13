@@ -1,9 +1,9 @@
 import { NotificationChannel, NotificationContextType, NotificationStatus } from '../enums';
 
 export interface NotificationProps {
-  userId: string;
+  userId?: string;
   channel: NotificationChannel;
-  to: string; // Email address
+  to: string;
   subject?: string;
   templateId?: string;
   data?: Record<string, any>;
@@ -53,7 +53,7 @@ export class Notification {
     return this._id;
   }
 
-  get userId(): string {
+  get userId(): string | undefined {
     return this.props.userId;
   }
 

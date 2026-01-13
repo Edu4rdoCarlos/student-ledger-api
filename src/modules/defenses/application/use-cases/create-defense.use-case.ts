@@ -1,10 +1,11 @@
-import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, ForbiddenException, Logger } from '@nestjs/common';
 import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError, StudentAlreadyHasActiveDefenseError } from '../../domain/errors';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 import { ICurrentUser } from '../../../../shared/types';
+import { NotifyDefenseScheduledUseCase } from './notify-defense-scheduled.use-case';
 
 interface CreateDefenseRequest {
   title: string;
@@ -18,6 +19,8 @@ interface CreateDefenseRequest {
 
 @Injectable()
 export class CreateDefenseUseCase {
+  private readonly logger = new Logger(CreateDefenseUseCase.name);
+
   constructor(
     @Inject(DEFENSE_REPOSITORY)
     private readonly defenseRepository: IDefenseRepository,
@@ -25,6 +28,7 @@ export class CreateDefenseUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
+    private readonly notifyDefenseScheduledUseCase: NotifyDefenseScheduledUseCase,
   ) {}
 
   async execute(request: CreateDefenseRequest): Promise<Defense> {
@@ -72,6 +76,12 @@ export class CreateDefenseUseCase {
       status: 'SCHEDULED',
     });
 
-    return this.defenseRepository.create(defense);
+    const createdDefense = await this.defenseRepository.create(defense);
+
+    this.notifyDefenseScheduledUseCase.execute(createdDefense.id).catch((error) => {
+      this.logger.error(`Failed to send defense scheduled notification: ${error.message}`);
+    });
+
+    return createdDefense;
   }
 }

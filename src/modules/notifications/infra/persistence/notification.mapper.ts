@@ -10,7 +10,7 @@ export class NotificationMapper {
   static toDomain(prisma: PrismaNotification): Notification {
     return Notification.create(
       {
-        userId: prisma.userId,
+        userId: prisma.userId ?? undefined,
         channel: prisma.channel as NotificationChannel,
         to: prisma.to,
         subject: prisma.subject ?? undefined,
@@ -33,7 +33,7 @@ export class NotificationMapper {
   static toPrisma(notification: Notification) {
     return {
       id: notification.id,
-      userId: notification.userId,
+      userId: notification.userId ?? null,
       channel: notification.channel,
       to: notification.to,
       subject: notification.subject ?? null,
