@@ -35,6 +35,9 @@ export class EmailTemplateService {
       case EmailTemplate.DOCUMENT_REJECTED:
         return this.documentRejected(data);
 
+      case EmailTemplate.REJECTION_OVERRIDDEN:
+        return this.rejectionOverridden(data);
+
       case EmailTemplate.USER_CREDENTIALS:
         return this.userCredentials(data);
 
@@ -231,6 +234,66 @@ export class EmailTemplateService {
         <p>Por favor, revise o documento e submeta novamente após as correções necessárias.</p>
         <br>
         <p>Atenciosamente,<br>Student Ledger</p>
+      `,
+    };
+  }
+
+  private rejectionOverridden(data: EmailTemplateData): EmailTemplateResult {
+    const approvalUrl = data.approvalId
+      ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/approvals/${data.approvalId}`
+      : '#';
+
+    return {
+      subject: `Rejeição desconsiderada - ${data.documentType}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #3b82f6;">Rejeição Desconsiderada pelo Coordenador</h2>
+          <p>Olá, ${data.approverName}!</p>
+
+          <p>A coordenação analisou a rejeição que você fez e decidiu <strong>desconsiderar</strong> a mesma.</p>
+
+          <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>📋 Informações do Documento:</strong></p>
+            <ul style="margin: 8px 0 0 0;">
+              <li><strong>Tipo:</strong> ${data.documentType}</li>
+              <li><strong>Defesa:</strong> ${data.defenseTitle || 'N/A'}</li>
+              <li><strong>Aluno(s):</strong> ${data.studentsNames || 'N/A'}</li>
+            </ul>
+          </div>
+
+          <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>💬 Justificativa do Coordenador:</strong></p>
+            <p style="margin: 8px 0 0 0; font-style: italic;">"${data.coordinatorReason}"</p>
+          </div>
+
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #374151;">🔄 O que isso significa?</h3>
+            <p style="margin: 0;">
+              Sua rejeição foi analisada e considerada inválida ou inapropriada pelo coordenador.
+              O status da aprovação foi <strong>resetado para PENDENTE</strong> e você está sendo
+              solicitado(a) a <strong>revisar o documento novamente</strong>.
+            </p>
+          </div>
+
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${approvalUrl}"
+               style="background-color: #3b82f6; color: white; padding: 14px 28px;
+                      text-decoration: none; border-radius: 6px; font-weight: bold;
+                      display: inline-block;">
+              Revisar Documento Novamente
+            </a>
+          </div>
+
+          <p>Por favor, acesse o sistema e faça uma nova análise do documento considerando a justificativa do coordenador.</p>
+
+          <p>Se você tiver dúvidas sobre esta decisão, entre em contato com a coordenação.</p>
+
+          <br>
+          <p style="color: #6b7280; font-size: 14px;">
+            Atenciosamente,<br>
+            <strong>Student Ledger</strong>
+          </p>
+        </div>
       `,
     };
   }

@@ -1166,12 +1166,13 @@ async function main() {
     },
   });
 
-  // Aprovação do coordenador ainda pendente para curso de Sistemas de Informação
+  // Aprovações do coordenador ainda pendentes para curso de Sistemas de Informação
   await prisma.approval.create({
     data: {
       documentId: docParcial.id,
       role: ApprovalRole.COORDINATOR,
       status: ApprovalStatus.PENDING,
+      approverId: coordUser2.id,
     },
   });
 
@@ -1212,19 +1213,7 @@ async function main() {
     },
   });
 
-  // Aprovações para documento versão 1 (rejeitado pelo coordenador)
-  await prisma.approval.upsert({
-    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
-    update: {},
-    create: {
-      documentId: docAjustadaV1.id,
-      role: ApprovalRole.ADVISOR,
-      status: ApprovalStatus.APPROVED,
-      approverId: advisorUser1.id,
-      approvedAt: new Date('2024-07-18T18:00:00Z'),
-    },
-  });
-
+  // Aprovações para documento versão 1 (rejeitado pelo orientador)
   await prisma.approval.upsert({
     where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.STUDENT, approverId: studentUser10.id as string } },
     update: {},
@@ -1238,13 +1227,22 @@ async function main() {
   });
 
   await prisma.approval.upsert({
-    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.COORDINATOR, approverId: coordUser1.id as string } },
+    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
     update: {},
     create: {
       documentId: docAjustadaV1.id,
-      role: ApprovalRole.COORDINATOR,
+      role: ApprovalRole.ADVISOR,
       status: ApprovalStatus.REJECTED,
       justification: 'Formatação incorreta e erros nos dados da banca examinadora. Por favor, revisar e reenviar documento corrigido.',
+      approverId: advisorUser1.id,
+    },
+  });
+
+  await prisma.approval.create({
+    data: {
+      documentId: docAjustadaV1.id,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.PENDING,
       approverId: coordUser1.id,
     },
   });
@@ -1286,7 +1284,7 @@ async function main() {
     },
   });
 
-  // Aprovações para documento aguardando (estudante aprovou, orientador e coordenador pendentes)
+  // Aprovações para documento aguardando (estudante aprovou, orientador pendente, coordenador não pode ver ainda)
   await prisma.approval.upsert({
     where: { documentId_role_approverId: { documentId: docAguardandoAprovacoes.id, role: ApprovalRole.STUDENT, approverId: studentUser12.id as string } },
     update: {},
@@ -1299,37 +1297,27 @@ async function main() {
     },
   });
 
-  // Aprovação do orientador ainda pendente (sem approverId definido)
+  // Aprovação do orientador ainda pendente
   await prisma.approval.create({
     data: {
       documentId: docAguardandoAprovacoes.id,
       role: ApprovalRole.ADVISOR,
       status: ApprovalStatus.PENDING,
+      approverId: advisorUser1.id,
     },
   });
 
-  // Aprovação do coordenador ainda pendente (sem approverId definido)
+  // Aprovação do coordenador ainda pendente
   await prisma.approval.create({
     data: {
       documentId: docAguardandoAprovacoes.id,
       role: ApprovalRole.COORDINATOR,
       status: ApprovalStatus.PENDING,
+      approverId: coordUser1.id,
     },
   });
 
-  // Aprovações para documento Carlos Eduardo (coordenador e aluno aprovaram, orientador pendente)
-  await prisma.approval.upsert({
-    where: { documentId_role_approverId: { documentId: docCarlosEduardo.id, role: ApprovalRole.COORDINATOR, approverId: coordUser2.id as string } },
-    update: {},
-    create: {
-      documentId: docCarlosEduardo.id,
-      role: ApprovalRole.COORDINATOR,
-      status: ApprovalStatus.APPROVED,
-      approverId: coordUser2.id,
-      approvedAt: new Date('2025-01-10T12:00:00Z'),
-    },
-  });
-
+  // Aprovações para documento Carlos Eduardo (aluno e orientador aprovaram, coordenador pendente)
   await prisma.approval.upsert({
     where: { documentId_role_approverId: { documentId: docCarlosEduardo.id, role: ApprovalRole.STUDENT, approverId: studentUser11.id as string } },
     update: {},
@@ -1342,23 +1330,36 @@ async function main() {
     },
   });
 
+  await prisma.approval.upsert({
+    where: { documentId_role_approverId: { documentId: docCarlosEduardo.id, role: ApprovalRole.ADVISOR, approverId: coordUser1.id as string } },
+    update: {},
+    create: {
+      documentId: docCarlosEduardo.id,
+      role: ApprovalRole.ADVISOR,
+      status: ApprovalStatus.APPROVED,
+      approverId: coordUser1.id,
+      approvedAt: new Date('2025-01-10T12:00:00Z'),
+    },
+  });
+
   await prisma.approval.create({
     data: {
       documentId: docCarlosEduardo.id,
-      role: ApprovalRole.ADVISOR,
+      role: ApprovalRole.COORDINATOR,
       status: ApprovalStatus.PENDING,
+      approverId: coordUser1.id,
     },
   });
 
   console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Reprovada (todas APPROVED - defesa FAILED)`);
   console.log(`  ✓ 4 aprovações para ATA Defense Dupla (todas APPROVED - TCC em dupla)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Parcial (2 APPROVED, 1 PENDING)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Parcial (Aluno e Orientador APPROVED, Coordenador PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Nota Mínima (todas APPROVED)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v1 (2 APPROVED, 1 REJECTED)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v1 (Aluno APPROVED, Orientador REJECTED, Coordenador PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v2 (todas APPROVED)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Aguardando (1 APPROVED, 2 PENDING)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Carlos Eduardo (2 APPROVED, 1 PENDING - falta orientador)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Aguardando (Aluno APPROVED, Orientador e Coordenador PENDING)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Carlos Eduardo (Aluno e Orientador APPROVED, Coordenador PENDING)`);
 
   console.log('\n' + '='.repeat(50));
   console.log('🎉 Seed completed successfully!');

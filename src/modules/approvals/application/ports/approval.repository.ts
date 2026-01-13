@@ -22,6 +22,25 @@ export interface ApprovalWithDetails {
   }>;
 }
 
+export interface ApprovalItem {
+  id: string;
+  role: ApprovalRole;
+  status: ApprovalStatus;
+  approverName?: string;
+  approvedAt?: Date;
+  justification?: string;
+  approverId?: string;
+}
+
+export interface GroupedDocumentApprovals {
+  documentId: string;
+  documentTitle: string;
+  students: StudentInfo[];
+  courseName: string;
+  createdAt: Date;
+  approvals: ApprovalItem[];
+}
+
 export interface IApprovalRepository {
   create(approval: Approval): Promise<Approval>;
   update(approval: Approval): Promise<Approval>;
@@ -32,5 +51,13 @@ export interface IApprovalRepository {
   findAllPendingWithDetails(): Promise<ApprovalWithDetails[]>;
   findPendingByUserId(userId: string): Promise<Approval[]>;
   findPendingByUserIdWithDetails(userId: string): Promise<ApprovalWithDetails[]>;
+  findAllByStatusWithDetails(status: ApprovalStatus): Promise<ApprovalWithDetails[]>;
+  findByUserIdAndStatusWithDetails(userId: string, status: ApprovalStatus): Promise<ApprovalWithDetails[]>;
+  findGroupedByStatus(status: ApprovalStatus): Promise<GroupedDocumentApprovals[]>;
+  findGroupedByUserIdAndStatus(userId: string, status: ApprovalStatus): Promise<GroupedDocumentApprovals[]>;
+  findAllGrouped(): Promise<GroupedDocumentApprovals[]>;
+  findGroupedByUserId(userId: string): Promise<GroupedDocumentApprovals[]>;
+  findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]>;
+  findGroupedByCourseIdAndStatus(courseId: string, status: ApprovalStatus): Promise<GroupedDocumentApprovals[]>;
   delete(id: string): Promise<void>;
 }

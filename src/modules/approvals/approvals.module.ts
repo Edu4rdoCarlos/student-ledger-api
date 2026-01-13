@@ -4,6 +4,7 @@ import { DefensesModule } from '../defenses/defenses.module';
 import { DocumentsModule } from '../documents/documents.module';
 import { StudentsModule } from '../students/students.module';
 import { AdvisorsModule } from '../advisors/advisors.module';
+import { CoordinatorsModule } from '../coordinators/coordinators.module';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { FabricModule } from '../fabric/fabric.module';
@@ -11,6 +12,7 @@ import {
   CreateApprovalsUseCase,
   ApproveDocumentUseCase,
   RejectDocumentUseCase,
+  OverrideRejectionUseCase,
   RegisterOnBlockchainUseCase,
   ListPendingApprovalsUseCase,
 } from './application/use-cases';
@@ -25,6 +27,7 @@ import { ApprovalController } from './presentation/http';
     forwardRef(() => DocumentsModule),
     StudentsModule,
     AdvisorsModule,
+    CoordinatorsModule,
     AuthModule,
     NotificationsModule,
     FabricModule,
@@ -38,6 +41,7 @@ import { ApprovalController } from './presentation/http';
     CreateApprovalsUseCase,
     ApproveDocumentUseCase,
     RejectDocumentUseCase,
+    OverrideRejectionUseCase,
     RegisterOnBlockchainUseCase,
     ListPendingApprovalsUseCase,
   ],
@@ -46,6 +50,7 @@ import { ApprovalController } from './presentation/http';
     CreateApprovalsUseCase,
     ApproveDocumentUseCase,
     RejectDocumentUseCase,
+    OverrideRejectionUseCase,
     RegisterOnBlockchainUseCase,
     ListPendingApprovalsUseCase,
   ],

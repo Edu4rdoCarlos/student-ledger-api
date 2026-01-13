@@ -64,24 +64,42 @@ export class CreateApprovalsUseCase {
       throw new Error('Nenhum aluno encontrado para a defesa');
     }
 
-    const approvalRoles = [
-      ApprovalRole.COORDINATOR,
-      ApprovalRole.ADVISOR,
-      ApprovalRole.STUDENT,
-    ];
-
     const approvals: Approval[] = [];
 
-    for (const role of approvalRoles) {
-      const approval = Approval.create({
-        role,
-        documentId: request.documentId,
+    // Create COORDINATOR approval
+    const coordinatorApproval = Approval.create({
+      role: ApprovalRole.COORDINATOR,
+      documentId: request.documentId,
+    });
+    const createdCoordinatorApproval = await this.approvalRepository.create(coordinatorApproval);
+    approvals.push(createdCoordinatorApproval);
+    this.sendApprovalEmail(createdCoordinatorApproval, document, defense, advisor, validStudents)
+      .catch(error => {
+        this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
       });
 
-      const createdApproval = await this.approvalRepository.create(approval);
-      approvals.push(createdApproval);
+    // Create ADVISOR approval
+    const advisorApproval = Approval.create({
+      role: ApprovalRole.ADVISOR,
+      documentId: request.documentId,
+    });
+    const createdAdvisorApproval = await this.approvalRepository.create(advisorApproval);
+    approvals.push(createdAdvisorApproval);
+    this.sendApprovalEmail(createdAdvisorApproval, document, defense, advisor, validStudents)
+      .catch(error => {
+        this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
+      });
 
-      this.sendApprovalEmail(createdApproval, document, defense, advisor, validStudents)
+    // Create STUDENT approval for each student
+    for (const student of validStudents) {
+      const studentApproval = Approval.create({
+        role: ApprovalRole.STUDENT,
+        documentId: request.documentId,
+        approverId: student.id,
+      });
+      const createdStudentApproval = await this.approvalRepository.create(studentApproval);
+      approvals.push(createdStudentApproval);
+      this.sendApprovalEmail(createdStudentApproval, document, defense, advisor, [student])
         .catch(error => {
           this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
         });

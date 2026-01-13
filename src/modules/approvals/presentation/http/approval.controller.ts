@@ -4,6 +4,7 @@ import {
   Get,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpStatus,
   HttpCode,
@@ -14,12 +15,12 @@ import { CurrentUser } from '../../../../shared/decorators';
 import {
   ApproveDocumentUseCase,
   RejectDocumentUseCase,
+  OverrideRejectionUseCase,
   ListPendingApprovalsUseCase,
 } from '../../application/use-cases';
-import { RejectDto } from '../dtos/request';
-import { ApprovalResponseDto } from '../dtos/response';
+import { RejectDto, OverrideRejectionDto, ListApprovalsQueryDto } from '../dtos/request';
 import { ApprovalSerializer } from '../serializers';
-import { ListPendingApprovalsDocs, ApproveDocumentDocs, RejectDocumentDocs } from '../docs';
+import { ListPendingApprovalsDocs, ApproveDocumentDocs, RejectDocumentDocs, OverrideRejectionDocs } from '../docs';
 
 @ApiTags('Approvals')
 @ApiBearerAuth()
@@ -29,49 +30,73 @@ export class ApprovalController {
   constructor(
     private readonly approveDocumentUseCase: ApproveDocumentUseCase,
     private readonly rejectDocumentUseCase: RejectDocumentUseCase,
+    private readonly overrideRejectionUseCase: OverrideRejectionUseCase,
     private readonly listPendingApprovalsUseCase: ListPendingApprovalsUseCase,
   ) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
   @ListPendingApprovalsDocs()
-  async listPending(@CurrentUser() user: any) {
+  async listPending(
+    @CurrentUser() user: any,
+    @Query() query: ListApprovalsQueryDto,
+  ) {
     const { approvals } = await this.listPendingApprovalsUseCase.execute({
       userId: user.id,
       userRole: user.role,
+      status: query.status,
     });
 
-    return ApprovalSerializer.toHttpResponsePendingList(approvals);
+    return ApprovalSerializer.toHttpResponseGroupedList(approvals);
   }
 
-  @Post(':id/approve')
+  @Post(':documentId/approve')
   @HttpCode(HttpStatus.OK)
   @ApproveDocumentDocs()
   async approve(
-    @Param('id') approvalId: string,
+    @Param('documentId') documentId: string,
     @CurrentUser() user: any,
   ) {
     const { approval } = await this.approveDocumentUseCase.execute({
-      approvalId,
+      approvalId: documentId,
       userId: user.id,
     });
 
     return ApprovalSerializer.toHttpResponse(approval);
   }
 
-  @Post(':id/reject')
+  @Post(':documentId/reject')
   @HttpCode(HttpStatus.OK)
   @RejectDocumentDocs()
   async reject(
-    @Param('id') approvalId: string,
+    @Param('documentId') documentId: string,
     @Body() dto: RejectDto,
     @CurrentUser() user: any,
   ) {
     const { approval } = await this.rejectDocumentUseCase.execute({
-      approvalId,
+      approvalId: documentId,
       userId: user.id,
       justification: dto.justification,
     });
 
     return ApprovalSerializer.toHttpResponse(approval);
-  }}
+  }
+
+  @Post(':approvalId/override-rejection')
+  @HttpCode(HttpStatus.OK)
+  @OverrideRejectionDocs()
+  async overrideRejection(
+    @Param('approvalId') approvalId: string,
+    @Body() dto: OverrideRejectionDto,
+    @CurrentUser() user: any,
+  ) {
+    const { approval } = await this.overrideRejectionUseCase.execute({
+      approvalId,
+      userId: user.id,
+      userRole: user.role,
+      reason: dto.reason,
+    });
+
+    return ApprovalSerializer.toHttpResponse(approval);
+  }
+}

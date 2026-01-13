@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma';
-import { IApprovalRepository, ApprovalWithDetails } from '../../application/ports';
+import { IApprovalRepository, ApprovalWithDetails, GroupedDocumentApprovals } from '../../application/ports';
 import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { ApprovalMapper } from './approval.mapper';
 
@@ -124,6 +124,141 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.approval.delete({
       where: { id },
+    });
+  }
+
+  async findAllByStatusWithDetails(status: ApprovalStatus): Promise<ApprovalWithDetails[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: status,
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.flatMap((doc) => {
+      const approvalsWithStatus = doc.approvals.filter((a) => a.status === status);
+
+      return approvalsWithStatus.map((approval) => ({
+        approval: ApprovalMapper.toDomain(approval),
+        documentTitle: doc.defense.title,
+        students: doc.defense.students.map((ds) => ({
+          name: ds.student.user.name,
+          email: ds.student.user.email,
+          registration: ds.student.registration,
+        })),
+        courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+        allSignatures: doc.approvals.map((sig) => ({
+          role: sig.role as ApprovalRole,
+          status: sig.status as ApprovalStatus,
+          approverName: sig.approver?.name,
+          approvedAt: sig.approvedAt || undefined,
+          justification: sig.justification || undefined,
+        })),
+      }));
+    });
+  }
+
+  async findByUserIdAndStatusWithDetails(
+    userId: string,
+    status: ApprovalStatus,
+  ): Promise<ApprovalWithDetails[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: status,
+            OR: [
+              { approverId: userId },
+              {
+                approverId: null,
+                document: {
+                  defense: {
+                    OR: [
+                      { advisorId: userId },
+                      { students: { some: { studentId: userId } } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.flatMap((doc) => {
+      const approvalsWithStatus = doc.approvals.filter(
+        (a) =>
+          a.status === status &&
+          (a.approverId === userId || a.approverId === null),
+      );
+
+      return approvalsWithStatus.map((approval) => ({
+        approval: ApprovalMapper.toDomain(approval),
+        documentTitle: doc.defense.title,
+        students: doc.defense.students.map((ds) => ({
+          name: ds.student.user.name,
+          email: ds.student.user.email,
+          registration: ds.student.registration,
+        })),
+        courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+        allSignatures: doc.approvals.map((sig) => ({
+          role: sig.role as ApprovalRole,
+          status: sig.status as ApprovalStatus,
+          approverName: sig.approver?.name,
+          approvedAt: sig.approvedAt || undefined,
+          justification: sig.justification || undefined,
+        })),
+      }));
     });
   }
 
@@ -261,5 +396,368 @@ export class PrismaApprovalRepository implements IApprovalRepository {
         })),
       };
     });
+  }
+
+  async findGroupedByStatus(status: ApprovalStatus): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: status,
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
+
+  async findGroupedByUserIdAndStatus(
+    userId: string,
+    status: ApprovalStatus,
+  ): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: status,
+            OR: [
+              { approverId: userId },
+              {
+                approverId: null,
+                document: {
+                  defense: {
+                    OR: [
+                      { advisorId: userId },
+                      { students: { some: { studentId: userId } } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
+
+  async findAllGrouped(): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
+
+  async findGroupedByUserId(userId: string): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        defense: {
+          OR: [
+            { advisorId: userId },
+            { students: { some: { studentId: userId } } },
+          ],
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
+
+  async findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        defense: {
+          students: {
+            some: {
+              student: {
+                courseId: courseId,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
+
+  async findGroupedByCourseIdAndStatus(
+    courseId: string,
+    status: ApprovalStatus,
+  ): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        approvals: {
+          some: {
+            status: status,
+          },
+        },
+        defense: {
+          students: {
+            some: {
+              student: {
+                courseId: courseId,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
   }
 }

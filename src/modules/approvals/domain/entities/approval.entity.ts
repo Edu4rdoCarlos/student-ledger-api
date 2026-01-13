@@ -57,6 +57,16 @@ export class Approval {
     this.props.updatedAt = new Date();
   }
 
+  resetToPending(): void {
+    if (this.props.status !== ApprovalStatus.REJECTED) {
+      throw new Error('Apenas aprovações rejeitadas podem ser resetadas para pendente');
+    }
+    this.props.status = ApprovalStatus.PENDING;
+    this.props.justification = undefined;
+    this.props.approvedAt = undefined;
+    this.props.updatedAt = new Date();
+  }
+
   get id(): string | undefined {
     return this.props.id;
   }
