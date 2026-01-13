@@ -49,8 +49,13 @@ export class SubmitDefenseResultUseCase {
       throw new DefenseNotFoundError();
     }
 
-    if (defense.status !== 'COMPLETED') {
-      throw new ForbiddenException('Só é possível submeter documentos para defesas que já foram concluídas (status COMPLETED)');
+    if (defense.status !== 'SCHEDULED') {
+      throw new ForbiddenException('Só é possível submeter documentos para defesas agendadas');
+    }
+
+    const now = new Date();
+    if (now < defense.defenseDate) {
+      throw new ForbiddenException('Só é possível submeter resultados após a data da defesa');
     }
 
     if (request.currentUser?.role === 'COORDINATOR') {
