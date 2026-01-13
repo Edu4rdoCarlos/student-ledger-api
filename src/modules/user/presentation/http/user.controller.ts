@@ -3,8 +3,9 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { ChangePasswordDto, HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
-import { ChangePasswordUseCase, GetUserUseCase } from '../../application/use-cases';
-import { UserResponseDto } from '../dtos';
+import { ChangePasswordUseCase, GetUserUseCase, GetBasicUserUseCase, GetUserDefensesUseCase } from '../../application/use-cases';
+import { UserResponseDto, BasicUserResponseDto } from '../dtos';
+import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -13,18 +14,20 @@ export class UserController {
   constructor(
     private readonly changePassword: ChangePasswordUseCase,
     private readonly getUser: GetUserUseCase,
+    private readonly getBasicUser: GetBasicUserUseCase,
+    private readonly getUserDefenses: GetUserDefensesUseCase,
   ) {}
 
   @Get('me')
   @Roles('STUDENT', 'ADVISOR', 'COORDINATOR', 'ADMIN')
   @ApiOperation({
-    summary: 'Get current user user',
-    description: 'Returns user information for the authenticated user, including role-specific data.',
+    summary: 'Get current user profile (optimized)',
+    description: 'Returns basic user information with summary of defenses. Use /user/me/defenses for full defense details.',
   })
   @ApiResponse({
     status: 200,
     description: 'Profile retrieved successfully.',
-    type: UserResponseDto,
+    type: BasicUserResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -34,9 +37,33 @@ export class UserController {
     status: 404,
     description: 'User not found',
   })
-  async getMe(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<UserResponseDto>> {
-    const user = await this.getUser.execute(currentUser.id);
+  async getMe(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<BasicUserResponseDto>> {
+    const user = await this.getBasicUser.execute(currentUser.id);
     return HttpResponseSerializer.serialize(user);
+  }
+
+  @Get('me/defenses')
+  @Roles('STUDENT', 'ADVISOR', 'COORDINATOR')
+  @ApiOperation({
+    summary: 'Get all user defenses',
+    description: 'Returns complete list of all defenses for the authenticated user (student, advisor, or coordinator).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Defenses retrieved successfully.',
+    type: [DefenseResponseDto],
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async getMyDefenses(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<DefenseResponseDto[]>> {
+    const defenses = await this.getUserDefenses.execute(currentUser.id);
+    return HttpResponseSerializer.serialize(defenses);
   }
 
   @Patch('password')

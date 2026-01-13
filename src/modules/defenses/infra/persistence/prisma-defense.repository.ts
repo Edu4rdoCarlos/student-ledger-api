@@ -102,6 +102,60 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     return defenses.map(DefenseMapper.toDomain);
   }
 
+  async findSummaryByAdvisorId(advisorId: string): Promise<any[]> {
+    const defenses = await this.prisma.defense.findMany({
+      where: { advisorId },
+      select: {
+        id: true,
+        title: true,
+        defenseDate: true,
+        result: true,
+        status: true,
+      },
+      orderBy: { defenseDate: 'desc' },
+    });
+    return defenses;
+  }
+
+  async findSummaryByStudentId(studentId: string): Promise<any[]> {
+    const defenses = await this.prisma.defense.findMany({
+      where: {
+        students: {
+          some: {
+            studentId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        defenseDate: true,
+        result: true,
+        status: true,
+      },
+      orderBy: { defenseDate: 'desc' },
+    });
+    return defenses;
+  }
+
+  async countByAdvisorId(advisorId: string): Promise<number> {
+    return this.prisma.defense.count({
+      where: { advisorId },
+    });
+  }
+
+  async countByStudentId(studentId: string): Promise<number> {
+    return this.prisma.defense.count({
+      where: {
+        students: {
+          some: {
+            studentId,
+          },
+        },
+      },
+    });
+  }
+
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     const where: any = {};
 
