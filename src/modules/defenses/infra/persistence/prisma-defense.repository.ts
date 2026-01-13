@@ -104,14 +104,43 @@ export class PrismaDefenseRepository implements IDefenseRepository {
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     const where: any = {};
-    if (options?.courseId) {
+
+    if (options?.courseIds && options.courseIds.length > 0) {
       where.students = {
         some: {
           student: {
-            courseId: options.courseId,
+            courseId: {
+              in: options.courseIds,
+            },
           },
         },
       };
+    }
+
+    if (options?.search) {
+      const searchTerm = options.search.trim();
+      where.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { location: { contains: searchTerm, mode: 'insensitive' } },
+        {
+          students: {
+            some: {
+              student: {
+                user: {
+                  name: { contains: searchTerm, mode: 'insensitive' },
+                },
+              },
+            },
+          },
+        },
+        {
+          advisor: {
+            user: {
+              name: { contains: searchTerm, mode: 'insensitive' },
+            },
+          },
+        },
+      ];
     }
 
     const [items, total] = await Promise.all([

@@ -4,7 +4,8 @@ export interface FindAllOptions {
   skip?: number;
   take?: number;
   order?: 'asc' | 'desc';
-  courseId?: string;
+  courseIds?: string[];
+  search?: string;
 }
 
 export interface FindAllResult {

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentListItemDto } from '../../presentation/dtos';
 import { PaginationMetadata } from '../../../../shared/dtos';
@@ -19,8 +19,6 @@ export interface ListStudentsResponse {
 
 @Injectable()
 export class ListStudentsUseCase {
-  private readonly logger = new Logger(ListStudentsUseCase.name);
-
   constructor(
     @Inject(STUDENT_REPOSITORY)
     private readonly studentRepository: IStudentRepository,
@@ -43,20 +41,12 @@ export class ListStudentsUseCase {
     let courseIds: string[] | undefined;
     if (currentUser?.role === 'COORDINATOR') {
       courseIds = await this.getCoordinatorCourseIds(currentUser.id);
-      this.logger.log(`[LIST STUDENTS] Coordinator ${currentUser.email} manages courses: ${courseIds.join(', ')}`);
     }
-
-    this.logger.log(`[LIST STUDENTS] User: ${currentUser?.email}, Role: ${currentUser?.role}, CourseIds: ${courseIds?.join(', ') || 'ALL'}, Page: ${page}, PerPage: ${perPage}`);
 
     const { items, total } = await this.studentRepository.findAll({
       skip,
       take: perPage,
       courseIds,
-    });
-
-    this.logger.log(`[LIST STUDENTS] Found ${items.length} students (total: ${total})`);
-    items.forEach((student, index) => {
-      this.logger.log(`[LIST STUDENTS] Student ${index + 1}: ${student.matricula} - ${student.name} (courseId: ${student.courseId})`);
     });
 
     if (items.length === 0) {

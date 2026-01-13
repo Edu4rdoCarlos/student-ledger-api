@@ -103,16 +103,24 @@ export class DefenseController {
     description: 'Ordenação por data de criação',
     schema: { default: 'desc' },
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Busca por título, local, nome do aluno ou orientador',
+  })
   async findAll(
     @CurrentUser() user: ICurrentUser,
     @Query() pagination: PaginationDto,
     @Query('order') order?: 'asc' | 'desc',
+    @Query('search') search?: string,
   ): Promise<ListDefensesResponseDto> {
     const { page = 1, perPage = 10 } = pagination;
     const { items, total } = await this.listDefensesUseCase.execute({
       skip: (page - 1) * perPage,
       take: perPage,
       order: order || 'desc',
+      search,
     }, user);
 
     return DefenseSerializer.serializeListToResponse(items, page, perPage, total);

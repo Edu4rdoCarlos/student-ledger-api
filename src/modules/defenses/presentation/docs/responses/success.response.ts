@@ -44,7 +44,7 @@ export const ApiDefenseListResponse = () =>
   applyDecorators(
     ApiExtraModels(DefenseListItemDto, PaginationMetadata),
     ApiOkResponse({
-      description: 'Lista de defesas com informações básicas e metadados de paginação. Retorna apenas dados essenciais: título, data, status, resultado, orientador e alunos. Para informações detalhadas (banca examinadora, documentos, emails), use o endpoint GET /defenses/:id.',
+      description: 'Lista de defesas com informações básicas e metadados de paginação. Retorna apenas dados essenciais: título, data, status, resultado, orientador e alunos. Para informações detalhadas (banca examinadora, documentos, emails), use o endpoint GET /defenses/:id. Suporta filtro por texto através do parâmetro "search" que busca em: título da defesa, local, nome do aluno e nome do orientador.',
       schema: {
         type: 'object',
         properties: {

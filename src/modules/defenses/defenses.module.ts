@@ -6,6 +6,7 @@ import { DocumentsModule } from '../documents/documents.module';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthModule } from '../auth/auth.module';
+import { CoursesModule } from '../courses/courses.module';
 import { HashUtil } from '../documents/infra/utils/hash.util';
 import {
   CreateDefenseUseCase,
@@ -30,6 +31,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
     PrismaModule,
     StudentsModule,
     AdvisorsModule,
+    CoursesModule,
     forwardRef(() => DocumentsModule),
     forwardRef(() => require('../approvals/approvals.module').ApprovalsModule),
     IpfsModule,

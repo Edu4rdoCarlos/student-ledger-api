@@ -98,6 +98,17 @@ async function main() {
     },
   });
 
+  const courseES = await prisma.course.upsert({
+    where: { code: 'ES-UFRGS' },
+    update: {},
+    create: {
+      name: 'Engenharia de Software',
+      code: 'ES-UFRGS',
+      active: true,
+      coordinatorId: coordinator1.id,
+    },
+  });
+
   const courseInativo = await prisma.course.upsert({
     where: { code: 'EC-UFRGS' },
     update: {},
@@ -110,6 +121,7 @@ async function main() {
 
   console.log(`  ✓ ${courseCC.name} (ativo)`);
   console.log(`  ✓ ${courseSI.name} (ativo)`);
+  console.log(`  ✓ ${courseES.name} (ativo)`);
   console.log(`  ✓ ${courseInativo.name} (inativo)`);
 
   console.log('\n👨‍🏫 Creating Advisors...');
