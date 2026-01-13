@@ -79,12 +79,6 @@ export class DefenseResponseDto {
   @ApiProperty({ enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'], description: 'Defense status' })
   status: string;
 
-  @ApiProperty({ description: 'Nome do orientador (denormalizado para facilitar)' })
-  advisorName: string;
-
-  @ApiProperty({ type: [String], description: 'Nomes dos estudantes (denormalizado para facilitar)' })
-  studentNames: string[];
-
   @ApiProperty({ type: AdvisorInDefenseDto })
   advisor: AdvisorInDefenseDto;
 
@@ -116,8 +110,6 @@ export class DefenseResponseDto {
       finalGrade: defense.finalGrade,
       result: defense.result,
       status: defense.status,
-      advisorName: defense.advisor?.name || '',
-      studentNames: defense.students?.map(s => s.name) || [],
       advisor: defense.advisor!,
       students: defense.students!,
       examBoard: defense.examBoard?.map(member => ({

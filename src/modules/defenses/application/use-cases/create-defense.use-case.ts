@@ -52,12 +52,12 @@ export class CreateDefenseUseCase {
         throw new ForbiddenException('Coordenador não está associado a nenhum curso');
       }
 
-      const allStudentsFromSameCourse = students.every(
-        student => student.courseId === request.currentUser!.courseId
+      const studentsWithDifferentCourse = students.filter(
+        student => student.courseId && student.courseId !== request.currentUser!.courseId
       );
 
-      if (!allStudentsFromSameCourse) {
-        throw new ForbiddenException('Coordenador só pode criar defesas para alunos do seu curso');
+      if (studentsWithDifferentCourse.length > 0) {
+        throw new ForbiddenException('Não é permitido criar defesa para alunos que já pertencem a outro curso');
       }
     }
 

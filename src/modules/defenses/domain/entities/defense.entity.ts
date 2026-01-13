@@ -11,6 +11,11 @@ export interface StudentInDefense {
   name: string;
   email?: string;
   registration?: string;
+  course?: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 export interface DocumentInDefense {

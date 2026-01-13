@@ -6,12 +6,8 @@ model Course {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relacionamentos
-  coordinatorId String?
-  coordinator   Coordinator? @relation("CourseCoordinator", fields: [coordinatorId], references: [id])
+  coordinator Coordinator? @relation("CourseCoordinator")
 
   students Student[]
   advisors Advisor[]
-
-  @@index([coordinatorId])
 }

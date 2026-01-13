@@ -6,5 +6,8 @@ model Coordinator {
 
   user User @relation(fields: [id], references: [id])
 
-  courses Course[] @relation("CourseCoordinator")
+  courseId String? @unique
+  course   Course? @relation("CourseCoordinator", fields: [courseId], references: [id])
+
+  @@index([courseId])
 }

@@ -9,33 +9,19 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(coordinator: Coordinator): Promise<Coordinator> {
-    await this.prisma.coordinator.create({
+    const found = await this.prisma.coordinator.create({
       data: {
         id: coordinator.id,
         isActive: coordinator.isActive,
-      } as any,
+        courseId: coordinator.courseId || null,
+      },
       include: {
         user: true,
-        courses: false,
+        course: true,
       },
     });
 
-    await this.prisma.course.update({
-      where: { id: coordinator.courseId },
-      data: {
-        coordinatorId: coordinator.id,
-      },
-    });
-
-    const found = await this.prisma.coordinator.findUnique({
-      where: { id: coordinator.id },
-      include: {
-        user: true,
-        courses: true,
-      },
-    });
-
-    return CoordinatorMapper.toDomain(found!);
+    return CoordinatorMapper.toDomain(found);
   }
 
   async findById(id: string): Promise<Coordinator | null> {
@@ -43,7 +29,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
       where: { id },
       include: {
         user: true,
-        courses: true
+        course: true
       },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
@@ -54,7 +40,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
       where: { id: userId },
       include: {
         user: true,
-        courses: true
+        course: true,
       },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
@@ -63,13 +49,11 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async findByCourseId(courseId: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findFirst({
       where: {
-        courses: {
-          some: { id: courseId },
-        },
+        courseId: courseId,
       },
       include: {
         user: true,
-        courses: true
+        course: true
       },
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
@@ -79,7 +63,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
     const coordinators = await this.prisma.coordinator.findMany({
       include: {
         user: true,
-        courses: true
+        course: true
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -95,7 +79,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
       },
       include: {
         user: true,
-        courses: true
+        course: true
       },
     });
     return CoordinatorMapper.toDomain(updated);

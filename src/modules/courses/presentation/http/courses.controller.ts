@@ -1,18 +1,21 @@
 import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { Roles } from '../../../../shared/decorators';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { CoordinatorCourseGuard } from '../../../../shared/guards';
+import { ICurrentUser } from '../../../../shared/types';
 import {
   CreateCourseUseCase,
   GetCourseUseCase,
   ListCoursesUseCase,
   UpdateCourseUseCase,
+  ListCourseStudentsUseCase,
   ListCoursesQuery,
   ListCoursesResponse,
 } from '../../application/use-cases';
 import { CreateCourseDto, UpdateCourseDto, CourseResponseDto } from '../dtos';
 import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
+import { StudentResponseDto } from '../../../students/presentation/dtos/response';
 import {
   ApiCourseListResponse,
   ApiCourseCreatedResponse,
@@ -32,6 +35,7 @@ export class CoursesController {
     private readonly getCourse: GetCourseUseCase,
     private readonly listCourses: ListCoursesUseCase,
     private readonly updateCourse: UpdateCourseUseCase,
+    private readonly listCourseStudents: ListCourseStudentsUseCase,
   ) {}
 
   @Post()
@@ -82,5 +86,40 @@ export class CoursesController {
   async update(@Param('id') id: string, @Body() dto: UpdateCourseDto): Promise<HttpResponse<CourseResponseDto>> {
     const course = await this.updateCourse.execute(id, dto);
     return HttpResponseSerializer.serialize(course);
+  }
+
+  @Get(':id/students')
+  @Roles('ADMIN', 'COORDINATOR')
+  @ApiOperation({
+    summary: 'List students from a course',
+    description: 'Returns all students enrolled in the specified course. Coordinators can only access students from their own course, admins can access any course.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Students list retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/StudentResponseDto' }
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Coordinator trying to access students from another course',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Course not found',
+  })
+  async listStudents(
+    @Param('id') courseId: string,
+    @CurrentUser() currentUser: ICurrentUser,
+  ) {
+    const students = await this.listCourseStudents.execute({ courseId, currentUser });
+    return { data: students };
   }
 }

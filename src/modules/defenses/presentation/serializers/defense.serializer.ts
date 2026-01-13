@@ -34,8 +34,6 @@ export class DefenseSerializer {
       finalGrade: showFinalGrade ? defense.finalGrade : undefined,
       result: defense.result,
       status: defense.status,
-      advisorName: defense.advisor?.name ?? '',
-      studentNames: defense.students?.map(s => s.name) ?? [],
       advisor: {
         id: defense.advisor?.id ?? '',
         name: defense.advisor?.name ?? '',
@@ -49,6 +47,7 @@ export class DefenseSerializer {
           name: s.name,
           email: showSensitiveData ? s.email : undefined,
           registration: showSensitiveData ? s.registration : undefined,
+          course: s.course,
         })) ?? [],
       examBoard: showSensitiveData
         ? defense.examBoard?.map((member) => ({

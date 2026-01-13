@@ -4,13 +4,12 @@ import { Course } from '../../../courses/domain/entities';
 
 type PrismaCoordinatorWithRelations = PrismaCoordinator & {
   user: PrismaUser;
-  courses?: PrismaCourse[];
+  course?: PrismaCourse | null;
 };
 
 export class CoordinatorMapper {
   static toDomain(prisma: PrismaCoordinatorWithRelations): Coordinator {
-    const firstCourse = prisma.courses && prisma.courses.length > 0 ? prisma.courses[0] : null;
-    const courseId = firstCourse?.id || '';
+    const courseId = prisma.course?.id || '';
 
     return Coordinator.create({
       id: prisma.id,
@@ -20,14 +19,14 @@ export class CoordinatorMapper {
       isFirstAccess: prisma.user.isFirstAccess,
       courseId: courseId,
       isActive: prisma.isActive,
-      course: firstCourse ? Course.create({
-        code: firstCourse.code,
-        name: firstCourse.name,
-        active: firstCourse.active,
-        coordinatorId: firstCourse.coordinatorId || undefined,
-        createdAt: firstCourse.createdAt,
-        updatedAt: firstCourse.updatedAt,
-      }, firstCourse.id) : undefined,
+      course: prisma.course ? Course.create({
+        code: prisma.course.code,
+        name: prisma.course.name,
+        active: prisma.course.active,
+        coordinatorId: undefined,
+        createdAt: prisma.course.createdAt,
+        updatedAt: prisma.course.updatedAt,
+      }, prisma.course.id) : undefined,
       createdAt: prisma.createdAt,
       updatedAt: prisma.updatedAt,
     });

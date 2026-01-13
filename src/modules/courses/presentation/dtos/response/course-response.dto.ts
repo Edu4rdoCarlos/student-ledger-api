@@ -25,8 +25,8 @@ export class CoordinatorBasicDto {
   @ApiProperty({ description: 'Role do usuário', enum: ['ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT'] })
   role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
 
-  @ApiProperty({ description: 'Cursos coordenados', type: [CourseBasicDto], required: false })
-  courses?: CourseBasicDto[];
+  @ApiProperty({ description: 'Curso coordenado', type: CourseBasicDto, required: false })
+  course?: CourseBasicDto;
 }
 
 export class CourseResponseDto {
@@ -58,7 +58,7 @@ export class CourseResponseDto {
       email: course.coordinator.email,
       name: course.coordinator.name,
       role: course.coordinator.role as 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT',
-      courses: course.coordinator.courses,
+      course: course.coordinator.course || undefined,
     } : undefined;
     dto.createdAt = course.createdAt;
     dto.updatedAt = course.updatedAt;

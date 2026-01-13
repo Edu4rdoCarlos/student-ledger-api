@@ -12,7 +12,7 @@ export interface UserBaseProps {
   isFirstAccess?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  courses?: CourseBasic[];
+  course?: CourseBasic | null;
 }
 
 export class UserBase {
@@ -46,7 +46,7 @@ export class UserBase {
     return this.props.updatedAt;
   }
 
-  get courses(): CourseBasic[] | undefined {
-    return this.props.courses;
+  get course(): CourseBasic | null | undefined {
+    return this.props.course;
   }
 }

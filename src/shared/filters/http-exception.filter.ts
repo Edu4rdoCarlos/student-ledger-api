@@ -13,20 +13,43 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+      message = typeof exceptionResponse === 'string'
+        ? exceptionResponse
+        : (exceptionResponse as any).message;
+    } else if (exception instanceof Error) {
+      switch (exception.name) {
+        case 'DefenseNotFoundError':
+          status = HttpStatus.NOT_FOUND;
+          message = exception.message;
+          break;
+        case 'StudentAlreadyHasActiveDefenseError':
+          status = HttpStatus.CONFLICT;
+          message = exception.message;
+          break;
+        case 'TooManyStudentsError':
+          status = HttpStatus.BAD_REQUEST;
+          message = exception.message;
+          break;
+        case 'InvalidGradeError':
+          status = HttpStatus.BAD_REQUEST;
+          message = exception.message;
+          break;
+        default:
+          status = HttpStatus.INTERNAL_SERVER_ERROR;
+          message = exception.message || 'Internal server error';
+      }
+    }
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
-      message: typeof message === 'string' ? message : (message as any).message,
+      message,
     });
   }
 }

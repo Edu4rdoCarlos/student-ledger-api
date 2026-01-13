@@ -15,6 +15,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
         student: {
           include: {
             user: true,
+            course: true,
           },
         },
       },
@@ -242,6 +243,9 @@ export class PrismaDefenseRepository implements IDefenseRepository {
       where: {
         studentId,
         defense: {
+          status: {
+            not: 'CANCELED',
+          },
           result: {
             in: ['PENDING', 'APPROVED'],
           },

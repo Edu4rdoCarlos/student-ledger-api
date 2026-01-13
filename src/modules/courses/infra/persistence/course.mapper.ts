@@ -10,7 +10,7 @@ type CourseBasic = {
 
 type CoordinatorWithUser = PrismaCoordinator & {
   user: PrismaUser;
-  courses?: CourseBasic[];
+  course?: CourseBasic | null;
 };
 
 type CourseWithRelations = PrismaCourse & {
@@ -24,7 +24,7 @@ export class CourseMapper {
         code: prisma.code,
         name: prisma.name,
         active: prisma.active,
-        coordinatorId: prisma.coordinatorId || undefined,
+        coordinatorId: prisma.coordinator?.id || undefined,
         coordinator: prisma.coordinator && prisma.coordinator.user ? new UserBase({
           id: prisma.coordinator.user.id,
           email: prisma.coordinator.user.email,
@@ -33,7 +33,7 @@ export class CourseMapper {
           isFirstAccess: prisma.coordinator.user.isFirstAccess,
           createdAt: prisma.coordinator.user.createdAt,
           updatedAt: prisma.coordinator.user.updatedAt,
-          courses: prisma.coordinator.courses,
+          course: prisma.coordinator.course,
         }) : undefined,
         createdAt: prisma.createdAt,
         updatedAt: prisma.updatedAt,
@@ -48,7 +48,6 @@ export class CourseMapper {
       code: course.code,
       name: course.name,
       active: course.active,
-      coordinatorId: course.coordinatorId || null,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
     };

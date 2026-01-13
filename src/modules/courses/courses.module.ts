@@ -8,11 +8,13 @@ import {
   GetCourseUseCase,
   ListCoursesUseCase,
   UpdateCourseUseCase,
+  ListCourseStudentsUseCase,
 } from './application/use-cases';
 import { CoordinatorsModule } from '../coordinators/coordinators.module';
+import { StudentsModule } from '../students/students.module';
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => CoordinatorsModule)],
+  imports: [PrismaModule, forwardRef(() => CoordinatorsModule), forwardRef(() => StudentsModule)],
   controllers: [CoursesController],
   providers: [
     {
@@ -23,6 +25,7 @@ import { CoordinatorsModule } from '../coordinators/coordinators.module';
     GetCourseUseCase,
     ListCoursesUseCase,
     UpdateCourseUseCase,
+    ListCourseStudentsUseCase,
   ],
   exports: [COURSE_REPOSITORY],
 })

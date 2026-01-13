@@ -75,14 +75,14 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
     let where = {};
-    let courseWhere = {};
+    let coordinatorWhere: any = {};
 
     if (options?.courseIds && options.courseIds.length > 0) {
       where = { courseId: { in: options.courseIds } };
-      courseWhere = { id: { in: options.courseIds } };
+      coordinatorWhere = { courseId: { in: options.courseIds } };
     } else if (options?.courseId) {
       where = { courseId: options.courseId };
-      courseWhere = { id: options.courseId };
+      coordinatorWhere = { courseId: options.courseId };
     }
 
     // Buscar advisors e coordenadores em paralelo
@@ -118,14 +118,10 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
       }),
       // Buscar coordenadores que também são advisors
       this.prisma.coordinator.findMany({
-        where: Object.keys(courseWhere).length > 0 ? {
-          courses: {
-            some: courseWhere
-          }
-        } : undefined,
+        where: Object.keys(coordinatorWhere).length > 0 ? coordinatorWhere : undefined,
         include: {
           user: true,
-          courses: true,
+          course: true,
         },
       }),
       this.prisma.advisor.count({ where }),
@@ -168,9 +164,9 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
           isActive: coordinator.isActive,
           createdAt: coordinator.createdAt,
           updatedAt: coordinator.updatedAt,
-          courseId: coordinator.courses[0]?.id || null,
+          courseId: coordinator.course?.id || null,
           user: coordinator.user,
-          course: coordinator.courses[0] || null,
+          course: coordinator.course || null,
           defenses,
         };
       })

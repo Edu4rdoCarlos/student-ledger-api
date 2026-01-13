@@ -61,7 +61,7 @@ export class PrismaCourseRepository implements ICourseRepository {
             },
             include: {
               user: true,
-              courses: {
+              course: {
                 select: {
                   code: true,
                   name: true,
@@ -92,7 +92,11 @@ export class PrismaCourseRepository implements ICourseRepository {
 
   async findByCoordinatorId(coordinatorId: string): Promise<Course[]> {
     const courses = await this.prisma.course.findMany({
-      where: { coordinatorId },
+      where: {
+        coordinator: {
+          id: coordinatorId
+        }
+      },
       include: {
         coordinator: {
           where: {
@@ -100,6 +104,7 @@ export class PrismaCourseRepository implements ICourseRepository {
           },
           include: {
             user: true,
+            course: true,
           },
         },
       },

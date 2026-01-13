@@ -1,10 +1,11 @@
-import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document, ExamBoardMember, Approval } from '@prisma/client';
+import { Defense as PrismaDefense, DefenseStudent, Advisor, User, Student, Document, ExamBoardMember, Approval, Course } from '@prisma/client';
 import { Defense } from '../../domain/entities';
 
 type DefenseWithRelations = PrismaDefense & {
   students: (DefenseStudent & {
     student: Student & {
       user: User;
+      course: Course | null;
     };
   })[];
   advisor: Advisor & {
@@ -50,6 +51,11 @@ export class DefenseMapper {
           name: s.student.user.name,
           email: s.student.user.email,
           registration: s.student.registration,
+          course: s.student.course ? {
+            id: s.student.course.id,
+            code: s.student.course.code,
+            name: s.student.course.name,
+          } : undefined,
         })),
         documents: prisma.documents.map((d) => ({
           id: d.id,

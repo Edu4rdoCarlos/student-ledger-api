@@ -44,11 +44,44 @@ async function main() {
         },
   });
 
+  console.log('\n📚 Creating Courses...');
+
+  const courseCC = await prisma.course.upsert({
+    where: { code: 'CC-UFRGS' },
+    update: {},
+    create: {
+      name: 'Ciência da Computação',
+      code: 'CC-UFRGS',
+      active: true,
+    },
+  });
+
+  const courseSI = await prisma.course.upsert({
+    where: { code: 'SI-UFRGS' },
+    update: {},
+    create: {
+      name: 'Sistemas de Informação',
+      code: 'SI-UFRGS',
+      active: true,
+    },
+  });
+
+  const courseES = await prisma.course.upsert({
+    where: { code: 'ES-UFRGS' },
+    update: {},
+    create: {
+      name: 'Engenharia de Software',
+      code: 'ES-UFRGS',
+      active: true,
+    },
+  });
+
   const coordinator1 = await prisma.coordinator.upsert({
     where: { id: coordUser1.id },
     update: {},
     create: {
       id: coordUser1.id,
+      courseId: courseCC.id,
     },
   });
 
@@ -68,46 +101,12 @@ async function main() {
     update: {},
     create: {
       id: coordUser2.id,
+      courseId: courseSI.id,
     },
   });
 
   console.log(`  ✓ ${coordUser1.email}`);
   console.log(`  ✓ ${coordUser2.email}`);
-
-  console.log('\n📚 Creating Courses...');
-
-  const courseCC = await prisma.course.upsert({
-    where: { code: 'CC-UFRGS' },
-    update: {},
-    create: {
-      name: 'Ciência da Computação',
-      code: 'CC-UFRGS',
-      active: true,
-      coordinatorId: coordinator1.id,
-    },
-  });
-
-  const courseSI = await prisma.course.upsert({
-    where: { code: 'SI-UFRGS' },
-    update: {},
-    create: {
-      name: 'Sistemas de Informação',
-      code: 'SI-UFRGS',
-      active: true,
-      coordinatorId: coordinator2.id,
-    },
-  });
-
-  const courseES = await prisma.course.upsert({
-    where: { code: 'ES-UFRGS' },
-    update: {},
-    create: {
-      name: 'Engenharia de Software',
-      code: 'ES-UFRGS',
-      active: true,
-      coordinatorId: coordinator1.id,
-    },
-  });
 
   const courseInativo = await prisma.course.upsert({
     where: { code: 'EC-UFRGS' },
