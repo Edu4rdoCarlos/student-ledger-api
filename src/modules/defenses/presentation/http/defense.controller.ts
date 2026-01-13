@@ -94,7 +94,7 @@ export class DefenseController {
 
   @Get()
   @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
-  @ApiOperation({ summary: 'List all defenses' })
+  @ApiOperation({ summary: 'List all defenses with basic information' })
   @ApiDefenseListResponse()
   @ApiQuery({
     name: 'order',
@@ -115,7 +115,7 @@ export class DefenseController {
       order: order || 'desc',
     }, user);
 
-    return DefenseSerializer.serializeListToResponse(items, user, page, perPage, total);
+    return DefenseSerializer.serializeListToResponse(items, page, perPage, total);
   }
 
   @Get(':id')

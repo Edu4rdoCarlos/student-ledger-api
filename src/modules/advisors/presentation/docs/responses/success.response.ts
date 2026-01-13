@@ -23,7 +23,7 @@ export const ApiAdvisorOkResponse = () =>
   applyDecorators(
     ApiExtraModels(AdvisorResponseDto),
     ApiOkResponse({
-      description: 'Orientador encontrado',
+      description: 'Orientador encontrado com lista de IDs das defesas orientadas. Retorna informações básicas do orientador e apenas os IDs das defesas. Use GET /defenses/:id para obter detalhes completos de cada defesa.',
       schema: {
         type: 'object',
         properties: {

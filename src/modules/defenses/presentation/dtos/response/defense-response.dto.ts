@@ -2,17 +2,59 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Defense } from '../../../domain/entities';
 import { AdvisorInDefenseDto } from './advisor-in-defense.dto';
 import { StudentInDefenseDto } from './student-in-defense.dto';
-import { DocumentVersionDto } from './document-version.dto';
 
 export class ExamBoardMemberResponseDto {
   @ApiProperty()
-  id: string;
+  id?: string;
 
   @ApiProperty()
   name: string;
 
   @ApiProperty()
   email: string;
+}
+
+export class DocumentApprovalDto {
+  @ApiProperty({ description: 'Role do aprovador' })
+  role: string;
+
+  @ApiProperty({ description: 'Email do aprovador' })
+  email: string;
+
+  @ApiProperty({ description: 'Data e hora da aprovação' })
+  timestamp?: Date;
+
+  @ApiProperty({ enum: ['APPROVED', 'REJECTED', 'PENDING'], description: 'Status da aprovação' })
+  status: string;
+
+  @ApiProperty({ required: false, description: 'Justificativa em caso de rejeição' })
+  justification?: string;
+}
+
+export class DocumentWithApprovalsDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  version: number;
+
+  @ApiProperty({ enum: ['PENDING', 'APPROVED', 'REJECTED', 'INACTIVE'] })
+  status: string;
+
+  @ApiProperty({ required: false })
+  changeReason?: string;
+
+  @ApiProperty({ required: false })
+  documentCid?: string;
+
+  @ApiProperty({ required: false })
+  blockchainRegisteredAt?: Date;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty({ type: [DocumentApprovalDto], required: false, description: 'Aprovações e assinaturas do documento' })
+  signatures?: DocumentApprovalDto[];
 }
 
 export class DefenseResponseDto {
@@ -34,8 +76,14 @@ export class DefenseResponseDto {
   @ApiProperty({ enum: ['PENDING', 'APPROVED', 'FAILED'] })
   result: string;
 
-  @ApiProperty({ enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'] })
+  @ApiProperty({ enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'], description: 'Defense status' })
   status: string;
+
+  @ApiProperty({ description: 'Nome do orientador (denormalizado para facilitar)' })
+  advisorName: string;
+
+  @ApiProperty({ type: [String], description: 'Nomes dos estudantes (denormalizado para facilitar)' })
+  studentNames: string[];
 
   @ApiProperty({ type: AdvisorInDefenseDto })
   advisor: AdvisorInDefenseDto;
@@ -43,15 +91,15 @@ export class DefenseResponseDto {
   @ApiProperty({ type: [StudentInDefenseDto] })
   students: StudentInDefenseDto[];
 
-  @ApiProperty({ type: [ExamBoardMemberResponseDto], required: false })
+  @ApiProperty({ type: [ExamBoardMemberResponseDto], required: false, description: 'Banca examinadora' })
   examBoard?: ExamBoardMemberResponseDto[];
 
   @ApiProperty({
-    type: [DocumentVersionDto],
+    type: [DocumentWithApprovalsDto],
     required: false,
-    description: 'Array with all document versions, ordered from newest to oldest'
+    description: 'Documentos da defesa com assinaturas e aprovações, ordenados do mais recente para o mais antigo'
   })
-  documents?: DocumentVersionDto[];
+  documents?: DocumentWithApprovalsDto[];
 
   @ApiProperty({ required: false })
   createdAt?: Date;
@@ -68,10 +116,12 @@ export class DefenseResponseDto {
       finalGrade: defense.finalGrade,
       result: defense.result,
       status: defense.status,
+      advisorName: defense.advisor?.name || '',
+      studentNames: defense.students?.map(s => s.name) || [],
       advisor: defense.advisor!,
       students: defense.students!,
       examBoard: defense.examBoard?.map(member => ({
-        id: member.id!,
+        id: member.id,
         name: member.name,
         email: member.email,
       })),
@@ -83,6 +133,13 @@ export class DefenseResponseDto {
         documentCid: doc.documentCid,
         blockchainRegisteredAt: doc.blockchainRegisteredAt,
         createdAt: doc.createdAt,
+        signatures: doc.approvals?.map(approval => ({
+          role: approval.role,
+          email: approval.approver?.email || '',
+          timestamp: approval.approvedAt,
+          status: approval.status,
+          justification: approval.justification,
+        })),
       })),
       createdAt: defense.createdAt,
       updatedAt: defense.updatedAt,

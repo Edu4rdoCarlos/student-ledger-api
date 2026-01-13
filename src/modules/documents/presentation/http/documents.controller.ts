@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -50,9 +50,15 @@ export class DocumentsController {
   @ValidateDocumentDocs()
   async validate(
     @UploadedFile() file: Express.Multer.File,
+    @Body('hash') hash: string,
     @CurrentUser() currentUser: ICurrentUser,
   ) {
-    const result = await this.validateDocument.execute(file.buffer, currentUser);
+    if (!file && !hash) {
+      throw new BadRequestException('Deve fornecer um arquivo ou um hash para validação');
+    }
+
+    const input = file ? file.buffer : hash;
+    const result = await this.validateDocument.execute(input, currentUser);
     return ValidateDocumentSerializer.serialize(result, currentUser);
   }
 

@@ -40,7 +40,7 @@ export const ApiStudentOkResponse = () =>
   applyDecorators(
     ApiExtraModels(StudentResponseDto),
     ApiOkResponse({
-      description: 'Estudante encontrado',
+      description: 'Estudante encontrado com lista de IDs das defesas. Retorna informações básicas do estudante e apenas os IDs das defesas associadas. Use GET /defenses/:id para obter detalhes completos de cada defesa.',
       schema: {
         type: 'object',
         properties: {

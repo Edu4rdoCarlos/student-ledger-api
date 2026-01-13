@@ -30,15 +30,19 @@ export class ValidateDocumentUseCase {
   }
 
   async execute(
-    fileBuffer: Buffer,
+    fileBufferOrHash: Buffer | string,
     currentUser: ICurrentUser
   ): Promise<ValidateDocumentResponseDto> {
-    const hash = this.hashUtil.calculateSha256(fileBuffer);
+    const isHash = typeof fileBufferOrHash === 'string';
+    const hash = isHash ? fileBufferOrHash : this.hashUtil.calculateSha256(fileBufferOrHash);
 
     const document = await this.tryFindDocumentByHash(hash);
 
     if (!document) {
-      return await this.validateOnBlockchain(fileBuffer, hash, currentUser);
+      if (isHash) {
+        return await this.validateHashOnBlockchain();
+      }
+      return await this.validateOnBlockchain(fileBufferOrHash, hash, currentUser);
     }
 
     return this.validateDocumentStatus(document);
@@ -53,6 +57,15 @@ export class ValidateDocumentUseCase {
       this.logger.warn(`Postgres indisponível, consultando Fabric: ${error.message}`);
       return null;
     }
+  }
+
+  private async validateHashOnBlockchain(): Promise<ValidateDocumentResponseDto> {
+    this.logger.warn('Validação com hash fornecido. Blockchain não pode ser consultado sem o arquivo original.');
+
+    return {
+      isValid: false,
+      message: 'Documento não encontrado no sistema. Para validar via blockchain, forneça o arquivo PDF original.',
+    };
   }
 
   private async validateOnBlockchain(

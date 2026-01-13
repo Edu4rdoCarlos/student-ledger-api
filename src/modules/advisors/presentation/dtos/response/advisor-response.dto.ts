@@ -12,66 +12,6 @@ class CourseInfo {
   name: string;
 }
 
-class ExamBoardMemberInfo {
-  @ApiProperty({ description: 'ID do membro da banca' })
-  id: string;
-
-  @ApiProperty({ description: 'Nome do membro da banca' })
-  name: string;
-
-  @ApiProperty({ description: 'Email do membro da banca' })
-  email: string;
-}
-
-class StudentInfo {
-  @ApiProperty({ description: 'ID do estudante' })
-  id: string;
-
-  @ApiProperty({ description: 'Nome do estudante' })
-  name: string;
-
-  @ApiProperty({ required: false, description: 'Email do estudante' })
-  email?: string;
-
-  @ApiProperty({ required: false, description: 'Matrícula do estudante' })
-  registration?: string;
-}
-
-class DefenseInfo {
-  @ApiProperty({ description: 'ID da defesa' })
-  id: string;
-
-  @ApiProperty({ description: 'Título da defesa' })
-  title: string;
-
-  @ApiProperty({ description: 'Data da defesa' })
-  defenseDate: Date;
-
-  @ApiProperty({ required: false, description: 'Local da defesa' })
-  location?: string;
-
-  @ApiProperty({ required: false, description: 'Nota final' })
-  finalGrade?: number;
-
-  @ApiProperty({ enum: ['PENDING', 'APPROVED', 'FAILED'], description: 'Resultado da defesa' })
-  result: string;
-
-  @ApiProperty({ enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'], description: 'Status da defesa' })
-  status: string;
-
-  @ApiProperty({ type: [StudentInfo], description: 'Estudantes da defesa' })
-  students: StudentInfo[];
-
-  @ApiProperty({ required: false, type: [ExamBoardMemberInfo], description: 'Banca examinadora' })
-  examBoard?: ExamBoardMemberInfo[];
-
-  @ApiProperty({ description: 'Data de criação' })
-  createdAt: Date;
-
-  @ApiProperty({ description: 'Data de atualização' })
-  updatedAt: Date;
-}
-
 export class AdvisorResponseDto {
   @ApiProperty({ description: 'ID do usuário do orientador' })
   userId: string;
@@ -103,8 +43,8 @@ export class AdvisorResponseDto {
   @ApiProperty({ description: 'Data de atualização' })
   updatedAt: Date;
 
-  @ApiProperty({ required: false, type: [DefenseInfo], description: 'Lista de orientações de TCC' })
-  defenses?: DefenseInfo[];
+  @ApiProperty({ required: false, type: [String], isArray: true, description: 'Lista de IDs das defesas orientadas. Use GET /defenses/:id para obter detalhes completos de cada defesa.' })
+  defenseIds?: string[];
 
   static fromEntity(advisor: Advisor, activeAdvisorshipsCount?: number): AdvisorResponseDto {
     const dto = new AdvisorResponseDto();
@@ -128,28 +68,7 @@ export class AdvisorResponseDto {
     }
 
     if (advisor.defenses) {
-      dto.defenses = advisor.defenses.map(defense => ({
-        id: defense.id,
-        title: defense.title,
-        defenseDate: defense.defenseDate,
-        location: defense.location,
-        finalGrade: defense.finalGrade,
-        result: defense.result,
-        status: defense.status,
-        students: defense.students?.map(student => ({
-          id: student.id,
-          name: student.name,
-          email: student.email,
-          registration: student.registration,
-        })) || [],
-        examBoard: defense.examBoard?.map(member => ({
-          id: member.id!,
-          name: member.name,
-          email: member.email,
-        })),
-        createdAt: defense.createdAt,
-        updatedAt: defense.updatedAt,
-      }));
+      dto.defenseIds = advisor.defenses.map(defense => defense.id);
     }
 
     return dto;

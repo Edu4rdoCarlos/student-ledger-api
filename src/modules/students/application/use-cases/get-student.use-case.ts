@@ -1,8 +1,7 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentNotFoundError } from '../../domain/errors';
-import { StudentResponseDto, DefenseRecord } from '../../presentation/dtos';
-import { IFabricGateway, FABRIC_GATEWAY, FabricUser } from '../../../fabric/application/ports';
+import { StudentResponseDto } from '../../presentation/dtos';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 
@@ -17,13 +16,9 @@ export interface GetStudentRequest {
 
 @Injectable()
 export class GetStudentUseCase {
-  private readonly logger = new Logger(GetStudentUseCase.name);
-
   constructor(
     @Inject(STUDENT_REPOSITORY)
     private readonly studentRepository: IStudentRepository,
-    @Inject(FABRIC_GATEWAY)
-    private readonly fabricGateway: IFabricGateway,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
     @Inject(DEFENSE_REPOSITORY)
@@ -44,35 +39,7 @@ export class GetStudentUseCase {
     }
 
     const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
-    let defenses: DefenseRecord[] = [];
-
-    try {
-      const fabricUser: FabricUser = {
-        id: request.currentUser.id,
-        email: request.currentUser.email,
-        role: request.currentUser.role,
-      };
-
-      // Tentar buscar defesas do blockchain
-      const blockchainRecords = await this.fabricGateway.getDocumentHistory(fabricUser, student.matricula);
-
-      if (blockchainRecords && blockchainRecords.length > 0) {
-        // Blockchain tem dados - usar como fonte de verdade
-        defenses = blockchainRecords.map(record => this.mapToDefenseRecord(record));
-
-        // Comparar com dados do DB e logar inconsistências
-        this.compareDefensesWithDB(defenses, dbDefenses, student.matricula);
-      } else {
-        // Blockchain vazio - usar dados do DB
-        defenses = this.mapDBDefensesToRecords(dbDefenses, student.id);
-      }
-    } catch (error) {
-      // Erro ao acessar blockchain - usar dados do DB
-      this.logger.warn(
-        `Erro ao buscar defesas do blockchain para matrícula ${student.matricula}: ${error.message}. Usando dados do banco.`
-      );
-      defenses = this.mapDBDefensesToRecords(dbDefenses, student.id);
-    }
+    const defenseIds = dbDefenses.map(defense => defense.id);
 
     return {
       userId: student.id,
@@ -86,146 +53,7 @@ export class GetStudentUseCase {
       },
       createdAt: student.createdAt!,
       updatedAt: student.updatedAt!,
-      defenses,
+      defenseIds,
     };
-  }
-
-  private mapToDefenseRecord(record: any): DefenseRecord {
-    const roleMap: Record<string, string> = {
-      coordenador: 'coordinator',
-      orientador: 'advisor',
-      aluno: 'student',
-    };
-
-    return {
-      studentRegistration: record.matricula,
-      title: record.titulo || '',
-      defenseDate: record.defenseDate,
-      location: record.location || record.local,
-      finalGrade: record.notaFinal,
-      result: record.resultado === 'APROVADO' ? 'APPROVED' : 'FAILED',
-      reason: record.motivo || '',
-      registeredBy: record.registeredBy,
-      defenseStatus: 'COMPLETED',
-      examBoard: record.examBoard || record.bancaExaminadora,
-      signatures: (record.signatures || []).map((sig: any) => ({
-        role: roleMap[sig.role] || sig.role,
-        email: sig.email,
-        timestamp: sig.timestamp,
-        status: sig.status,
-        justification: sig.justification,
-      })),
-      validatedAt: record.validatedAt,
-      documents: [{
-        id: record.documentId,
-        version: record.versao,
-        status: 'APPROVED',
-        documentCid: record.ipfsCid,
-        blockchainRegisteredAt: record.validatedAt ? new Date(record.validatedAt) : undefined,
-        createdAt: record.validatedAt ? new Date(record.validatedAt) : new Date(),
-      }],
-    };
-  }
-
-  private mapDBDefensesToRecords(dbDefenses: any[], currentStudentId?: string): DefenseRecord[] {
-    const mapped = dbDefenses.map((defense) => {
-      const coStudents = defense.students
-        ?.filter((s: any) => s.id !== currentStudentId)
-        .map((s: any) => ({
-          id: s.id,
-          registration: s.registration,
-          name: s.name,
-          email: s.email,
-        })) || [];
-
-      const approvedDoc = defense.documents?.find((doc: any) => doc.status === 'APPROVED');
-      const latestDoc = defense.documents?.[0];
-      const referenceDoc = approvedDoc || latestDoc;
-
-      const roleMap: Record<string, string> = {
-        COORDINATOR: 'coordinator',
-        ADVISOR: 'advisor',
-        STUDENT: 'student',
-      };
-
-      const signatures = referenceDoc?.approvals?.map((approval: any) => ({
-        role: roleMap[approval.role] || approval.role.toLowerCase(),
-        email: approval.approver?.email || '',
-        timestamp: approval.approvedAt?.toISOString() || new Date().toISOString(),
-        status: approval.status,
-        justification: approval.justification || undefined,
-      })) || [];
-
-      return {
-        studentRegistration: defense.students?.[0]?.registration || '',
-        title: defense.title,
-        defenseDate: defense.defenseDate.toISOString(),
-        location: defense.location,
-        finalGrade: defense.finalGrade || 0,
-        result: defense.result as 'APPROVED' | 'FAILED',
-        reason: '',
-        registeredBy: defense.advisor?.email || '',
-        defenseStatus: defense.status,
-        advisor: defense.advisor ? {
-          id: defense.advisor.id,
-          name: defense.advisor.name,
-          email: defense.advisor.email,
-          specialization: defense.advisor.specialization,
-          isActive: defense.advisor.isActive,
-        } : undefined,
-        examBoard: defense.examBoard?.map((member: any) => ({
-          name: member.name,
-          email: member.email,
-        })),
-        coStudents: coStudents.length > 0 ? coStudents : undefined,
-        signatures,
-        validatedAt: referenceDoc?.blockchainRegisteredAt?.toISOString() || defense.updatedAt.toISOString(),
-        documents: defense.documents?.map((doc: any) => ({
-          id: doc.id,
-          version: doc.version,
-          status: doc.status,
-          changeReason: doc.changeReason,
-          documentCid: doc.documentCid,
-          blockchainRegisteredAt: doc.blockchainRegisteredAt,
-          createdAt: doc.createdAt,
-        })) || [],
-      };
-    });
-
-    return mapped;
-  }
-
-  private compareDefensesWithDB(
-    blockchainDefenses: DefenseRecord[],
-    dbDefenses: any[],
-    matricula: string,
-  ): void {
-    const dbDefensesCount = dbDefenses.filter(d =>
-      d.documents?.some((doc: any) => doc.status === 'APPROVED')
-    ).length;
-
-    if (blockchainDefenses.length !== dbDefensesCount) {
-      this.logger.warn(
-        `Inconsistência detectada para matrícula ${matricula}: ` +
-        `Blockchain tem ${blockchainDefenses.length} defesa(s), ` +
-        `DB tem ${dbDefensesCount} defesa(s) com documentos aprovados`
-      );
-    }
-
-    blockchainDefenses.forEach(bcDefense => {
-      const dbDefense = dbDefenses.find(d => d.title === bcDefense.title);
-
-      if (!dbDefense) {
-        this.logger.warn(
-          `Defesa "${bcDefense.title}" existe no blockchain mas não foi encontrada no DB ` +
-          `para matrícula ${matricula}`
-        );
-      } else if (dbDefense.finalGrade !== bcDefense.finalGrade) {
-        this.logger.warn(
-          `Nota divergente para defesa "${bcDefense.title}" (matrícula ${matricula}): ` +
-          `Blockchain=${bcDefense.finalGrade}, DB=${dbDefense.finalGrade}`
-        );
-      }
-    });
   }
 }

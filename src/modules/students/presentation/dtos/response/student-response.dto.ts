@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { STUDENT_RESPONSE_EXAMPLE } from '../../docs/responses';
 import { DocumentVersionDto } from '../../../../defenses/presentation/dtos/response/document-version.dto';
 
 export class ExamBoardMember {
@@ -217,10 +216,10 @@ export class StudentResponseDto {
   updatedAt: Date;
 
   @ApiPropertyOptional({
-    description: 'Histórico de defesas registradas no blockchain (apenas no GET /:registration)',
-    type: DefenseRecordDto,
+    description: 'Lista de IDs das defesas do estudante. Use GET /defenses/:id para obter detalhes completos de cada defesa.',
+    type: [String],
     isArray: true,
-    example: [STUDENT_RESPONSE_EXAMPLE],
+    example: ['def-uuid-1', 'def-uuid-2'],
   })
-  defenses?: DefenseRecord[];
+  defenseIds?: string[];
 }
