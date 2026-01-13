@@ -37,7 +37,11 @@ export class CancelDefenseUseCase {
       },
     });
 
-    await this.notifyDefenseCanceledUseCase.execute(request.defenseId);
+    this.notifyDefenseCanceledUseCase
+      .execute(request.defenseId)
+      .catch((error) => {
+        console.error('Failed to send cancellation notifications:', error);
+      });
 
     return updatedDefense;
   }
