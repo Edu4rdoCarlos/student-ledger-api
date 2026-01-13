@@ -44,7 +44,11 @@ export class RescheduleDefenseUseCase {
       },
     });
 
-    await this.notifyDefenseRescheduledUseCase.execute(request.defenseId);
+    this.notifyDefenseRescheduledUseCase
+      .execute(request.defenseId)
+      .catch((error) => {
+        console.error('Failed to send reschedule notifications:', error);
+      });
 
     return updatedDefense;
   }
