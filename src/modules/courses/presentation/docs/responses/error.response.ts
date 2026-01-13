@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -31,4 +30,18 @@ export const ApiCourseFindOneErrorResponses = () =>
   applyDecorators(
     ApiUnauthorizedResponse({ description: 'Não autenticado' }),
     ApiNotFoundResponse({ description: 'Curso não encontrado' }),
+  );
+
+export const ApiCourseStudentsListErrorResponses = () =>
+  applyDecorators(
+    ApiUnauthorizedResponse({ description: 'Não autenticado' }),
+    ApiForbiddenResponse({ description: 'Forbidden - Coordinator trying to access students from another course' }),
+    ApiNotFoundResponse({ description: 'Course not found' }),
+  );
+
+export const ApiCourseAdvisorsListErrorResponses = () =>
+  applyDecorators(
+    ApiUnauthorizedResponse({ description: 'Não autenticado' }),
+    ApiForbiddenResponse({ description: 'Forbidden - Coordinator trying to access advisors from another course' }),
+    ApiNotFoundResponse({ description: 'Course not found' }),
   );

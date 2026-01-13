@@ -45,7 +45,19 @@ export class PrismaStudentRepository implements IStudentRepository {
     const students = await this.prisma.student.findMany({
       where: { courseId },
       orderBy: { createdAt: 'asc' },
-      include: { user: true }
+      include: {
+        user: true,
+        defenses: {
+          include: {
+            defense: true,
+          },
+          orderBy: {
+            defense: {
+              createdAt: 'desc',
+            },
+          },
+        },
+      }
     });
     return students.map(StudentMapper.toDomain);
   }

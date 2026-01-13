@@ -18,7 +18,7 @@ import {
     PrismaModule,
     AuthModule,
     FabricModule,
-    CoursesModule,
+    forwardRef(() => CoursesModule),
     forwardRef(() => require('../defenses/defenses.module').DefensesModule),
   ],
   controllers: [StudentsController],

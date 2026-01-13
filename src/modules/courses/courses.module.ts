@@ -9,12 +9,20 @@ import {
   ListCoursesUseCase,
   UpdateCourseUseCase,
   ListCourseStudentsUseCase,
+  ListCourseAdvisorsUseCase,
 } from './application/use-cases';
 import { CoordinatorsModule } from '../coordinators/coordinators.module';
 import { StudentsModule } from '../students/students.module';
+import { AdvisorsModule } from '../advisors/advisors.module';
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => CoordinatorsModule), forwardRef(() => StudentsModule)],
+  imports: [
+    PrismaModule,
+    forwardRef(() => CoordinatorsModule),
+    forwardRef(() => StudentsModule),
+    forwardRef(() => AdvisorsModule),
+    forwardRef(() => require('../defenses/defenses.module').DefensesModule),
+  ],
   controllers: [CoursesController],
   providers: [
     {
@@ -26,6 +34,7 @@ import { StudentsModule } from '../students/students.module';
     ListCoursesUseCase,
     UpdateCourseUseCase,
     ListCourseStudentsUseCase,
+    ListCourseAdvisorsUseCase,
   ],
   exports: [COURSE_REPOSITORY],
 })

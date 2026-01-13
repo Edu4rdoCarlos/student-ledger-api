@@ -338,11 +338,11 @@ async function main() {
 
   const student7 = await prisma.student.upsert({
     where: { registration: '00789012' },
-    update: { courseId: courseCC.id },
+    update: { courseId: courseSI.id },
     create: {
       id: studentUser7.id,
       registration: '00789012',
-      courseId: courseCC.id,
+      courseId: courseSI.id,
     },
   });
 
@@ -627,7 +627,7 @@ async function main() {
       finalGrade: 8.5,
       result: DefenseResult.APPROVED,
       status: DefenseStatus.COMPLETED,
-      advisorId: advisor1.id,
+      advisorId: advisor2.id,
       students: {
         create: {
           studentId: student7.id,
@@ -1166,7 +1166,7 @@ async function main() {
     },
   });
 
-  // Aprovação do coordenador ainda pendente (sem approverId definido)
+  // Aprovação do coordenador ainda pendente para curso de Sistemas de Informação
   await prisma.approval.create({
     data: {
       documentId: docParcial.id,

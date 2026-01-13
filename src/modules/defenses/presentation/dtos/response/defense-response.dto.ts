@@ -57,6 +57,17 @@ export class DocumentWithApprovalsDto {
   signatures?: DocumentApprovalDto[];
 }
 
+export class CourseInDefenseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  code: string;
+
+  @ApiProperty()
+  name: string;
+}
+
 export class DefenseResponseDto {
   @ApiProperty()
   id: string;
@@ -85,6 +96,9 @@ export class DefenseResponseDto {
   @ApiProperty({ type: [StudentInDefenseDto] })
   students: StudentInDefenseDto[];
 
+  @ApiProperty({ type: CourseInDefenseDto, description: 'Curso da defesa' })
+  course: CourseInDefenseDto;
+
   @ApiProperty({ type: [ExamBoardMemberResponseDto], required: false, description: 'Banca examinadora' })
   examBoard?: ExamBoardMemberResponseDto[];
 
@@ -102,6 +116,9 @@ export class DefenseResponseDto {
   updatedAt?: Date;
 
   static fromEntity(defense: Defense): DefenseResponseDto {
+    const firstStudent = defense.students?.[0];
+    const course = firstStudent?.course || { id: '', code: '', name: '' };
+
     return {
       id: defense.id,
       title: defense.title,
@@ -112,6 +129,11 @@ export class DefenseResponseDto {
       status: defense.status,
       advisor: defense.advisor!,
       students: defense.students!,
+      course: {
+        id: course.id,
+        code: course.code,
+        name: course.name,
+      },
       examBoard: defense.examBoard?.map(member => ({
         id: member.id,
         name: member.name,

@@ -54,3 +54,86 @@ export const ApiCourseListResponse = () =>
       },
     }),
   );
+
+export const ApiCourseStudentsListResponse = () =>
+  applyDecorators(
+    ApiOkResponse({
+      description: 'Students list retrieved successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                userId: { type: 'string' },
+                registration: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                course: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    code: { type: 'string' },
+                  },
+                },
+                defensesCount: { type: 'number', description: 'Quantidade de defesas registradas' },
+                defenseStatus: {
+                  type: 'string',
+                  enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'],
+                  description: 'Status da defesa mais recente',
+                  nullable: true,
+                },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
+      },
+    }),
+  );
+
+export const ApiCourseAdvisorsListResponse = () =>
+  applyDecorators(
+    ApiOkResponse({
+      description: 'Advisors list retrieved successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                userId: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                specialization: { type: 'string', nullable: true },
+                isActive: { type: 'boolean' },
+                course: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    code: { type: 'string' },
+                  },
+                },
+                defensesCount: { type: 'number', description: 'Quantidade de defesas orientadas' },
+                defenseStatus: {
+                  type: 'string',
+                  enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'],
+                  description: 'Status da defesa mais recente',
+                  nullable: true,
+                },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
+      },
+    }),
+  );

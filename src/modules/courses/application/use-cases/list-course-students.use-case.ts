@@ -1,6 +1,7 @@
 import { Inject, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../ports';
+import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { ICurrentUser } from '../../../../shared/types';
 import { StudentResponseDto } from '../../../students/presentation/dtos/response';
 
@@ -16,6 +17,8 @@ export class ListCourseStudentsUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
   ) {}
 
   async execute(request: ListCourseStudentsRequest): Promise<StudentResponseDto[]> {
@@ -36,18 +39,29 @@ export class ListCourseStudentsUseCase {
 
     const students = await this.studentRepository.findByCourseId(request.courseId);
 
-    return students.map(student => ({
-      userId: student.userId,
-      registration: student.matricula,
-      name: student.name,
-      email: student.email,
-      course: {
-        id: course.id,
-        name: course.name,
-        code: course.code,
-      },
-      createdAt: student.createdAt!,
-      updatedAt: student.updatedAt!,
-    }));
+    const studentsWithDefenseInfo = await Promise.all(
+      students.map(async (student) => {
+        const defenseSummary = await this.defenseRepository.findSummaryByStudentId(student.userId);
+        const mostRecentDefense = defenseSummary.length > 0 ? defenseSummary[0] : null;
+
+        return {
+          userId: student.userId,
+          registration: student.matricula,
+          name: student.name,
+          email: student.email,
+          course: {
+            id: course.id,
+            name: course.name,
+            code: course.code,
+          },
+          defensesCount: defenseSummary.length,
+          defenseStatus: mostRecentDefense?.status,
+          createdAt: student.createdAt!,
+          updatedAt: student.updatedAt!,
+        };
+      })
+    );
+
+    return studentsWithDefenseInfo;
   }
 }

@@ -110,7 +110,6 @@ export class DefenseController {
     description: 'Busca por título, local, nome do aluno ou orientador',
   })
   async findAll(
-    @CurrentUser() user: ICurrentUser,
     @Query() pagination: PaginationDto,
     @Query('order') order?: 'asc' | 'desc',
     @Query('search') search?: string,
@@ -121,7 +120,7 @@ export class DefenseController {
       take: perPage,
       order: order || 'desc',
       search,
-    }, user);
+    });
 
     return DefenseSerializer.serializeListToResponse(items, page, perPage, total);
   }

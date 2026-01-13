@@ -26,6 +26,9 @@ export class DefenseSerializer {
     const showFinalGrade = hasFullAccess || (isApproved && (isAdvisor || isStudent));
     const showDocuments = hasFullAccess || isApproved;
 
+    const firstStudent = defense.students?.[0];
+    const course = firstStudent?.course || { id: '', code: '', name: '' };
+
     return {
       id: defense.id,
       title: defense.title,
@@ -49,6 +52,11 @@ export class DefenseSerializer {
           registration: showSensitiveData ? s.registration : undefined,
           course: s.course,
         })) ?? [],
+      course: {
+        id: course.id,
+        code: course.code,
+        name: course.name,
+      },
       examBoard: showSensitiveData
         ? defense.examBoard?.map((member) => ({
             id: member.id!,

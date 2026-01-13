@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../../database/prisma';
 import { AuthModule } from '../auth/auth.module';
 import { CoursesModule } from '../courses/courses.module';
@@ -14,7 +14,7 @@ import {
 } from './application/use-cases';
 
 @Module({
-  imports: [PrismaModule, AuthModule, CoursesModule, CoordinatorsModule],
+  imports: [PrismaModule, AuthModule, forwardRef(() => CoursesModule), forwardRef(() => CoordinatorsModule)],
   controllers: [AdvisorsController],
   providers: [
     {

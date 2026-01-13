@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../shared/decorators';
 import { CoordinatorCourseGuard } from '../../../../shared/guards';
 import { ICurrentUser } from '../../../../shared/types';
@@ -9,13 +9,13 @@ import {
   ListCoursesUseCase,
   UpdateCourseUseCase,
   ListCourseStudentsUseCase,
+  ListCourseAdvisorsUseCase,
   ListCoursesQuery,
   ListCoursesResponse,
 } from '../../application/use-cases';
 import { CreateCourseDto, UpdateCourseDto, CourseResponseDto } from '../dtos';
 import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
-import { StudentResponseDto } from '../../../students/presentation/dtos/response';
 import {
   ApiCourseListResponse,
   ApiCourseCreatedResponse,
@@ -24,6 +24,10 @@ import {
   ApiCourseCreateErrorResponses,
   ApiCourseUpdateErrorResponses,
   ApiCourseFindOneErrorResponses,
+  ApiCourseStudentsListResponse,
+  ApiCourseStudentsListErrorResponses,
+  ApiCourseAdvisorsListResponse,
+  ApiCourseAdvisorsListErrorResponses,
 } from '../docs';
 
 @ApiTags('Courses')
@@ -36,6 +40,7 @@ export class CoursesController {
     private readonly listCourses: ListCoursesUseCase,
     private readonly updateCourse: UpdateCourseUseCase,
     private readonly listCourseStudents: ListCourseStudentsUseCase,
+    private readonly listCourseAdvisors: ListCourseAdvisorsUseCase,
   ) {}
 
   @Post()
@@ -94,32 +99,29 @@ export class CoursesController {
     summary: 'List students from a course',
     description: 'Returns all students enrolled in the specified course. Coordinators can only access students from their own course, admins can access any course.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Students list retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/StudentResponseDto' }
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Coordinator trying to access students from another course',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Course not found',
-  })
+  @ApiCourseStudentsListResponse()
+  @ApiCourseStudentsListErrorResponses()
   async listStudents(
     @Param('id') courseId: string,
     @CurrentUser() currentUser: ICurrentUser,
   ) {
     const students = await this.listCourseStudents.execute({ courseId, currentUser });
     return { data: students };
+  }
+
+  @Get(':id/advisors')
+  @Roles('ADMIN', 'COORDINATOR')
+  @ApiOperation({
+    summary: 'List advisors from a course',
+    description: 'Returns all advisors from the specified course. Coordinators can only access advisors from their own course, admins can access any course.'
+  })
+  @ApiCourseAdvisorsListResponse()
+  @ApiCourseAdvisorsListErrorResponses()
+  async listAdvisors(
+    @Param('id') courseId: string,
+    @CurrentUser() currentUser: ICurrentUser,
+  ) {
+    const advisors = await this.listCourseAdvisors.execute({ courseId, currentUser });
+    return { data: advisors };
   }
 }
