@@ -130,6 +130,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async findAllByStatusWithDetails(status: ApprovalStatus): Promise<ApprovalWithDetails[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: status,
@@ -190,6 +191,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   ): Promise<ApprovalWithDetails[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: status,
@@ -263,9 +265,9 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   }
 
   async findAllPendingWithDetails(): Promise<ApprovalWithDetails[]> {
-    // Buscar documentos que têm pelo menos uma aprovação pendente
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: 'PENDING',
@@ -322,9 +324,9 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   }
 
   async findPendingByUserIdWithDetails(userId: string): Promise<ApprovalWithDetails[]> {
-    // Buscar documentos que têm pelo menos uma aprovação pendente relacionada ao usuário
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: 'PENDING',
@@ -401,6 +403,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async findGroupedByStatus(status: ApprovalStatus): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: status,
@@ -460,6 +463,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   ): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: status,
@@ -529,6 +533,9 @@ export class PrismaApprovalRepository implements IApprovalRepository {
 
   async findAllGrouped(): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
+      where: {
+        nextVersion: null,
+      },
       include: {
         defense: {
           include: {
@@ -579,6 +586,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async findGroupedByUserId(userId: string): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         defense: {
           OR: [
             { advisorId: userId },
@@ -636,6 +644,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   async findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         defense: {
           students: {
             some: {
@@ -699,6 +708,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
   ): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {
+        nextVersion: null,
         approvals: {
           some: {
             status: status,

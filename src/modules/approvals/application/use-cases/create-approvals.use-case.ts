@@ -7,6 +7,7 @@ import { EmailTemplate, NotificationContextType } from '../../../notifications/d
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
 
@@ -33,6 +34,8 @@ export class CreateApprovalsUseCase {
     private readonly studentRepository: IStudentRepository,
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
+    @Inject(COORDINATOR_REPOSITORY)
+    private readonly coordinatorRepository: ICoordinatorRepository,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
@@ -122,7 +125,32 @@ export class CreateApprovalsUseCase {
 
     switch (approval.role) {
       case ApprovalRole.COORDINATOR:
-        return;
+        if (students.length === 0) {
+          this.logger.warn('Nenhum aluno encontrado para buscar coordenador');
+          return;
+        }
+        const firstStudent = students[0];
+        const studentWithCourse = await this.studentRepository.findById(firstStudent.id);
+        if (!studentWithCourse || !studentWithCourse.courseId) {
+          this.logger.warn('Curso do aluno não encontrado');
+          return;
+        }
+
+        const coordinator = await this.coordinatorRepository.findByCourseId(studentWithCourse.courseId);
+        if (!coordinator) {
+          this.logger.warn(`Coordenador não encontrado para o curso ${studentWithCourse.courseId}`);
+          return;
+        }
+
+        const coordinatorUser = await this.userRepository.findById(coordinator.id);
+        if (!coordinatorUser) {
+          this.logger.warn(`Usuário coordenador não encontrado: ${coordinator.id}`);
+          return;
+        }
+
+        recipientEmail = coordinatorUser.email;
+        userId = coordinatorUser.id;
+        break;
 
       case ApprovalRole.ADVISOR:
         recipientEmail = advisor.email;

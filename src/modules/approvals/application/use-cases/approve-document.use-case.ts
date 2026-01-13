@@ -1,11 +1,19 @@
 import { Injectable, Inject, Logger, forwardRef } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
-import { Approval } from '../../domain/entities';
+import { Approval, ApprovalStatus } from '../../domain/entities';
 import {
   ApprovalNotFoundError,
   ApprovalAlreadyProcessedError,
 } from '../../domain/errors';
 import { RegisterOnBlockchainUseCase } from './register-on-blockchain.use-case';
+import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
+import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
+import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { SendEmailUseCase } from '../../../notifications/application/use-cases';
+import { EmailTemplateService } from '../../../notifications/application/services';
+import { EmailTemplate, NotificationContextType } from '../../../notifications/domain/enums';
 
 interface ApproveDocumentRequest {
   approvalId: string;
@@ -25,6 +33,18 @@ export class ApproveDocumentUseCase {
     private readonly approvalRepository: IApprovalRepository,
     @Inject(forwardRef(() => RegisterOnBlockchainUseCase))
     private readonly registerOnBlockchainUseCase: RegisterOnBlockchainUseCase,
+    @Inject(DOCUMENT_REPOSITORY)
+    private readonly documentRepository: IDocumentRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
+    @Inject(STUDENT_REPOSITORY)
+    private readonly studentRepository: IStudentRepository,
+    @Inject(ADVISOR_REPOSITORY)
+    private readonly advisorRepository: IAdvisorRepository,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: IUserRepository,
+    private readonly sendEmailUseCase: SendEmailUseCase,
+    private readonly emailTemplateService: EmailTemplateService,
   ) {}
 
   async execute(request: ApproveDocumentRequest): Promise<ApproveDocumentResponse> {
@@ -46,6 +66,109 @@ export class ApproveDocumentUseCase {
       this.logger.error(`Failed to register on blockchain: ${error.message}`);
     });
 
+    this.checkAndNotifyAllApproved(approval.documentId).catch((error) => {
+      this.logger.error(`Failed to send approval completion emails: ${error.message}`);
+    });
+
     return { approval: updatedApproval };
+  }
+
+  private async checkAndNotifyAllApproved(documentId: string): Promise<void> {
+    const approvals = await this.approvalRepository.findByDocumentId(documentId);
+
+    const allApproved = approvals.every(approval => approval.status === ApprovalStatus.APPROVED);
+
+    if (!allApproved) {
+      return;
+    }
+
+    const document = await this.documentRepository.findById(documentId);
+    if (!document) {
+      this.logger.warn(`Documento ${documentId} não encontrado`);
+      return;
+    }
+
+    const defense = await this.defenseRepository.findById(document.defenseId);
+    if (!defense) {
+      this.logger.warn(`Defesa ${document.defenseId} não encontrada`);
+      return;
+    }
+
+    const students = await Promise.all(
+      defense.studentIds.map(id => this.studentRepository.findById(id))
+    );
+    const validStudents = students.filter(s => s !== null);
+
+    const advisor = await this.advisorRepository.findById(defense.advisorId);
+    if (!advisor) {
+      this.logger.warn(`Orientador ${defense.advisorId} não encontrado`);
+      return;
+    }
+
+    const studentsNames = validStudents.map(s => s.name).filter(Boolean).join(', ');
+
+    const coordinatorApproval = approvals.find(a => a.role === 'COORDINATOR');
+
+    const emailPromises = [];
+
+    if (coordinatorApproval?.approverId) {
+      emailPromises.push(this.sendApprovalCompletionEmail(
+        coordinatorApproval.approverId,
+        document,
+        defense,
+        studentsNames
+      ));
+    }
+
+    emailPromises.push(this.sendApprovalCompletionEmail(
+      advisor.id,
+      document,
+      defense,
+      studentsNames
+    ));
+
+    for (const student of validStudents) {
+      emailPromises.push(this.sendApprovalCompletionEmail(
+        student.id,
+        document,
+        defense,
+        studentsNames
+      ));
+    }
+
+    await Promise.all(emailPromises);
+  }
+
+  private async sendApprovalCompletionEmail(
+    userId: string,
+    document: any,
+    defense: any,
+    studentsNames: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      this.logger.warn(`Usuário ${userId} não encontrado para envio de email`);
+      return;
+    }
+
+    const emailContent = this.emailTemplateService.generateTemplate(
+      EmailTemplate.DOCUMENT_APPROVED,
+      {
+        documentType: document.type,
+        defenseTitle: defense.title,
+        studentsNames,
+        approvedBy: 'Todos os aprovadores',
+        approvedAt: new Date(),
+      },
+    );
+
+    await this.sendEmailUseCase.execute({
+      userId,
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      contextType: NotificationContextType.DOCUMENT_APPROVAL,
+      contextId: document.id,
+    });
   }
 }

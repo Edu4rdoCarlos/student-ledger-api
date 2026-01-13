@@ -456,6 +456,28 @@ async function main() {
     },
   });
 
+  // Estudante 13: Carlos Eduardo - TCC com aprovação do aluno e rejeição do orientador
+  const studentCarlosEduardo = await prisma.user.upsert({
+    where: { email: 'carlos.eduardo@ufrgs.edu.br' },
+    update: {},
+    create: {
+      email: 'carlos.eduardo@ufrgs.edu.br',
+      password: defaultPassword,
+      name: 'Carlos Eduardo',
+      role: Role.STUDENT,
+    },
+  });
+
+  const studentCarlos = await prisma.student.upsert({
+    where: { registration: '02345678' },
+    update: {},
+    create: {
+      id: studentCarlosEduardo.id,
+      registration: '02345678',
+      courseId: courseCC.id,
+    },
+  });
+
   console.log(`  ✓ ${studentUser1.email} (${student1.registration}) - TCC Aprovado`);
   console.log(`  ✓ ${studentUser2.email} (${student2.registration}) - TCC Reprovado`);
   console.log(`  ✓ ${studentUser3.email} (${student3.registration}) - TCC Pendente`);
@@ -468,6 +490,7 @@ async function main() {
   console.log(`  ✓ ${studentUser10.email} (${student10.registration}) - TCC com Versão Ajustada`);
   console.log(`  ✓ ${studentUser11.email} (${student11.registration}) - Múltiplas Defesas (Cancelada + Completa)`);
   console.log(`  ✓ ${studentUser12.email} (${student12.registration}) - TCC Aguardando Aprovações Iniciais`);
+  console.log(`  ✓ ${studentCarlosEduardo.email} (${studentCarlos.registration}) - TCC com Aluno Aprovado e Orientador Rejeitado`);
 
   console.log('\n📝 Creating Defenses...');
 
@@ -824,6 +847,43 @@ async function main() {
     },
   });
 
+  // Defesa 11: Carlos Eduardo como estudante - aprovação pendente (aluno aprovou, orientador rejeitou)
+  const defenseCarlosEstudante = await prisma.defense.upsert({
+    where: { id: 'defense-carlos-estudante' },
+    update: {},
+    create: {
+      id: 'defense-carlos-estudante',
+      title: 'Plataforma de Gestão Acadêmica com Blockchain',
+      defenseDate: new Date('2025-01-05T14:00:00Z'),
+      location: 'Sala 201 - Prédio da Computação',
+      finalGrade: 7.5,
+      result: DefenseResult.APPROVED,
+      status: DefenseStatus.COMPLETED,
+      advisorId: advisor1.id,
+      students: {
+        create: {
+          studentId: studentCarlos.id,
+        },
+      },
+      examBoard: {
+        create: [
+          {
+            name: 'Prof. Dr. Marcos Silva',
+            email: 'marcos.silva@ufrgs.edu.br',
+          },
+          {
+            name: 'Profa. Dra. Ana Costa',
+            email: 'ana.costa@ufrgs.edu.br',
+          },
+          {
+            name: 'Prof. Dr. Ricardo Alves',
+            email: 'ricardo.alves@ufrgs.edu.br',
+          },
+        ],
+      },
+    },
+  });
+
   console.log(`  ✓ "${defenseAprovada.title.substring(0, 50)}..." (APROVADO)`);
   console.log(`  ✓ "${defenseReprovada.title.substring(0, 50)}..." (REPROVADO)`);
   console.log(`  ✓ "${defensePendente.title.substring(0, 50)}..." (PENDENTE)`);
@@ -834,6 +894,7 @@ async function main() {
   console.log(`  ✓ "${defenseVersaoAjustada.title.substring(0, 50)}..." (VERSÃO AJUSTADA)`);
   console.log(`  ✓ "${defenseAguardandoAprovacoes.title.substring(0, 50)}..." (AGUARDANDO APROVAÇÕES)`);
   console.log(`  ✓ "${defenseCarlosEduardo.title.substring(0, 50)}..." (CARLOS EDUARDO ORIENTADOR - FALTA SUA APROVAÇÃO)`);
+  console.log(`  ✓ "${defenseCarlosEstudante.title.substring(0, 50)}..." (CARLOS EDUARDO ESTUDANTE - ALUNO APROVOU, ORIENTADOR REJEITOU)`);
 
   console.log('\n📄 Creating Documents...');
 
@@ -923,7 +984,7 @@ async function main() {
   });
 
   // Documento 7 e 8: Versão ajustada - defesa8
-  // Primeira versão rejeitada (inativa)
+  // Primeira versão foi totalmente aprovada e registrada na blockchain, depois substituída por nova versão
   const docHash7 = crypto.createHash('sha256').update('ata-defense-ajustada-v1').digest('hex');
   const docAjustadaV1 = await prisma.document.upsert({
     where: { id: 'doc-ata-ajustada-v1' },
@@ -991,15 +1052,31 @@ async function main() {
     },
   });
 
+  // Documento 11: ATA Carlos Eduardo Estudante - aluno aprovou, orientador rejeitou
+  const docHash11 = crypto.createHash('sha256').update('ata-defense-carlos-estudante-v1').digest('hex');
+  const docCarlosEstudante = await prisma.document.upsert({
+    where: { id: 'doc-ata-carlos-estudante' },
+    update: {},
+    create: {
+      id: 'doc-ata-carlos-estudante',
+
+      version: 1,
+      documentHash: docHash11,
+      status: DocumentStatus.PENDING,
+      defenseId: defenseCarlosEstudante.id,
+    },
+  });
+
   console.log(`  ✓ ATA - Defense 1 (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Reprovada (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Dupla (APROVADO, na blockchain)`);
   console.log(`  ✓ ATA - Defense Parcial (PENDENTE - aprovações parciais)`);
   console.log(`  ✓ ATA - Defense Nota Mínima (APROVADO, na blockchain)`);
-  console.log(`  ✓ ATA - Defense Ajustada v1 (INATIVO - rejeitado)`);
+  console.log(`  ✓ ATA - Defense Ajustada v1 (INATIVO - substituído por nova versão)`);
   console.log(`  ✓ ATA - Defense Ajustada v2 (APROVADO - versão corrigida, na blockchain)`);
   console.log(`  ✓ ATA - Defense Aguardando (PENDENTE - sem aprovações)`);
   console.log(`  ✓ ATA - Defense Carlos Eduardo (PENDENTE - falta aprovação do orientador)`);
+  console.log(`  ✓ ATA - Defense Carlos Eduardo Estudante (PENDENTE - aluno aprovou, orientador rejeitou)`);
 
   console.log('\n✅ Creating Approvals...');
 
@@ -1213,39 +1290,10 @@ async function main() {
     },
   });
 
-  // Aprovações para documento versão 1 (rejeitado pelo orientador)
-  await prisma.approval.upsert({
-    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.STUDENT, approverId: studentUser10.id as string } },
-    update: {},
-    create: {
-      documentId: docAjustadaV1.id,
-      role: ApprovalRole.STUDENT,
-      status: ApprovalStatus.APPROVED,
-      approverId: studentUser10.id,
-      approvedAt: new Date('2024-07-18T19:00:00Z'),
-    },
-  });
-
-  await prisma.approval.upsert({
-    where: { documentId_role_approverId: { documentId: docAjustadaV1.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
-    update: {},
-    create: {
-      documentId: docAjustadaV1.id,
-      role: ApprovalRole.ADVISOR,
-      status: ApprovalStatus.REJECTED,
-      justification: 'Formatação incorreta e erros nos dados da banca examinadora. Por favor, revisar e reenviar documento corrigido.',
-      approverId: advisorUser1.id,
-    },
-  });
-
-  await prisma.approval.create({
-    data: {
-      documentId: docAjustadaV1.id,
-      role: ApprovalRole.COORDINATOR,
-      status: ApprovalStatus.PENDING,
-      approverId: coordUser1.id,
-    },
-  });
+  // Aprovações para documento versão 1 (todas foram processadas antes de ser inativado)
+  // Quando um documento é inativado por uma nova versão, as aprovações antigas são deletadas
+  // Portanto, NÃO criamos aprovações para documentos inativos
+  // Este documento foi totalmente aprovado antes de ser substituído pela v2
 
   // Aprovações para documento versão 2 (todas aprovadas)
   await prisma.approval.upsert({
@@ -1351,15 +1399,53 @@ async function main() {
     },
   });
 
+  // Aprovações para documento Carlos Eduardo Estudante (aluno aprovou, orientador rejeitou)
+  await prisma.approval.upsert({
+    where: { documentId_role_approverId: { documentId: docCarlosEstudante.id, role: ApprovalRole.STUDENT, approverId: studentCarlosEduardo.id as string } },
+    update: {},
+    create: {
+      documentId: docCarlosEstudante.id,
+      role: ApprovalRole.STUDENT,
+      status: ApprovalStatus.APPROVED,
+      approverId: studentCarlosEduardo.id,
+      approvedAt: new Date('2025-01-06T10:00:00Z'),
+    },
+  });
+
+  // Aprovação do orientador rejeitada com motivo
+  await prisma.approval.upsert({
+    where: { documentId_role_approverId: { documentId: docCarlosEstudante.id, role: ApprovalRole.ADVISOR, approverId: advisorUser1.id as string } },
+    update: {},
+    create: {
+      documentId: docCarlosEstudante.id,
+      role: ApprovalRole.ADVISOR,
+      status: ApprovalStatus.REJECTED,
+      approverId: advisorUser1.id,
+      approvedAt: new Date('2025-01-07T14:30:00Z'),
+      justification: 'A ata apresenta inconsistências nos dados da banca examinadora e a nota final registrada não corresponde à média das avaliações individuais. Por favor, revisar e corrigir antes de prosseguir com as aprovações.',
+    },
+  });
+
+  // Aprovação do coordenador ainda pendente
+  await prisma.approval.create({
+    data: {
+      documentId: docCarlosEstudante.id,
+      role: ApprovalRole.COORDINATOR,
+      status: ApprovalStatus.PENDING,
+      approverId: coordUser1.id,
+    },
+  });
+
   console.log(`  ✓ 3 aprovações para ATA Defense 1 (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Reprovada (todas APPROVED - defesa FAILED)`);
   console.log(`  ✓ 4 aprovações para ATA Defense Dupla (todas APPROVED - TCC em dupla)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Parcial (Aluno e Orientador APPROVED, Coordenador PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Nota Mínima (todas APPROVED)`);
-  console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v1 (Aluno APPROVED, Orientador REJECTED, Coordenador PENDING)`);
+  console.log(`  ✓ 0 aprovações para ATA Defense Ajustada v1 (documento inativo - aprovações deletadas ao criar v2)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Ajustada v2 (todas APPROVED)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Aguardando (Aluno APPROVED, Orientador e Coordenador PENDING)`);
   console.log(`  ✓ 3 aprovações para ATA Defense Carlos Eduardo (Aluno e Orientador APPROVED, Coordenador PENDING)`);
+  console.log(`  ✓ 3 aprovações para ATA Defense Carlos Eduardo Estudante (Aluno APPROVED, Orientador REJECTED, Coordenador PENDING)`);
 
   console.log('\n' + '='.repeat(50));
   console.log('🎉 Seed completed successfully!');
@@ -1382,6 +1468,7 @@ async function main() {
   console.log(`  STUDENT:     ${studentUser9.email} - TCC Nota Mínima`);
   console.log(`  STUDENT:     ${studentUser10.email} - TCC Versão Ajustada`);
   console.log(`  STUDENT:     ${studentUser12.email} - TCC Aguardando Aprovações`);
+  console.log(`  STUDENT:     ${studentCarlosEduardo.email} - Aluno Aprovou, Orientador Rejeitou`);
   console.log('─'.repeat(50));
 }
 
