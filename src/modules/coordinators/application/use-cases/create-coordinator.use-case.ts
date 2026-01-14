@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Coordinator } from '../../domain/entities';
@@ -13,6 +13,8 @@ import { EmailTemplate } from '../../../notifications/domain/enums';
 
 @Injectable()
 export class CreateCoordinatorUseCase {
+  private readonly logger = new Logger(CreateCoordinatorUseCase.name);
+
   constructor(
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
@@ -67,26 +69,22 @@ export class CreateCoordinatorUseCase {
 
     const created = await this.coordinatorRepository.create(coordinator);
 
-    // Send welcome email with credentials
-    try {
-      await this.sendEmailUseCase.execute({
-        userId: created.id,
-        to: created.email,
-        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
-        template: {
-          id: EmailTemplate.USER_CREDENTIALS,
-          data: {
-            name: created.name,
-            email: created.email,
-            temporaryPassword: randomPassword,
-            role: 'COORDINATOR',
-          },
+    this.sendEmailUseCase.execute({
+      userId: created.id,
+      to: created.email,
+      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+      template: {
+        id: EmailTemplate.USER_CREDENTIALS,
+        data: {
+          name: created.name,
+          email: created.email,
+          temporaryPassword: randomPassword,
+          role: 'COORDINATOR',
         },
-      });
-    } catch (error) {
-      console.error('Erro ao enviar email de boas-vindas:', error);
-      // Don't throw error, user was created successfully
-    }
+      },
+    }).catch((error) => {
+      this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`);
+    });
 
     return CoordinatorResponseDto.fromEntity(created);
   }

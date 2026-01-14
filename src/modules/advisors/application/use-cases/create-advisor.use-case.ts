@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Inject, Injectable, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
@@ -12,6 +12,8 @@ import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordin
 
 @Injectable()
 export class CreateAdvisorUseCase {
+  private readonly logger = new Logger(CreateAdvisorUseCase.name);
+
   constructor(
     @Inject(ADVISOR_REPOSITORY)
     private readonly advisorRepository: IAdvisorRepository,
@@ -65,26 +67,22 @@ export class CreateAdvisorUseCase {
 
     const created = await this.advisorRepository.create(advisor);
 
-    // Send welcome email with credentials
-    try {
-      await this.sendEmailUseCase.execute({
-        userId: created.id,
-        to: created.email,
-        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
-        template: {
-          id: EmailTemplate.USER_CREDENTIALS,
-          data: {
-            name: created.name,
-            email: created.email,
-            temporaryPassword: randomPassword,
-            role: 'ADVISOR',
-          },
+    this.sendEmailUseCase.execute({
+      userId: created.id,
+      to: created.email,
+      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+      template: {
+        id: EmailTemplate.USER_CREDENTIALS,
+        data: {
+          name: created.name,
+          email: created.email,
+          temporaryPassword: randomPassword,
+          role: 'ADVISOR',
         },
-      });
-    } catch (error) {
-      console.error('Erro ao enviar email de boas-vindas:', error);
-      // Don't throw error, user was created successfully
-    }
+      },
+    }).catch((error) => {
+      this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`);
+    });
 
     return AdvisorResponseDto.fromEntity(created);
   }

@@ -67,8 +67,9 @@ export class OverrideRejectionUseCase {
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
-    // Send email notification to the approver
-    await this.sendOverrideNotificationEmail(updatedApproval, request.reason);
+    this.sendOverrideNotificationEmail(updatedApproval, request.reason).catch((error) => {
+      this.logger.error(`Failed to send override notification email: ${error.message}`);
+    });
 
     return { approval: updatedApproval };
   }

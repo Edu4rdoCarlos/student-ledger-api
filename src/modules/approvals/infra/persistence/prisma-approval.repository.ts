@@ -770,4 +770,74 @@ export class PrismaApprovalRepository implements IApprovalRepository {
       })),
     }));
   }
+
+  async findGroupedByParticipant(userId: string): Promise<GroupedDocumentApprovals[]> {
+    const documents = await this.prisma.document.findMany({
+      where: {
+        nextVersion: null,
+        OR: [
+          {
+            defense: {
+              students: {
+                some: {
+                  studentId: userId,
+                },
+              },
+            },
+          },
+          {
+            approvals: {
+              some: {
+                approverId: userId,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        defense: {
+          include: {
+            students: {
+              include: {
+                student: {
+                  include: {
+                    user: true,
+                    course: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        approvals: {
+          include: {
+            approver: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return documents.map((doc) => ({
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: doc.defense.students.map((ds) => ({
+        name: ds.student.user.name,
+        email: ds.student.user.email,
+        registration: ds.student.registration,
+      })),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: doc.approvals.map((approval) => ({
+        id: approval.id,
+        role: approval.role as ApprovalRole,
+        status: approval.status as ApprovalStatus,
+        approverName: approval.approver?.name,
+        approvedAt: approval.approvedAt || undefined,
+        justification: approval.justification || undefined,
+        approverId: approval.approverId || undefined,
+      })),
+    }));
+  }
 }

@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY, GroupedDocumentApprovals } from '../ports';
 import { ApprovalStatus } from '../../domain/entities';
+import { calculateConsolidatedStatus } from '../../domain/helpers';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 
 interface ListPendingApprovalsRequest {
@@ -26,31 +27,22 @@ export class ListPendingApprovalsUseCase {
     let approvals: GroupedDocumentApprovals[];
 
     if (request.userRole === 'COORDINATOR') {
-      // Coordinator sees only documents from their course
       const coordinator = await this.coordinatorRepository.findByUserId(request.userId);
       if (!coordinator || !coordinator.courseId) {
         return { approvals: [] };
       }
-
-      if (request.status) {
-        approvals = await this.approvalRepository.findGroupedByCourseIdAndStatus(coordinator.courseId, request.status);
-      } else {
-        approvals = await this.approvalRepository.findGroupedByCourseId(coordinator.courseId);
-      }
+      approvals = await this.approvalRepository.findGroupedByCourseId(coordinator.courseId);
     } else if (request.userRole === 'ADMIN') {
-      // Admin sees all documents
-      if (request.status) {
-        approvals = await this.approvalRepository.findGroupedByStatus(request.status);
-      } else {
-        approvals = await this.approvalRepository.findAllGrouped();
-      }
+      approvals = await this.approvalRepository.findAllGrouped();
     } else {
-      // Advisor and Student see only their own documents
-      if (request.status) {
-        approvals = await this.approvalRepository.findGroupedByUserIdAndStatus(request.userId, request.status);
-      } else {
-        approvals = await this.approvalRepository.findGroupedByUserId(request.userId);
-      }
+      approvals = await this.approvalRepository.findGroupedByParticipant(request.userId);
+    }
+
+    if (request.status) {
+      approvals = approvals.filter((doc) => {
+        const consolidatedStatus = calculateConsolidatedStatus(doc.approvals);
+        return consolidatedStatus === request.status;
+      });
     }
 
     return { approvals };
