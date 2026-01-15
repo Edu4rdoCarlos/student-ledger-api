@@ -67,6 +67,13 @@ export class Approval {
     this.props.updatedAt = new Date();
   }
 
+  resetForNewVersion(): void {
+    this.props.status = ApprovalStatus.PENDING;
+    this.props.justification = undefined;
+    this.props.approvedAt = undefined;
+    this.props.updatedAt = new Date();
+  }
+
   get id(): string | undefined {
     return this.props.id;
   }

@@ -46,7 +46,7 @@ export class CreateDocumentVersionUseCase {
     const newDocumentCid = await this.uploadToIpfs(request.documentFile, request.documentFilename);
 
     try {
-      const { createdVersion, previousVersion } = await this.createOrReplaceDocument(
+      const { createdVersion, previousVersion, wasReplaced } = await this.createOrReplaceDocument(
         currentDocument,
         isFullyApproved,
         newDocumentHash,
@@ -54,9 +54,12 @@ export class CreateDocumentVersionUseCase {
         request.changeReason
       );
 
-      await this.resetApprovals(createdVersion.id);
+      if (wasReplaced) {
+        await this.resetApprovalsStatus(createdVersion.id);
+      } else {
+        await this.createNewApprovals(createdVersion.id);
+      }
       await this.updateDefenseGrade(currentDocument.defenseId, request.finalGrade);
-      await this.createNewApprovals(createdVersion.id);
 
       return { previousVersion, newVersion: createdVersion };
     } catch (error) {
@@ -116,11 +119,13 @@ export class CreateDocumentVersionUseCase {
     newDocumentHash: string,
     newDocumentCid: string,
     changeReason: string
-  ): Promise<{ createdVersion: Document; previousVersion: Document }> {
+  ): Promise<{ createdVersion: Document; previousVersion: Document; wasReplaced: boolean }> {
     if (isFullyApproved) {
-      return await this.createNewVersion(currentDocument, newDocumentHash, newDocumentCid, changeReason);
+      const result = await this.createNewVersion(currentDocument, newDocumentHash, newDocumentCid, changeReason);
+      return { ...result, wasReplaced: false };
     } else {
-      return await this.replaceCurrentDocument(currentDocument, newDocumentHash, newDocumentCid);
+      const result = await this.replaceCurrentDocument(currentDocument, newDocumentHash, newDocumentCid);
+      return { ...result, wasReplaced: true };
     }
   }
 
@@ -156,14 +161,15 @@ export class CreateDocumentVersionUseCase {
     return { createdVersion: updatedDocument, previousVersion: currentDocument };
   }
 
-  private async resetApprovals(documentId: string): Promise<void> {
-    this.logger.log(`Deletando aprovações antigas do documento ${documentId}`);
+  private async resetApprovalsStatus(documentId: string): Promise<void> {
+    this.logger.log(`Resetando aprovações do documento ${documentId}`);
 
-    const approvalsToDelete = await this.approvalRepository.findByDocumentId(documentId);
+    const approvals = await this.approvalRepository.findByDocumentId(documentId);
 
-    for (const approval of approvalsToDelete) {
-      if (approval.id) {
-        await this.approvalRepository.delete(approval.id);
+    for (const approval of approvals) {
+      if (approval.id && approval.status !== ApprovalStatus.PENDING) {
+        approval.resetForNewVersion();
+        await this.approvalRepository.update(approval);
       }
     }
   }

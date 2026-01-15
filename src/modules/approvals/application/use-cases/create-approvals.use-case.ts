@@ -69,10 +69,16 @@ export class CreateApprovalsUseCase {
 
     const approvals: Approval[] = [];
 
-    // Create COORDINATOR approval
+    const firstStudent = validStudents[0];
+    const studentWithCourse = await this.studentRepository.findById(firstStudent.id);
+    const coordinator = studentWithCourse?.courseId
+      ? await this.coordinatorRepository.findByCourseId(studentWithCourse.courseId)
+      : null;
+
     const coordinatorApproval = Approval.create({
       role: ApprovalRole.COORDINATOR,
       documentId: request.documentId,
+      approverId: coordinator?.id,
     });
     const createdCoordinatorApproval = await this.approvalRepository.create(coordinatorApproval);
     approvals.push(createdCoordinatorApproval);
@@ -81,10 +87,10 @@ export class CreateApprovalsUseCase {
         this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
       });
 
-    // Create ADVISOR approval
     const advisorApproval = Approval.create({
       role: ApprovalRole.ADVISOR,
       documentId: request.documentId,
+      approverId: advisor.id,
     });
     const createdAdvisorApproval = await this.approvalRepository.create(advisorApproval);
     approvals.push(createdAdvisorApproval);
@@ -93,7 +99,6 @@ export class CreateApprovalsUseCase {
         this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
       });
 
-    // Create STUDENT approval for each student
     for (const student of validStudents) {
       const studentApproval = Approval.create({
         role: ApprovalRole.STUDENT,

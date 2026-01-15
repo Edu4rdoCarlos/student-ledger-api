@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString, Min, Max, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreateDocumentVersionDto {
   @ApiPropertyOptional({
@@ -9,6 +10,7 @@ export class CreateDocumentVersionDto {
     maximum: 10,
   })
   @IsOptional()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? parseFloat(value) : undefined))
   @IsNumber({}, { message: 'Nota final deve ser um número' })
   @Min(0, { message: 'Nota final deve ser maior ou igual a 0' })
   @Max(10, { message: 'Nota final deve ser menor ou igual a 10' })
