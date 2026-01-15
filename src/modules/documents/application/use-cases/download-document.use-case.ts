@@ -29,46 +29,56 @@ export class DownloadDocumentUseCase {
       throw new NotFoundException('Documento não encontrado');
     }
 
+
     const isAdmin = currentUser.role === 'ADMIN';
     const isCoordinator = currentUser.role === 'COORDINATOR';
 
     if (isCoordinator) {
       if (!currentUser.courseId) {
+        this.logger.warn(`[DOWNLOAD] Coordenador sem curso associado: ${currentUser.id}`);
         throw new ForbiddenException('Coordenador não está associado a nenhum curso');
       }
 
       const defenseCourseId = await this.defenseRepository.getDefenseCourseId(document.defenseId);
       if (defenseCourseId !== currentUser.courseId) {
+        this.logger.warn(`[DOWNLOAD] Coordenador tentou acessar documento de outro curso`);
         throw new ForbiddenException('Coordenador só pode baixar documentos de defesas do seu curso');
       }
     } else if (!isAdmin) {
       const defense = await this.defenseRepository.findById(document.defenseId);
 
       if (!defense) {
+        this.logger.warn(`[DOWNLOAD] Defesa não encontrada: ${document.defenseId}`);
         throw new NotFoundException('Defesa associada ao documento não encontrada');
       }
+
 
       const isAdvisor = defense.advisorId === currentUser.id;
       const isStudent = defense.studentIds.includes(currentUser.id);
 
       if (!isAdvisor && !isStudent) {
+        this.logger.warn(`[DOWNLOAD] Usuário ${currentUser.id} não é advisor nem student da defesa`);
         throw new ForbiddenException('Você não tem permissão para baixar este documento');
       }
 
       if (defense.result !== 'APPROVED') {
+        this.logger.warn(`[DOWNLOAD] Defesa não aprovada. Status atual: ${defense.result}`);
         throw new ForbiddenException('O documento só pode ser baixado quando a defesa estiver aprovada');
       }
+    } else {
+      this.logger.log(`[DOWNLOAD] Usuário é ADMIN - acesso liberado`);
     }
 
     const filename = `documento-${document.id}.pdf`;
 
     if (!document.documentCid) {
+      this.logger.error(`[DOWNLOAD] Documento ${document.id} não possui CID do IPFS!`);
       throw new NotFoundException('Documento não possui CID do IPFS');
     }
 
+
     try {
       const buffer = await this.ipfsService.downloadFile(document.documentCid);
-      this.logger.log(`Arquivo baixado do IPFS: ${document.documentCid}`);
 
       return {
         buffer,
@@ -76,7 +86,7 @@ export class DownloadDocumentUseCase {
         mimeType: 'application/pdf',
       };
     } catch (error) {
-      this.logger.error(`Falha ao baixar arquivo: ${error.message}`);
+      this.logger.error(`[DOWNLOAD] Falha ao baixar do IPFS - CID: ${document.documentCid}, Erro: ${error.message}`, error.stack);
       throw new NotFoundException('Documento não disponível no IPFS');
     }
   }

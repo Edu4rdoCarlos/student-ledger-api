@@ -53,10 +53,20 @@ export class DocumentResponseDto {
   }
 }
 
+export class DefenseInfoDto {
+  @ApiProperty({ description: 'Nome(s) do(s) estudante(s)' })
+  students: string[];
+
+  @ApiProperty({ description: 'Nome do orientador' })
+  advisor: string;
+
+  @ApiProperty({ description: 'Nome do curso' })
+  course: string;
+}
+
 export class SimpleDocumentDto {
   @ApiProperty()
   id: string;
-
 
   @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
   documentHash?: string;
@@ -65,7 +75,10 @@ export class SimpleDocumentDto {
   documentCid?: string;
 
   @ApiProperty({ enum: DocumentStatus })
-  status: DocumentStatus;
+  status: DocumentStatus | string;
+
+  @ApiPropertyOptional({ type: DefenseInfoDto, description: 'Informações da defesa associada' })
+  defenseInfo?: DefenseInfoDto;
 }
 
 export class ValidateDocumentResponseDto {

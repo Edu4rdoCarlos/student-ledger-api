@@ -28,6 +28,14 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     return found ? DocumentMapper.toDomain(found) : null;
   }
 
+  async findByCid(cid: string): Promise<Document | null> {
+    const found = await this.prisma.document.findFirst({
+      where: { documentCid: cid },
+      orderBy: { version: 'desc' },
+    });
+    return found ? DocumentMapper.toDomain(found) : null;
+  }
+
   async findByDefenseId(defenseId: string): Promise<Document[]> {
     const documents = await this.prisma.document.findMany({
       where: { defenseId },

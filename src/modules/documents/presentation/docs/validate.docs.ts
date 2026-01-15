@@ -12,11 +12,11 @@ import {
   ApiUnauthorizedErrorResponse,
   ApiTooManyRequestsResponse,
 } from '../../../../shared/decorators';
-import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../dtos/response';
+import { ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto } from '../dtos/response';
 
 export function ValidateDocumentDocs() {
   return applyDecorators(
-    ApiExtraModels(ValidateDocumentResponseDto, SimpleDocumentDto),
+    ApiExtraModels(ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto),
     ApiConsumes('multipart/form-data'),
     ApiOperation({
       summary: 'Validate document authenticity',

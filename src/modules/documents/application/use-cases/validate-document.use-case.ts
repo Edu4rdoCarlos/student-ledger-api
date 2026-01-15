@@ -1,12 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { ValidateDocumentResponseDto, SimpleDocumentDto } from '../../presentation/dtos';
+import { ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto } from '../../presentation/dtos';
 import { HashUtil } from '../../infra/utils/hash.util';
-import { Document, DocumentStatus } from '../../domain/entities';
+import { Document } from '../../domain/entities';
 import { FabricService } from '../../../fabric/fabric.service';
 import { FabricUser } from '../../../fabric/application/ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { ICurrentUser } from '../../../../shared/types';
+import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 
 @Injectable()
 export class ValidateDocumentUseCase {
@@ -15,17 +16,33 @@ export class ValidateDocumentUseCase {
   constructor(
     @Inject(DOCUMENT_REPOSITORY)
     private readonly documentRepository: IDocumentRepository,
+    @Inject(DEFENSE_REPOSITORY)
+    private readonly defenseRepository: IDefenseRepository,
     private readonly hashUtil: HashUtil,
     private readonly fabricService: FabricService,
     private readonly ipfsService: IpfsService,
   ) {}
 
-  private toSimpleDto(document: Document): SimpleDocumentDto {
+  private async getDefenseInfo(defenseId: string): Promise<DefenseInfoDto | undefined> {
+    const defense = await this.defenseRepository.findById(defenseId);
+    if (!defense) return undefined;
+
+    return {
+      students: defense.students?.map(s => s.name) ?? [],
+      advisor: defense.advisor?.name ?? '',
+      course: defense.students?.[0]?.course?.name ?? '',
+    };
+  }
+
+  private async toSimpleDto(document: Document): Promise<SimpleDocumentDto> {
+    const defenseInfo = await this.getDefenseInfo(document.defenseId);
+
     return {
       id: document.id,
       documentHash: document.documentHash,
       documentCid: document.documentCid,
       status: document.status,
+      defenseInfo,
     };
   }
 
@@ -33,34 +50,20 @@ export class ValidateDocumentUseCase {
     fileBufferOrHash: Buffer | string,
     currentUser: ICurrentUser
   ): Promise<ValidateDocumentResponseDto> {
-    const isHash = typeof fileBufferOrHash === 'string';
-    const hash = isHash ? fileBufferOrHash : this.hashUtil.calculateSha256(fileBufferOrHash);
+    const isBuffer = Buffer.isBuffer(fileBufferOrHash);
+    const hash = isBuffer
+      ? this.hashUtil.calculateSha256(fileBufferOrHash)
+      : fileBufferOrHash;
 
-    const document = await this.tryFindDocumentByHash(hash);
+    const document = await this.documentRepository.findByHash(hash);
 
-    if (!document) {
-      if (isHash) {
-        return await this.validateHashOnBlockchain();
-      }
-      return await this.validateOnBlockchain(fileBufferOrHash, hash, currentUser);
+    if (document) {
+      return this.validateDocumentStatus(document);
     }
 
-    return this.validateDocumentStatus(document);
-  }
-
-  private async tryFindDocumentByHash(hash: string): Promise<Document | null> {
-    try {
-      const document = await this.documentRepository.findByHash(hash);
-
-      return document;
-    } catch (error) {
-      this.logger.warn(`Postgres indisponível, consultando Fabric: ${error.message}`);
-      return null;
+    if (isBuffer) {
+      return this.validateOnBlockchain(fileBufferOrHash, hash, currentUser);
     }
-  }
-
-  private async validateHashOnBlockchain(): Promise<ValidateDocumentResponseDto> {
-    this.logger.warn('Validação com hash fornecido. Blockchain não pode ser consultado sem o arquivo original.');
 
     return {
       isValid: false,
@@ -85,18 +88,23 @@ export class ValidateDocumentUseCase {
       const fabricResult = await this.fabricService.verifyDocument(fabricUser, cid);
 
       if (fabricResult.valid && fabricResult.document) {
+        const localDocument = await this.documentRepository.findByCid(cid);
+        const defenseInfo = localDocument
+          ? await this.getDefenseInfo(localDocument.defenseId)
+          : undefined;
+
         return {
           isValid: true,
           document: {
             id: fabricResult.document.documentId,
             documentHash: hash,
             documentCid: cid,
-            status: DocumentStatus.APPROVED,
+            status: 'APPROVED',
+            defenseInfo,
           },
           message: 'Documento válido e registrado na blockchain',
         };
       }
-
     } catch (error) {
       this.logger.error(`Falha ao verificar no Fabric: ${error.message}`);
     }
@@ -107,11 +115,11 @@ export class ValidateDocumentUseCase {
     };
   }
 
-  private validateDocumentStatus(document: Document): ValidateDocumentResponseDto {
+  private async validateDocumentStatus(document: Document): Promise<ValidateDocumentResponseDto> {
     if (document.isInactive()) {
       return {
         isValid: false,
-        document: this.toSimpleDto(document),
+        document: await this.toSimpleDto(document),
         message: 'Documento foi inativado',
       };
     }
@@ -119,14 +127,14 @@ export class ValidateDocumentUseCase {
     if (!document.isApproved()) {
       return {
         isValid: false,
-        document: this.toSimpleDto(document),
+        document: await this.toSimpleDto(document),
         message: 'Documento ainda não foi aprovado',
       };
     }
 
     return {
       isValid: true,
-      document: this.toSimpleDto(document),
+      document: await this.toSimpleDto(document),
       message: 'Documento válido e registrado na blockchain',
     };
   }
