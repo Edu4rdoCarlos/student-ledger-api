@@ -15,6 +15,7 @@ import {
   OverrideRejectionUseCase,
   RegisterOnBlockchainUseCase,
   ListPendingApprovalsUseCase,
+  NotifyApproverUseCase,
 } from './application/use-cases';
 import { APPROVAL_REPOSITORY } from './application/ports';
 import { PrismaApprovalRepository } from './infra/persistence';
@@ -44,6 +45,7 @@ import { ApprovalController } from './presentation/http';
     OverrideRejectionUseCase,
     RegisterOnBlockchainUseCase,
     ListPendingApprovalsUseCase,
+    NotifyApproverUseCase,
   ],
   exports: [
     APPROVAL_REPOSITORY,
@@ -53,6 +55,7 @@ import { ApprovalController } from './presentation/http';
     OverrideRejectionUseCase,
     RegisterOnBlockchainUseCase,
     ListPendingApprovalsUseCase,
+    NotifyApproverUseCase,
   ],
 })
 export class ApprovalsModule {}

@@ -17,10 +17,11 @@ import {
   RejectDocumentUseCase,
   OverrideRejectionUseCase,
   ListPendingApprovalsUseCase,
+  NotifyApproverUseCase,
 } from '../../application/use-cases';
 import { RejectDto, OverrideRejectionDto, ListApprovalsQueryDto } from '../dtos/request';
 import { ApprovalSerializer } from '../serializers';
-import { ListPendingApprovalsDocs, ApproveDocumentDocs, RejectDocumentDocs, OverrideRejectionDocs } from '../docs';
+import { ListPendingApprovalsDocs, ApproveDocumentDocs, RejectDocumentDocs, OverrideRejectionDocs, NotifyApproverDocs } from '../docs';
 
 @ApiTags('Approvals')
 @ApiBearerAuth()
@@ -32,6 +33,7 @@ export class ApprovalController {
     private readonly rejectDocumentUseCase: RejectDocumentUseCase,
     private readonly overrideRejectionUseCase: OverrideRejectionUseCase,
     private readonly listPendingApprovalsUseCase: ListPendingApprovalsUseCase,
+    private readonly notifyApproverUseCase: NotifyApproverUseCase,
   ) {}
 
   @Get()
@@ -98,5 +100,14 @@ export class ApprovalController {
     });
 
     return ApprovalSerializer.toHttpResponse(approval);
+  }
+
+  @Post(':approvalId/notify')
+  @HttpCode(HttpStatus.OK)
+  @NotifyApproverDocs()
+  async notifyApprover(@Param('approvalId') approvalId: string) {
+    const result = await this.notifyApproverUseCase.execute({ approvalId });
+
+    return { data: result };
   }
 }
