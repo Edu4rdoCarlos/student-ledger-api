@@ -21,8 +21,8 @@ export class UserController {
   @Get('me')
   @Roles('STUDENT', 'ADVISOR', 'COORDINATOR', 'ADMIN')
   @ApiOperation({
-    summary: 'Get current user profile (optimized)',
-    description: 'Returns basic user information with summary of defenses. Use /user/me/defenses for full defense details.',
+    summary: 'Get current user profile',
+    description: 'Returns basic user information (id, email, name, role). Use /user/me/defenses for defense details.',
   })
   @ApiResponse({
     status: 200,
