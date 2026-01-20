@@ -13,7 +13,6 @@ import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response
 export class UserController {
   constructor(
     private readonly changePassword: ChangePasswordUseCase,
-    private readonly getUser: GetUserUseCase,
     private readonly getBasicUser: GetBasicUserUseCase,
     private readonly getUserDefenses: GetUserDefensesUseCase,
   ) {}
@@ -37,8 +36,8 @@ export class UserController {
     status: 404,
     description: 'User not found',
   })
-  async getMe(@CurrentUser() currentUser: { id: string }): Promise<HttpResponse<BasicUserResponseDto>> {
-    const user = await this.getBasicUser.execute(currentUser.id);
+  async getMe(@CurrentUser() currentUser: { id: string; courseId?: string }): Promise<HttpResponse<BasicUserResponseDto>> {
+    const user = await this.getBasicUser.execute(currentUser.id, currentUser.courseId);
     return HttpResponseSerializer.serialize(user);
   }
 
@@ -66,9 +65,9 @@ export class UserController {
     return HttpResponseSerializer.serialize(defenses);
   }
 
-  @Patch('password')
+  @Patch('me/password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('STUDENT', 'ADVISOR')
+  @Roles('STUDENT', 'ADVISOR', 'COORDINATOR')
   @ApiOperation({
     summary: 'Change user password',
     description: 'Allows students and advisors to change their own password.',

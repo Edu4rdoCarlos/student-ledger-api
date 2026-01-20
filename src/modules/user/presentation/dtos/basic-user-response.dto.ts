@@ -15,4 +15,7 @@ export class BasicUserResponseDto {
 
   @ApiProperty({ description: 'Indica se é o primeiro acesso do usuário (deve atualizar a senha)' })
   isFirstAccess: boolean;
+
+  @ApiProperty({ description: 'ID do curso (apenas para coordenadores)', required: false })
+  courseId?: string;
 }

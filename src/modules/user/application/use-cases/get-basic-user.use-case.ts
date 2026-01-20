@@ -9,7 +9,7 @@ export class GetBasicUserUseCase {
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(userId: string): Promise<BasicUserResponseDto> {
+  async execute(userId: string, courseId?: string): Promise<BasicUserResponseDto> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
@@ -21,6 +21,7 @@ export class GetBasicUserUseCase {
       name: user.name,
       role: user.role as 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT',
       isFirstAccess: user.isFirstAccess ?? false,
+      courseId,
     };
   }
 }
