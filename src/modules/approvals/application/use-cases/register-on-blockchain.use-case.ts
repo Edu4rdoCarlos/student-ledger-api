@@ -93,57 +93,51 @@ export class RegisterOnBlockchainUseCase {
     const users = await this.userRepository.findByIds(userIds);
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    const roleToFabricRole = (role: ApprovalRole): 'coordenador' | 'orientador' | 'aluno' => {
-      switch (role) {
-        case ApprovalRole.COORDINATOR:
-          return 'coordenador';
-        case ApprovalRole.ADVISOR:
-          return 'orientador';
-        case ApprovalRole.STUDENT:
-          return 'aluno';
-        default:
-          return 'coordenador';
-      }
-    };
+    const coordinatorApproval = approvals.find(a => a.role === ApprovalRole.COORDINATOR);
+    const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
+    const isCoordinatorAlsoAdvisor =
+      coordinatorApproval?.approverId === advisorApproval?.approverId;
 
-    const signatures: DocumentSignature[] = approvals.map(approval => {
-      if (!approval.approverId) {
-        this.logger.error(`Aprovação ${approval.id} não possui aprovador identificado`);
-        throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
-      }
+    // TODO: refatorar esta classe
+    const signatures: DocumentSignature[] = approvals
+      .filter(approval => !(isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.ADVISOR))
+      .map(approval => {
+        if (!approval.approverId) {
+          throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
+        }
 
-      const user = userMap.get(approval.approverId);
-      if (!user) {
-        this.logger.error(`Usuário aprovador não encontrado: ${approval.approverId}`);
-        throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
-      }
+        const user = userMap.get(approval.approverId);
+        if (!user) {
+          throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
+        }
 
-      if (!approval.approvedAt) {
-        this.logger.error(`Aprovação ${approval.id} não possui data de aprovação`);
-        throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
-      }
+        if (!approval.approvedAt) {
+          throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
+        }
 
-      const fabricRole = roleToFabricRole(approval.role);
+        const isHybridRole = isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.COORDINATOR;
 
-      const userRole: Role = approval.role === ApprovalRole.COORDINATOR ? 'COORDINATOR' :
-                             approval.role === ApprovalRole.ADVISOR ? 'ADVISOR' : 'STUDENT';
+        const fabricRole = isHybridRole ? 'coordenador_orientador' :
+          approval.role === ApprovalRole.COORDINATOR ? 'coordenador' :
+          approval.role === ApprovalRole.ADVISOR ? 'orientador' : 'aluno';
 
-      const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
+        const userRole: Role = approval.role === ApprovalRole.STUDENT ? 'STUDENT' : 'COORDINATOR';
+        const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
 
-      const signature: DocumentSignature = {
-        role: fabricRole,
-        email: user.email,
-        mspId,
-        timestamp: approval.approvedAt.toISOString(),
-        status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
-      };
+        const signature: DocumentSignature = {
+          role: fabricRole,
+          email: user.email,
+          mspId,
+          timestamp: approval.approvedAt.toISOString(),
+          status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
+        };
 
-      if (approval.justification) {
-        signature.justification = approval.justification;
-      }
+        if (approval.justification) {
+          signature.justification = approval.justification;
+        }
 
-      return signature;
-    });
+        return signature;
+      });
 
     try {
       const coordinatorApproval = approvals.find(

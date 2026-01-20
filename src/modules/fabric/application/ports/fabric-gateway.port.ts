@@ -11,7 +11,7 @@ export interface FabricUser {
 }
 
 export interface DocumentSignature {
-  role: 'coordenador' | 'orientador' | 'aluno';
+  role: 'coordenador' | 'orientador' | 'aluno' | 'coordenador_orientador';
   email: string;
   mspId: string;
   timestamp: string;

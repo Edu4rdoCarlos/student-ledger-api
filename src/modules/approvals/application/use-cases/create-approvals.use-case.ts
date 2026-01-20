@@ -75,6 +75,8 @@ export class CreateApprovalsUseCase {
       ? await this.coordinatorRepository.findByCourseId(studentWithCourse.courseId)
       : null;
 
+    const isCoordinatorAlsoAdvisor = coordinator?.id === advisor.id;
+
     const coordinatorApproval = Approval.create({
       role: ApprovalRole.COORDINATOR,
       documentId: request.documentId,
@@ -94,10 +96,13 @@ export class CreateApprovalsUseCase {
     });
     const createdAdvisorApproval = await this.approvalRepository.create(advisorApproval);
     approvals.push(createdAdvisorApproval);
-    this.sendApprovalEmail(createdAdvisorApproval, document, defense, advisor, validStudents)
-      .catch(error => {
-        this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
-      });
+
+    if (!isCoordinatorAlsoAdvisor) {
+      this.sendApprovalEmail(createdAdvisorApproval, document, defense, advisor, validStudents)
+        .catch(error => {
+          this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
+        });
+    }
 
     for (const student of validStudents) {
       const studentApproval = Approval.create({

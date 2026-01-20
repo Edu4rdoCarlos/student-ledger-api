@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger, forwardRef } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
-import { Approval, ApprovalStatus } from '../../domain/entities';
+import { Approval, ApprovalStatus, ApprovalRole } from '../../domain/entities';
 import {
   ApprovalNotFoundError,
   ApprovalAlreadyProcessedError,
@@ -62,6 +62,8 @@ export class ApproveDocumentUseCase {
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
+    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId);
+
     this.registerOnBlockchainUseCase.execute({ documentId: approval.documentId }).catch((error) => {
       this.logger.error(`Failed to register on blockchain: ${error.message}`);
     });
@@ -71,6 +73,29 @@ export class ApproveDocumentUseCase {
     });
 
     return { approval: updatedApproval };
+  }
+
+  private async autoApproveAdvisorIfCoordinatorIsAdvisor(
+    approval: Approval,
+    userId: string,
+  ): Promise<void> {
+    if (approval.role !== ApprovalRole.COORDINATOR) {
+      return;
+    }
+
+    const approvals = await this.approvalRepository.findByDocumentId(approval.documentId);
+    const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
+
+    if (!advisorApproval || advisorApproval.status !== ApprovalStatus.PENDING) {
+      return;
+    }
+
+    const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
+
+    if (isCoordinatorAlsoAdvisor) {
+      advisorApproval.approve(userId);
+      await this.approvalRepository.update(advisorApproval);
+    }
   }
 
   private async checkAndNotifyAllApproved(documentId: string): Promise<void> {
