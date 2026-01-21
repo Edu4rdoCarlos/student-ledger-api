@@ -40,7 +40,7 @@ Creates a new version of an already approved and blockchain-registered document.
 **Flow:**
 1. Validates that document is APPROVED and on blockchain
 2. Validates that new file has different content (different hash)
-3. Uploads new file to IPFS (encrypted)
+3. Uploads new file to IPFS
 4. Inactivates previous version (status: INACTIVE)
 5. Creates new version with PENDING status
 6. Updates defense final grade

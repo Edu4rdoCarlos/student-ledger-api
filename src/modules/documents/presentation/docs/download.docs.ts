@@ -19,7 +19,7 @@ export function DownloadDocumentDocs() {
 Downloads a document stored in the system.
 
 **Architecture:**
-- Fetches from IPFS (decrypts automatically)
+- Fetches from private IPFS network
 
 **Permissions:**
 - ADMIN/COORDINATOR: can download any document
@@ -27,8 +27,7 @@ Downloads a document stored in the system.
 - STUDENT: can download only documents from their defenses AND defense is APPROVED
 
 **Security:**
-- Documents are encrypted with AES-256-GCM on IPFS
-- Automatic decryption on download
+- Documents stored in isolated private IPFS network (swarm key)
 - Permission validation by role and defense participation
       `,
     }),

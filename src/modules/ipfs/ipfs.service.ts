@@ -11,12 +11,11 @@ import {
   IpfsUploadJobData,
 } from './application';
 import { IpfsConnectionError } from './domain/errors';
-import { EncryptionUtil } from '../documents/infra/utils/encryption.util';
 
 /**
  * Service de IPFS - Fachada para o adapter de storage
  * Implementa lógica de resiliência com enfileiramento via Redis
- * SEMPRE criptografa arquivos antes do upload e descriptografa após download
+ * Arquivos são armazenados sem criptografia (rede IPFS privada garante isolamento)
  */
 @Injectable()
 export class IpfsService implements OnModuleInit {
@@ -27,7 +26,6 @@ export class IpfsService implements OnModuleInit {
     private readonly ipfsStorage: IIpfsStorage,
     @InjectQueue(IPFS_UPLOAD_QUEUE)
     private readonly uploadQueue: Queue<IpfsUploadJobData>,
-    private readonly encryptionUtil: EncryptionUtil,
   ) {}
 
   async onModuleInit() {
@@ -46,17 +44,15 @@ export class IpfsService implements OnModuleInit {
   }
 
   async uploadFile(file: Buffer, filename: string): Promise<IpfsUploadResult | { queued: true }> {
-    const encryptedFile = this.encryptionUtil.encrypt(file);
-
     try {
-      return await this.ipfsStorage.uploadFile(encryptedFile, filename);
+      return await this.ipfsStorage.uploadFile(file, filename);
     } catch (error) {
       if (error instanceof IpfsConnectionError) {
         this.logger.warn(`IPFS offline - enfileirando upload de ${filename}`);
 
         await this.uploadQueue.add(
           {
-            file: encryptedFile,
+            file,
             filename,
             attemptNumber: 1,
           },
@@ -82,10 +78,7 @@ export class IpfsService implements OnModuleInit {
   }
 
   async downloadFile(cid: string): Promise<Buffer> {
-    const encryptedFile = await this.ipfsStorage.downloadFile(cid);
-
-    const decryptedFile = this.encryptionUtil.decrypt(encryptedFile);
-    return decryptedFile;
+    return this.ipfsStorage.downloadFile(cid);
   }
 
   async exists(cid: string): Promise<boolean> {

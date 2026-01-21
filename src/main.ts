@@ -41,14 +41,13 @@ async function bootstrap() {
 - Thesis defense management
 - Multi-stage approval workflow (Coordinator, Advisor, Student)
 - Immutable blockchain registration (Hyperledger Fabric)
-- Distributed storage via IPFS
-- AES-256-GCM file encryption
+- Distributed storage via private IPFS network
 - Approved document versioning
 - Document authenticity validation
 
 ### Architecture
 - **Validation**: Postgres (cache) with fallback to Hyperledger Fabric (source of truth)
-- **Storage**: IPFS with end-to-end encryption
+- **Storage**: Private IPFS network (isolated via swarm key)
 - **Queues**: Bull/Redis for asynchronous processing
 - **Authentication**: JWT + Refresh Token (HTTP-only cookie)
 
