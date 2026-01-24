@@ -18,8 +18,10 @@ import { ICurrentUser } from '../../../../shared/types';
 interface SubmitDefenseResultRequest {
   id: string;
   finalGrade: number;
-  documentFile: Buffer;
-  documentFilename: string;
+  minutesFile: Buffer;
+  minutesFilename: string;
+  evaluationFile: Buffer;
+  evaluationFilename: string;
   currentUser?: ICurrentUser;
 }
 
@@ -69,30 +71,49 @@ export class SubmitDefenseResultUseCase {
       }
     }
 
-    const documentHash = this.hashUtil.calculateSha256(request.documentFile);
+    // Calculate hashes for both files
+    const minutesHash = this.hashUtil.calculateSha256(request.minutesFile);
+    const evaluationHash = this.hashUtil.calculateSha256(request.evaluationFile);
 
-    let documentCid: string;
+    let minutesCid: string;
+    let evaluationCid: string;
+
     try {
-      const ipfsResult = await this.ipfsService.uploadFile(
-        request.documentFile,
-        request.documentFilename
+      // Upload minutes file (Ata) to IPFS
+      const minutesIpfsResult = await this.ipfsService.uploadFile(
+        request.minutesFile,
+        request.minutesFilename
       );
 
-      if ('queued' in ipfsResult) {
-        this.logger.warn('Upload IPFS enfileirado - será processado em breve');
+      if ('queued' in minutesIpfsResult) {
+        this.logger.warn('Upload IPFS da Ata enfileirado - será processado em breve');
         throw new InternalServerErrorException('Sistema de armazenamento temporariamente indisponível. Tente novamente em alguns minutos.');
       }
 
-      documentCid = ipfsResult.cid;
+      minutesCid = minutesIpfsResult.cid;
+
+      // Upload evaluation file (Avaliação de Desempenho) to IPFS
+      const evaluationIpfsResult = await this.ipfsService.uploadFile(
+        request.evaluationFile,
+        request.evaluationFilename
+      );
+
+      if ('queued' in evaluationIpfsResult) {
+        this.logger.warn('Upload IPFS da Avaliação enfileirado - será processado em breve');
+        throw new InternalServerErrorException('Sistema de armazenamento temporariamente indisponível. Tente novamente em alguns minutos.');
+      }
+
+      evaluationCid = evaluationIpfsResult.cid;
     } catch (error) {
       this.logger.error(`Falha ao fazer upload para IPFS: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Falha ao fazer upload do arquivo. Tente novamente.');
+      throw new InternalServerErrorException('Falha ao fazer upload dos arquivos. Tente novamente.');
     }
 
     const document = Document.create({
-      
-      documentHash,
-      documentCid,
+      minutesHash,
+      minutesCid,
+      evaluationHash,
+      evaluationCid,
       defenseId: request.id,
     });
 

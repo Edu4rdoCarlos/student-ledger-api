@@ -1,8 +1,17 @@
-import { IsNotEmpty, IsNumber, IsString, Min, Max, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Min, Max, IsOptional, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 export class CreateDocumentVersionDto {
+  @ApiProperty({
+    description: 'Type of document to update (minutes = Ata, evaluation = Avaliação de Desempenho)',
+    example: 'minutes',
+    enum: ['minutes', 'evaluation'],
+  })
+  @IsNotEmpty({ message: 'Tipo de documento é obrigatório' })
+  @IsIn(['minutes', 'evaluation'], { message: 'Tipo de documento deve ser "minutes" ou "evaluation"' })
+  documentType: 'minutes' | 'evaluation';
+
   @ApiPropertyOptional({
     description: 'Updated final grade (0 to 10). Optional - only required if grade is being changed',
     example: 8.5,

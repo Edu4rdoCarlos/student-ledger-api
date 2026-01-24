@@ -50,8 +50,11 @@ export class DocumentWithApprovalsDto {
   @ApiProperty({ required: false })
   changeReason?: string;
 
-  @ApiProperty({ required: false })
-  documentCid?: string;
+  @ApiProperty({ required: false, description: 'IPFS CID of minutes file (Ata)' })
+  minutesCid?: string;
+
+  @ApiProperty({ required: false, description: 'IPFS CID of evaluation file (Avaliação de Desempenho)' })
+  evaluationCid?: string;
 
   @ApiProperty({ required: false })
   blockchainRegisteredAt?: Date;
@@ -150,7 +153,8 @@ export class DefenseResponseDto {
         version: doc.version,
         status: doc.status,
         changeReason: doc.changeReason,
-        documentCid: doc.documentCid,
+        minutesCid: doc.minutesCid,
+        evaluationCid: doc.evaluationCid,
         blockchainRegisteredAt: doc.blockchainRegisteredAt,
         createdAt: doc.createdAt,
         signatures: doc.approvals?.map(approval => ({

@@ -3,6 +3,7 @@ import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { ICurrentUser } from '../../../../shared/types';
+import { DocumentType } from '../../domain/entities';
 
 interface DownloadDocumentResponse {
   buffer: Buffer;
@@ -22,7 +23,11 @@ export class DownloadDocumentUseCase {
     private readonly ipfsService: IpfsService,
   ) {}
 
-  async execute(documentId: string, currentUser: ICurrentUser): Promise<DownloadDocumentResponse> {
+  async execute(
+    documentId: string,
+    currentUser: ICurrentUser,
+    documentType?: DocumentType,
+  ): Promise<DownloadDocumentResponse> {
     const document = await this.documentRepository.findById(documentId);
 
     if (!document) {
@@ -69,16 +74,33 @@ export class DownloadDocumentUseCase {
       this.logger.log(`[DOWNLOAD] Usuário é ADMIN - acesso liberado`);
     }
 
-    const filename = `documento-${document.id}.pdf`;
+    // Determine which CID to use based on document type
+    let cid: string | undefined;
+    let filenamePrefix: string;
 
-    if (!document.documentCid) {
-      this.logger.error(`[DOWNLOAD] Documento ${document.id} não possui CID do IPFS!`);
-      throw new NotFoundException('Documento não possui CID do IPFS');
+    if (documentType === 'minutes') {
+      cid = document.minutesCid;
+      filenamePrefix = 'ata';
+    } else if (documentType === 'evaluation') {
+      cid = document.evaluationCid;
+      filenamePrefix = 'avaliacao';
+    } else {
+      // Default to minutes if no type specified
+      cid = document.minutesCid;
+      filenamePrefix = 'ata';
+    }
+
+    const filename = `${filenamePrefix}-${document.id}.pdf`;
+
+    if (!cid) {
+      const docTypeLabel = documentType === 'minutes' ? 'Ata' : documentType === 'evaluation' ? 'Avaliação de Desempenho' : 'Documento';
+      this.logger.error(`[DOWNLOAD] Documento ${document.id} não possui CID do IPFS para ${docTypeLabel}!`);
+      throw new NotFoundException(`${docTypeLabel} não possui CID do IPFS`);
     }
 
 
     try {
-      const buffer = await this.ipfsService.downloadFile(document.documentCid);
+      const buffer = await this.ipfsService.downloadFile(cid);
 
       return {
         buffer,
@@ -86,7 +108,7 @@ export class DownloadDocumentUseCase {
         mimeType: 'application/pdf',
       };
     } catch (error) {
-      this.logger.error(`[DOWNLOAD] Falha ao baixar do IPFS - CID: ${document.documentCid}, Erro: ${error.message}`, error.stack);
+      this.logger.error(`[DOWNLOAD] Falha ao baixar do IPFS - CID: ${cid}, Erro: ${error.message}`, error.stack);
       throw new NotFoundException('Documento não disponível no IPFS');
     }
   }

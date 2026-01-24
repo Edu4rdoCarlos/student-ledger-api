@@ -11,12 +11,10 @@ import {
   HttpStatus,
   HttpCode,
   UseInterceptors,
-  UploadedFile,
-  ParseFilePipeBuilder,
+  UploadedFiles,
   BadRequestException,
-  MaxFileSizeValidator,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard, RolesGuard } from '../../../../shared/guards';
@@ -162,20 +160,17 @@ export class DefenseController {
   @Post(':id/result')
   @Roles('COORDINATOR')
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
-  @UseInterceptors(FileInterceptor('document'))
-  @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'minutesFile', maxCount: 1 },
+    { name: 'evaluationFile', maxCount: 1 },
+  ]))
+  @ApiOperation({ summary: 'Submit defense result with grade and two document files (Minutes and Evaluation)' })
   @ApiSubmitResultRequest()
   async submitResult(
     @Param('id') id: string,
     @Body('finalGrade') finalGrade: string,
     @CurrentUser() currentUser: ICurrentUser,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addValidator(new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }))
-        .addValidator(new PdfContentValidator({}))
-        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
-    )
-    file: Express.Multer.File,
+    @UploadedFiles() files: { minutesFile?: Express.Multer.File[], evaluationFile?: Express.Multer.File[] },
   ): Promise<SubmitDefenseResultResponseDto> {
     const grade = parseFloat(finalGrade);
 
@@ -183,13 +178,35 @@ export class DefenseController {
       throw new BadRequestException('Nota final inválida. Deve ser um número entre 0 e 10.');
     }
 
-    const safeFilename = sanitizeFilename(file.originalname);
+    const minutesFile = files.minutesFile?.[0];
+    const evaluationFile = files.evaluationFile?.[0];
+
+    if (!minutesFile || !evaluationFile) {
+      throw new BadRequestException('Ambos os arquivos são obrigatórios: Ata (minutesFile) e Avaliação de Desempenho (evaluationFile).');
+    }
+
+    // Validate file types
+    const pdfValidator = new PdfContentValidator({});
+    for (const file of [minutesFile, evaluationFile]) {
+      if (file.size > 10 * 1024 * 1024) {
+        throw new BadRequestException(`Arquivo ${file.originalname} excede o tamanho máximo de 10MB.`);
+      }
+      const isValid = await pdfValidator.isValid(file);
+      if (!isValid) {
+        throw new BadRequestException(`Arquivo ${file.originalname} não é um PDF válido.`);
+      }
+    }
+
+    const safeMinutesFilename = sanitizeFilename(minutesFile.originalname);
+    const safeEvaluationFilename = sanitizeFilename(evaluationFile.originalname);
 
     const { defense, document } = await this.submitDefenseResultUseCase.execute({
       id,
       finalGrade: grade,
-      documentFile: file.buffer,
-      documentFilename: safeFilename,
+      minutesFile: minutesFile.buffer,
+      minutesFilename: safeMinutesFilename,
+      evaluationFile: evaluationFile.buffer,
+      evaluationFilename: safeEvaluationFilename,
       currentUser,
     });
 

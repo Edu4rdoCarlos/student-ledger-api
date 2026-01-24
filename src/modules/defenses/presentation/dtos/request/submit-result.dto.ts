@@ -15,7 +15,14 @@ export class SubmitDefenseResultDto {
   @ApiProperty({
     type: 'string',
     format: 'binary',
-    description: 'Unified defense document file (PDF containing all pages: ATA, FICHA, etc.)'
+    description: 'Minutes document file (Ata) - PDF'
   })
-  document: any;
+  minutesFile: any;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'Performance evaluation document file (Avaliação de Desempenho) - PDF'
+  })
+  evaluationFile: any;
 }

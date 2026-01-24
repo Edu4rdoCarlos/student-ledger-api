@@ -163,7 +163,8 @@ export interface DefenseRecord {
     version: number;
     status: string;
     changeReason?: string;
-    documentCid?: string;
+    minutesCid?: string;
+    evaluationCid?: string;
     blockchainTxId?: string;
     blockchainRegisteredAt?: Date;
     createdAt: Date;

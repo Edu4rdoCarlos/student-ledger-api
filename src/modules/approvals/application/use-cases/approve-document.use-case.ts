@@ -65,12 +65,17 @@ export class ApproveDocumentUseCase {
     }
 
     const document = await this.documentRepository.findById(approval.documentId);
-    if (!document || !document.documentHash) {
-      throw new Error('Documento não encontrado ou sem hash');
+    if (!document) {
+      throw new Error('Documento não encontrado');
+    }
+    if (!document.minutesHash || !document.evaluationHash) {
+      throw new Error('Documento sem hashes da ata e avaliação de desempenho');
     }
 
+    // Creates a combined hash for signing both documents together
+    const combinedHash = `${document.minutesHash}:${document.evaluationHash}`;
     const cryptographicSignature = this.signatureService.sign(
-      document.documentHash,
+      combinedHash,
       approval.role,
     );
 
@@ -78,7 +83,7 @@ export class ApproveDocumentUseCase {
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
-    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId, document.documentHash);
+    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId, combinedHash);
 
     this.registerOnBlockchainUseCase.execute({ documentId: approval.documentId }).catch((error) => {
       this.logger.error(`Failed to register on blockchain: ${error.message}`);
@@ -108,7 +113,7 @@ export class ApproveDocumentUseCase {
   private async autoApproveAdvisorIfCoordinatorIsAdvisor(
     approval: Approval,
     userId: string,
-    documentHash: string,
+    combinedHash: string,
   ): Promise<void> {
     if (approval.role !== ApprovalRole.COORDINATOR) {
       return;
@@ -124,7 +129,7 @@ export class ApproveDocumentUseCase {
     const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
 
     if (isCoordinatorAlsoAdvisor) {
-      const advisorSignature = this.signatureService.sign(documentHash, ApprovalRole.ADVISOR);
+      const advisorSignature = this.signatureService.sign(combinedHash, ApprovalRole.ADVISOR);
       advisorApproval.approve(userId, advisorSignature);
       await this.approvalRepository.update(advisorApproval);
     }

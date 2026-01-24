@@ -228,8 +228,10 @@ export class FabricGrpcAdapter implements IFabricGateway {
 
   async registerDocument(
     user: FabricUser,
-    documentHash: string,
-    ipfsCid: string,
+    minutesHash: string,
+    minutesCid: string,
+    evaluationHash: string,
+    evaluationCid: string,
     matriculas: string[],
     defenseDate: string,
     notaFinal: number,
@@ -242,8 +244,10 @@ export class FabricGrpcAdapter implements IFabricGateway {
       try {
         const result = await connection.contract.submitTransaction(
           'registerDocument',
-          documentHash,
-          ipfsCid,
+          minutesHash,
+          minutesCid,
+          evaluationHash,
+          evaluationCid,
           JSON.stringify(matriculas),
           defenseDate,
           notaFinal.toString(),

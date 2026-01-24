@@ -13,8 +13,11 @@ export class DocumentVersionDto {
   @ApiPropertyOptional({ example: 'Correção de nota final após revisão', description: 'Reason for creating this version' })
   changeReason?: string;
 
-  @ApiPropertyOptional({ example: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco', description: 'IPFS CID for document storage' })
-  documentCid?: string;
+  @ApiPropertyOptional({ example: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco', description: 'IPFS CID for minutes file (Ata)' })
+  minutesCid?: string;
+
+  @ApiPropertyOptional({ example: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi', description: 'IPFS CID for evaluation file (Avaliação de Desempenho)' })
+  evaluationCid?: string;
 
   @ApiPropertyOptional({ example: '2024-01-08T14:00:00Z', description: 'When document was registered on blockchain' })
   blockchainRegisteredAt?: Date;

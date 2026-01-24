@@ -70,7 +70,8 @@ export class DefenseSerializer {
             version: d.version,
             status: d.status,
             changeReason: d.changeReason,
-            documentCid: d.documentCid,
+            minutesCid: d.minutesCid,
+            evaluationCid: d.evaluationCid,
             blockchainRegisteredAt: d.blockchainRegisteredAt,
             createdAt: d.createdAt,
             signatures: d.approvals?.map(approval => ({

@@ -4,10 +4,16 @@ export enum DocumentStatus {
   INACTIVE = 'INACTIVE',
 }
 
+export type DocumentType = 'minutes' | 'evaluation';
+
 export interface DocumentProps {
   version: number;
-  documentHash?: string; // SHA-256 hash of the file content
-  documentCid?: string; // IPFS CID - filled when submitted to IPFS
+  // Ata (Minutes) document
+  minutesHash?: string; // SHA-256 hash of minutes file
+  minutesCid?: string; // IPFS CID of minutes file
+  // Avaliação de Desempenho (Evaluation) document
+  evaluationHash?: string; // SHA-256 hash of evaluation file
+  evaluationCid?: string; // IPFS CID of evaluation file
   status: DocumentStatus;
   changeReason?: string;
   inactivationReason?: string;
@@ -38,8 +44,10 @@ export class Document {
     return new Document(
       {
         version: props.version ?? 1,
-        documentHash: props.documentHash,
-        documentCid: props.documentCid,
+        minutesHash: props.minutesHash,
+        minutesCid: props.minutesCid,
+        evaluationHash: props.evaluationHash,
+        evaluationCid: props.evaluationCid,
         status: props.status ?? DocumentStatus.PENDING,
         changeReason: props.changeReason,
         inactivationReason: props.inactivationReason,
@@ -63,12 +71,20 @@ export class Document {
     return this.props.version;
   }
 
-  get documentHash(): string | undefined {
-    return this.props.documentHash;
+  get minutesHash(): string | undefined {
+    return this.props.minutesHash;
   }
 
-  get documentCid(): string | undefined {
-    return this.props.documentCid;
+  get minutesCid(): string | undefined {
+    return this.props.minutesCid;
+  }
+
+  get evaluationHash(): string | undefined {
+    return this.props.evaluationHash;
+  }
+
+  get evaluationCid(): string | undefined {
+    return this.props.evaluationCid;
   }
 
   get status(): DocumentStatus {
@@ -141,23 +157,52 @@ export class Document {
     this.props.updatedAt = new Date();
   }
 
-  setDocumentHash(documentHash: string): void {
-    this.props.documentHash = documentHash;
+  setMinutesHash(hash: string): void {
+    this.props.minutesHash = hash;
     this.props.updatedAt = new Date();
   }
 
-  setDocumentCid(documentCid: string): void {
-    this.props.documentCid = documentCid;
+  setMinutesCid(cid: string): void {
+    this.props.minutesCid = cid;
     this.props.updatedAt = new Date();
   }
 
-  createNewVersion(hash: string, reason: string): Document {
-    return Document.create({
+  setEvaluationHash(hash: string): void {
+    this.props.evaluationHash = hash;
+    this.props.updatedAt = new Date();
+  }
+
+  setEvaluationCid(cid: string): void {
+    this.props.evaluationCid = cid;
+    this.props.updatedAt = new Date();
+  }
+
+  createNewVersion(
+    documentType: DocumentType,
+    hash: string,
+    reason: string,
+  ): Document {
+    const baseProps = {
       version: this.props.version + 1,
-      documentHash: hash,
       defenseId: this.props.defenseId,
       previousVersionId: this.id,
       changeReason: reason,
-    });
+      // Keep the other document's hash/cid from current version
+      minutesHash: this.props.minutesHash,
+      minutesCid: this.props.minutesCid,
+      evaluationHash: this.props.evaluationHash,
+      evaluationCid: this.props.evaluationCid,
+    };
+
+    // Update only the specified document type
+    if (documentType === 'minutes') {
+      baseProps.minutesHash = hash;
+      baseProps.minutesCid = undefined; // Will be filled when uploaded to IPFS
+    } else {
+      baseProps.evaluationHash = hash;
+      baseProps.evaluationCid = undefined; // Will be filled when uploaded to IPFS
+    }
+
+    return Document.create(baseProps);
   }
 }

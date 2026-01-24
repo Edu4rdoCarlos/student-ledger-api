@@ -1,8 +1,14 @@
 model Document {
   id                     String         @id @default(uuid())
   version                Int            @default(1)
-  documentHash           String?        @db.VarChar(64) // SHA-256 hash of the file content
-  documentCid            String?        @db.VarChar(64) // IPFS CID (content-addressed identifier)
+
+  // Ata (Minutes) document
+  minutesHash            String?        @db.VarChar(64) // SHA-256 hash of minutes file
+  minutesCid             String?        @db.VarChar(64) // IPFS CID of minutes file
+
+  // Avaliação de Desempenho (Evaluation) document
+  evaluationHash         String?        @db.VarChar(64) // SHA-256 hash of evaluation file
+  evaluationCid          String?        @db.VarChar(64) // IPFS CID of evaluation file
 
   status                 DocumentStatus @default(PENDING)
   changeReason           String?        // Reason for new version
@@ -22,7 +28,8 @@ model Document {
 
   @@unique([defenseId, version])
   @@index([defenseId])
-  @@index([documentHash])
+  @@index([minutesHash])
+  @@index([evaluationHash])
   @@index([status])
 }
 

@@ -22,8 +22,12 @@ export interface DocumentSignature {
 
 export interface DocumentRecord {
   documentId: string;
-  documentHash: string;
-  ipfsCid: string;
+  // Ata (Minutes) document
+  minutesHash: string;
+  minutesCid: string;
+  // Avaliação de Desempenho (Evaluation) document
+  evaluationHash: string;
+  evaluationCid: string;
   matriculas: string[];
   defenseDate: string;
   notaFinal: number;
@@ -39,6 +43,7 @@ export interface DocumentRecord {
 export interface VerifyDocumentResult {
   valid: boolean;
   reason: string;
+  documentType: 'minutes' | 'evaluation' | null;
   document: DocumentRecord | null;
 }
 
@@ -54,8 +59,10 @@ export interface IFabricGateway {
 
   registerDocument(
     user: FabricUser,
-    documentHash: string,
-    ipfsCid: string,
+    minutesHash: string,
+    minutesCid: string,
+    evaluationHash: string,
+    evaluationCid: string,
     matriculas: string[],
     defenseDate: string,
     notaFinal: number,

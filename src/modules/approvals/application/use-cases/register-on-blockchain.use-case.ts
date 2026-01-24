@@ -76,14 +76,24 @@ export class RegisterOnBlockchainUseCase {
       );
     }
 
-    if (!document.documentHash) {
-      this.logger.error(`Documento ${request.documentId} não possui hash SHA-256`);
-      throw new Error('Documento não possui hash SHA-256');
+    if (!document.minutesHash) {
+      this.logger.error(`Documento ${request.documentId} não possui hash SHA-256 da Ata`);
+      throw new Error('Documento não possui hash SHA-256 da Ata');
     }
 
-    if (!document.documentCid) {
-      this.logger.error(`Documento ${request.documentId} não possui CID do IPFS`);
-      throw new Error('Documento não possui CID do IPFS');
+    if (!document.minutesCid) {
+      this.logger.error(`Documento ${request.documentId} não possui CID do IPFS da Ata`);
+      throw new Error('Documento não possui CID do IPFS da Ata');
+    }
+
+    if (!document.evaluationHash) {
+      this.logger.error(`Documento ${request.documentId} não possui hash SHA-256 da Avaliação`);
+      throw new Error('Documento não possui hash SHA-256 da Avaliação de Desempenho');
+    }
+
+    if (!document.evaluationCid) {
+      this.logger.error(`Documento ${request.documentId} não possui CID do IPFS da Avaliação`);
+      throw new Error('Documento não possui CID do IPFS da Avaliação de Desempenho');
     }
 
     const userIds = approvals
@@ -187,8 +197,10 @@ export class RegisterOnBlockchainUseCase {
 
       const result = await this.fabricGateway.registerDocument(
         fabricUser,
-        document.documentHash,
-        document.documentCid,
+        document.minutesHash,
+        document.minutesCid,
+        document.evaluationHash,
+        document.evaluationCid,
         defense.studentIds,
         defense.defenseDate.toISOString(),
         defense.finalGrade,

@@ -45,8 +45,10 @@ export class FabricService implements OnModuleInit {
 
   async registerDocument(
     user: FabricUser,
-    documentHash: string,
-    ipfsCid: string,
+    minutesHash: string,
+    minutesCid: string,
+    evaluationHash: string,
+    evaluationCid: string,
     matriculas: string[],
     defenseDate: string,
     notaFinal: number,
@@ -57,8 +59,10 @@ export class FabricService implements OnModuleInit {
   ): Promise<DocumentRecord> {
     return this.fabricGateway.registerDocument(
       user,
-      documentHash,
-      ipfsCid,
+      minutesHash,
+      minutesCid,
+      evaluationHash,
+      evaluationCid,
       matriculas,
       defenseDate,
       notaFinal,

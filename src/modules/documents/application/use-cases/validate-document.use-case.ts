@@ -56,15 +56,18 @@ export class ValidateDocumentUseCase {
     try {
       const fabricResult = await this.fabricService.verifyDocument(fabricUser, cid);
 
-      if (fabricResult.valid && fabricResult.document) {
+      if (fabricResult.valid && fabricResult.document && fabricResult.documentType) {
         const defenseInfo = await this.getSupplementaryInfo(cid);
 
         return {
           isValid: true,
           document: {
             id: fabricResult.document.documentId,
-            documentHash: hash,
-            documentCid: cid,
+            documentType: fabricResult.documentType,
+            minutesHash: fabricResult.document.minutesHash,
+            minutesCid: fabricResult.document.minutesCid,
+            evaluationHash: fabricResult.document.evaluationHash,
+            evaluationCid: fabricResult.document.evaluationCid,
             status: 'APPROVED',
             defenseInfo,
             blockchainData: {
@@ -77,7 +80,9 @@ export class ValidateDocumentUseCase {
               validatedAt: fabricResult.document.validatedAt,
             },
           },
-          message: 'Documento válido e registrado na blockchain',
+          message: fabricResult.documentType === 'minutes'
+            ? 'Ata válida e registrada na blockchain'
+            : 'Avaliação de Desempenho válida e registrada na blockchain',
         };
       }
 

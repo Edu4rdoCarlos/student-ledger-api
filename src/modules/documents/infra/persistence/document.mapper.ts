@@ -6,8 +6,10 @@ export class DocumentMapper {
     return Document.create(
       {
         version: prisma.version,
-        documentHash: prisma.documentHash ?? undefined,
-        documentCid: prisma.documentCid ?? undefined,
+        minutesHash: prisma.minutesHash ?? undefined,
+        minutesCid: prisma.minutesCid ?? undefined,
+        evaluationHash: prisma.evaluationHash ?? undefined,
+        evaluationCid: prisma.evaluationCid ?? undefined,
         status: prisma.status as DocumentStatus,
         changeReason: prisma.changeReason ?? undefined,
         inactivationReason: prisma.inactivationReason ?? undefined,
@@ -27,8 +29,10 @@ export class DocumentMapper {
     return {
       id: doc.id,
       version: doc.version,
-      documentHash: doc.documentHash ?? null,
-      documentCid: doc.documentCid ?? null,
+      minutesHash: doc.minutesHash ?? null,
+      minutesCid: doc.minutesCid ?? null,
+      evaluationHash: doc.evaluationHash ?? null,
+      evaluationCid: doc.evaluationCid ?? null,
       status: doc.status,
       changeReason: doc.changeReason ?? null,
       inactivationReason: doc.inactivationReason ?? null,

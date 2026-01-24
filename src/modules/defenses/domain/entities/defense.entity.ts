@@ -21,10 +21,13 @@ export interface StudentInDefense {
 export interface DocumentInDefense {
   id: string;
   version: number;
-  documentHash: string;
-  documentCid?: string;
+  minutesHash?: string;
+  minutesCid?: string;
+  evaluationHash?: string;
+  evaluationCid?: string;
   status: string;
   changeReason?: string;
+  blockchainTxId?: string;
   blockchainRegisteredAt?: Date;
   defenseId: string;
   previousVersionId?: string;

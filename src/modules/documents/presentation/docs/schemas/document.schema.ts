@@ -21,16 +21,28 @@ export class DocumentSchema {
   versao: number;
 
   @ApiPropertyOptional({
-    description: 'Hash SHA-256 do conteúdo do arquivo',
+    description: 'Hash SHA-256 do arquivo da ata',
     example: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
   })
-  documentHash?: string;
+  minutesHash?: string;
 
   @ApiPropertyOptional({
-    description: 'IPFS CID (Content Identifier)',
+    description: 'IPFS CID do arquivo da ata',
     example: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
   })
-  documentCid?: string;
+  minutesCid?: string;
+
+  @ApiPropertyOptional({
+    description: 'Hash SHA-256 do arquivo da avaliação de desempenho',
+    example: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3',
+  })
+  evaluationHash?: string;
+
+  @ApiPropertyOptional({
+    description: 'IPFS CID do arquivo da avaliação de desempenho',
+    example: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+  })
+  evaluationCid?: string;
 
   @ApiProperty({
     description: 'Status do documento',

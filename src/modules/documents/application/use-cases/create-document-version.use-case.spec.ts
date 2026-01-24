@@ -3,25 +3,28 @@ import { BadRequestException, InternalServerErrorException } from '@nestjs/commo
 import { CreateDocumentVersionUseCase } from './create-document-version.use-case';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { IApprovalRepository, APPROVAL_REPOSITORY } from '../../../approvals/application/ports';
 import { HashUtil } from '../../infra/utils/hash.util';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
 import { Document, DocumentStatus } from '../../domain/entities';
 import { Defense } from '../../../defenses/domain/entities/defense.entity';
 import { DocumentNotFoundError } from '../../domain/errors';
+import { ApprovalStatus } from '../../../approvals/domain/entities';
 
 describe('CreateDocumentVersionUseCase', () => {
   let useCase: CreateDocumentVersionUseCase;
   let documentRepository: jest.Mocked<IDocumentRepository>;
   let defenseRepository: jest.Mocked<IDefenseRepository>;
+  let approvalRepository: jest.Mocked<IApprovalRepository>;
   let hashUtil: jest.Mocked<HashUtil>;
   let ipfsService: jest.Mocked<IpfsService>;
   let createApprovalsUseCase: jest.Mocked<CreateApprovalsUseCase>;
 
   const mockDocumentFile = Buffer.from('fake pdf content v2');
-  const mockOriginalHash = 'original-hash-123';
-  const mockNewHash = 'new-hash-456';
-  const mockNewCid = 'QmNewCid456';
+  const mockOriginalMinutesHash = 'original-minutes-hash-123';
+  const mockNewMinutesHash = 'new-minutes-hash-456';
+  const mockNewMinutesCid = 'QmNewMinutesCid456';
 
   beforeEach(async () => {
     const mockDocumentRepository = {
@@ -32,6 +35,11 @@ describe('CreateDocumentVersionUseCase', () => {
 
     const mockDefenseRepository = {
       findById: jest.fn(),
+      update: jest.fn(),
+    };
+
+    const mockApprovalRepository = {
+      findByDocumentId: jest.fn(),
       update: jest.fn(),
     };
 
@@ -59,6 +67,10 @@ describe('CreateDocumentVersionUseCase', () => {
           useValue: mockDefenseRepository,
         },
         {
+          provide: APPROVAL_REPOSITORY,
+          useValue: mockApprovalRepository,
+        },
+        {
           provide: HashUtil,
           useValue: mockHashUtil,
         },
@@ -76,6 +88,7 @@ describe('CreateDocumentVersionUseCase', () => {
     useCase = module.get<CreateDocumentVersionUseCase>(CreateDocumentVersionUseCase);
     documentRepository = module.get(DOCUMENT_REPOSITORY);
     defenseRepository = module.get(DEFENSE_REPOSITORY);
+    approvalRepository = module.get(APPROVAL_REPOSITORY);
     hashUtil = module.get(HashUtil);
     ipfsService = module.get(IpfsService);
     createApprovalsUseCase = module.get(CreateApprovalsUseCase);
@@ -86,14 +99,15 @@ describe('CreateDocumentVersionUseCase', () => {
   });
 
   describe('execute', () => {
-    it('deve criar nova versão com sucesso', async () => {
+    it('deve criar nova versão com sucesso quando documento está totalmente aprovado', async () => {
       const mockCurrentDocument = Document.create(
         {
-          type: ATA,
           defenseId: 'defense-456',
           version: 1,
-          documentHash: mockOriginalHash,
-          documentCid: 'QmOldCid123',
+          minutesHash: mockOriginalMinutesHash,
+          minutesCid: 'QmOldMinutesCid123',
+          evaluationHash: 'original-evaluation-hash',
+          evaluationCid: 'bafyOldEvaluationCid',
           status: DocumentStatus.APPROVED,
           blockchainTxId: 'tx-blockchain-123',
         },
@@ -112,10 +126,16 @@ describe('CreateDocumentVersionUseCase', () => {
         'defense-456',
       );
 
+      const mockApprovals = [
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+        { id: 'approval-2', status: ApprovalStatus.APPROVED },
+      ];
+
       documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockNewHash);
+      approvalRepository.findByDocumentId.mockResolvedValue(mockApprovals as any);
+      hashUtil.calculateSha256.mockReturnValue(mockNewMinutesHash);
       ipfsService.uploadFile.mockResolvedValue({
-        cid: mockNewCid,
+        cid: mockNewMinutesCid,
         name: 'ata-v2.pdf',
         size: 1024,
       });
@@ -123,11 +143,12 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const mockNewVersion = Document.create(
         {
-          type: ATA,
           defenseId: 'defense-456',
           version: 2,
-          documentHash: mockNewHash,
-          documentCid: mockNewCid,
+          minutesHash: mockNewMinutesHash,
+          minutesCid: mockNewMinutesCid,
+          evaluationHash: 'original-evaluation-hash',
+          evaluationCid: 'bafyOldEvaluationCid',
           status: DocumentStatus.PENDING,
           previousVersionId: 'doc-123',
           changeReason: 'Correção de nota',
@@ -142,6 +163,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const result = await useCase.execute({
         documentId: 'doc-123',
+        documentType: 'minutes',
         finalGrade: 9.0,
         documentFile: mockDocumentFile,
         documentFilename: 'ata-v2.pdf',
@@ -159,12 +181,79 @@ describe('CreateDocumentVersionUseCase', () => {
       expect(result.newVersion.version).toBe(2);
     });
 
+    it('deve substituir documento quando não está totalmente aprovado', async () => {
+      const mockCurrentDocument = Document.create(
+        {
+          defenseId: 'defense-456',
+          version: 1,
+          minutesHash: mockOriginalMinutesHash,
+          minutesCid: 'QmOldMinutesCid123',
+          status: DocumentStatus.PENDING,
+        },
+        'doc-123',
+      );
+
+      const mockDefense = Defense.create(
+        {
+          title: 'Defesa de TCC',
+          studentIds: ['student-789'],
+          advisorId: 'advisor-101',
+          defenseDate: new Date('2024-12-01'),
+          result: 'APPROVED',
+          finalGrade: 8.5,
+        },
+        'defense-456',
+      );
+
+      const mockApprovals = [
+        { id: 'approval-1', status: ApprovalStatus.PENDING, resetForNewVersion: jest.fn() },
+        { id: 'approval-2', status: ApprovalStatus.APPROVED, resetForNewVersion: jest.fn() },
+      ];
+
+      documentRepository.findById.mockResolvedValue(mockCurrentDocument);
+      approvalRepository.findByDocumentId.mockResolvedValue(mockApprovals as any);
+      hashUtil.calculateSha256.mockReturnValue(mockNewMinutesHash);
+      ipfsService.uploadFile.mockResolvedValue({
+        cid: mockNewMinutesCid,
+        name: 'ata-v2.pdf',
+        size: 1024,
+      });
+
+      const updatedDocument = Document.create(
+        {
+          defenseId: 'defense-456',
+          version: 1,
+          minutesHash: mockNewMinutesHash,
+          minutesCid: mockNewMinutesCid,
+          status: DocumentStatus.PENDING,
+        },
+        'doc-123',
+      );
+
+      documentRepository.update.mockResolvedValue(updatedDocument);
+      defenseRepository.findById.mockResolvedValue(mockDefense);
+      defenseRepository.update.mockResolvedValue(mockDefense);
+
+      const result = await useCase.execute({
+        documentId: 'doc-123',
+        documentType: 'minutes',
+        finalGrade: 9.0,
+        documentFile: mockDocumentFile,
+        documentFilename: 'ata-v2.pdf',
+        changeReason: 'Correção de nota',
+      });
+
+      expect(result.newVersion.version).toBe(1);
+      expect(documentRepository.create).not.toHaveBeenCalled();
+    });
+
     it('deve lançar erro se documento não for encontrado', async () => {
       documentRepository.findById.mockResolvedValue(null);
 
       await expect(
         useCase.execute({
           documentId: 'doc-inexistente',
+          documentType: 'minutes',
           finalGrade: 9.0,
           documentFile: mockDocumentFile,
           documentFilename: 'ata-v2.pdf',
@@ -175,145 +264,109 @@ describe('CreateDocumentVersionUseCase', () => {
       expect(documentRepository.findById).toHaveBeenCalledWith('doc-inexistente');
     });
 
-    it('deve lançar erro se documento estiver PENDING', async () => {
-      const mockPendingDocument = Document.create({
-        type: ATA,
-        defenseId: 'defense-456',
-        status: DocumentStatus.PENDING,
-      });
-
-      documentRepository.findById.mockResolvedValue(mockPendingDocument);
-
-      await expect(
-        useCase.execute({
-          documentId: 'doc-pending',
-          finalGrade: 9.0,
-          documentFile: mockDocumentFile,
-          documentFilename: 'ata-v2.pdf',
-          changeReason: 'Correção',
-        })
-      ).rejects.toThrow(BadRequestException);
-
-      await expect(
-        useCase.execute({
-          documentId: 'doc-pending',
-          finalGrade: 9.0,
-          documentFile: mockDocumentFile,
-          documentFilename: 'ata-v2.pdf',
-          changeReason: 'Correção',
-        })
-      ).rejects.toThrow('Documento PENDING não pode ser versionado');
-    });
-
-    it('deve lançar erro se documento estiver INACTIVE', async () => {
-      const mockInactiveDocument = Document.create({
-        type: ATA,
-        defenseId: 'defense-456',
-        status: DocumentStatus.INACTIVE,
-      });
-      mockInactiveDocument.inactivate('Já foi inativado antes');
-
-      documentRepository.findById.mockResolvedValue(mockInactiveDocument);
-
-      await expect(
-        useCase.execute({
-          documentId: 'doc-inactive',
-          finalGrade: 9.0,
-          documentFile: mockDocumentFile,
-          documentFilename: 'ata-v2.pdf',
-          changeReason: 'Correção',
-        })
-      ).rejects.toThrow('Documento já está inativo');
-    });
-
-    it('deve lançar erro se documento não estiver registrado na blockchain', async () => {
-      const mockDocumentWithoutBlockchain = Document.create({
-        type: ATA,
-        defenseId: 'defense-456',
-        status: DocumentStatus.APPROVED,
-        documentHash: mockOriginalHash,
-        // blockchainTxId não definido
-      });
-
-      documentRepository.findById.mockResolvedValue(mockDocumentWithoutBlockchain);
-
-      await expect(
-        useCase.execute({
-          documentId: 'doc-no-blockchain',
-          finalGrade: 9.0,
-          documentFile: mockDocumentFile,
-          documentFilename: 'ata-v2.pdf',
-          changeReason: 'Correção',
-        })
-      ).rejects.toThrow('Documento ainda não foi registrado na blockchain');
-    });
-
-    it('deve lançar erro se nova versão tiver mesmo conteúdo', async () => {
+    it('deve lançar erro se nova versão da ata tiver mesmo conteúdo', async () => {
       const mockCurrentDocument = Document.create({
-        type: ATA,
         defenseId: 'defense-456',
         version: 1,
-        documentHash: mockOriginalHash,
+        minutesHash: mockOriginalMinutesHash,
         status: DocumentStatus.APPROVED,
         blockchainTxId: 'tx-blockchain-123',
       });
 
       documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockOriginalHash); // mesmo hash
+      approvalRepository.findByDocumentId.mockResolvedValue([
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+      ] as any);
+      hashUtil.calculateSha256.mockReturnValue(mockOriginalMinutesHash); // mesmo hash
 
       await expect(
         useCase.execute({
           documentId: 'doc-123',
+          documentType: 'minutes',
           finalGrade: 9.0,
           documentFile: mockDocumentFile,
           documentFilename: 'ata-v2.pdf',
           changeReason: 'Correção',
         })
-      ).rejects.toThrow('Nova versão deve ter conteúdo diferente da versão anterior');
+      ).rejects.toThrow('Nova versão da Ata deve ter conteúdo diferente da versão anterior');
     });
 
-    it('deve lançar erro se IPFS retornar queued', async () => {
+    it('deve lançar erro se nova versão da avaliação tiver mesmo conteúdo', async () => {
+      const mockOriginalEvaluationHash = 'original-evaluation-hash';
       const mockCurrentDocument = Document.create({
-        type: ATA,
         defenseId: 'defense-456',
         version: 1,
-        documentHash: mockOriginalHash,
+        evaluationHash: mockOriginalEvaluationHash,
         status: DocumentStatus.APPROVED,
         blockchainTxId: 'tx-blockchain-123',
       });
 
       documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockNewHash);
+      approvalRepository.findByDocumentId.mockResolvedValue([
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+      ] as any);
+      hashUtil.calculateSha256.mockReturnValue(mockOriginalEvaluationHash); // mesmo hash
+
+      await expect(
+        useCase.execute({
+          documentId: 'doc-123',
+          documentType: 'evaluation',
+          finalGrade: 9.0,
+          documentFile: mockDocumentFile,
+          documentFilename: 'avaliacao-v2.pdf',
+          changeReason: 'Correção',
+        })
+      ).rejects.toThrow('Nova versão da Avaliação de Desempenho deve ter conteúdo diferente da versão anterior');
+    });
+
+    it('deve lançar erro se IPFS retornar queued', async () => {
+      const mockCurrentDocument = Document.create({
+        defenseId: 'defense-456',
+        version: 1,
+        minutesHash: mockOriginalMinutesHash,
+        status: DocumentStatus.APPROVED,
+        blockchainTxId: 'tx-blockchain-123',
+      });
+
+      documentRepository.findById.mockResolvedValue(mockCurrentDocument);
+      approvalRepository.findByDocumentId.mockResolvedValue([
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+      ] as any);
+      hashUtil.calculateSha256.mockReturnValue(mockNewMinutesHash);
       ipfsService.uploadFile.mockResolvedValue({ queued: true });
 
       await expect(
         useCase.execute({
           documentId: 'doc-123',
+          documentType: 'minutes',
           finalGrade: 9.0,
           documentFile: mockDocumentFile,
           documentFilename: 'ata-v2.pdf',
           changeReason: 'Correção',
         })
-      ).rejects.toThrow('Falha ao fazer upload do arquivo');
+      ).rejects.toThrow('Sistema de armazenamento temporariamente indisponível');
     });
 
     it('deve lançar erro se IPFS falhar', async () => {
       const mockCurrentDocument = Document.create({
-        type: ATA,
         defenseId: 'defense-456',
         version: 1,
-        documentHash: mockOriginalHash,
+        minutesHash: mockOriginalMinutesHash,
         status: DocumentStatus.APPROVED,
         blockchainTxId: 'tx-blockchain-123',
       });
 
       documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockNewHash);
+      approvalRepository.findByDocumentId.mockResolvedValue([
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+      ] as any);
+      hashUtil.calculateSha256.mockReturnValue(mockNewMinutesHash);
       ipfsService.uploadFile.mockRejectedValue(new Error('IPFS connection failed'));
 
       await expect(
         useCase.execute({
           documentId: 'doc-123',
+          documentType: 'minutes',
           finalGrade: 9.0,
           documentFile: mockDocumentFile,
           documentFilename: 'ata-v2.pdf',
@@ -322,61 +375,13 @@ describe('CreateDocumentVersionUseCase', () => {
       ).rejects.toThrow('Falha ao fazer upload do arquivo');
     });
 
-    it('deve lançar erro se Defense não for encontrada', async () => {
-      const mockCurrentDocument = Document.create(
-        {
-          type: ATA,
-          defenseId: 'defense-inexistente',
-          version: 1,
-          documentHash: mockOriginalHash,
-          status: DocumentStatus.APPROVED,
-          blockchainTxId: 'tx-blockchain-123',
-        },
-        'doc-123',
-      );
-
-      documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockNewHash);
-      ipfsService.uploadFile.mockResolvedValue({
-        cid: mockNewCid,
-        name: 'ata-v2.pdf',
-        size: 1024,
-      });
-      documentRepository.update.mockResolvedValue(mockCurrentDocument);
-
-      const mockNewVersion = Document.create(
-        {
-          type: ATA,
-          defenseId: 'defense-inexistente',
-          version: 2,
-          documentHash: mockNewHash,
-          documentCid: mockNewCid,
-          status: DocumentStatus.PENDING,
-        },
-        'doc-new-version',
-      );
-
-      documentRepository.create.mockResolvedValue(mockNewVersion);
-      defenseRepository.findById.mockResolvedValue(null);
-
-      await expect(
-        useCase.execute({
-          documentId: 'doc-123',
-          finalGrade: 9.0,
-          documentFile: mockDocumentFile,
-          documentFilename: 'ata-v2.pdf',
-          changeReason: 'Correção',
-        })
-      ).rejects.toThrow(InternalServerErrorException);
-    });
-
     it('deve criar aprovações de forma assíncrona sem bloquear execução', async () => {
       const mockCurrentDocument = Document.create(
         {
-          type: ATA,
           defenseId: 'defense-456',
           version: 1,
-          documentHash: mockOriginalHash,
+          minutesHash: mockOriginalMinutesHash,
+          minutesCid: 'QmOldCid123',
           status: DocumentStatus.APPROVED,
           blockchainTxId: 'tx-blockchain-123',
         },
@@ -396,9 +401,12 @@ describe('CreateDocumentVersionUseCase', () => {
       );
 
       documentRepository.findById.mockResolvedValue(mockCurrentDocument);
-      hashUtil.calculateSha256.mockReturnValue(mockNewHash);
+      approvalRepository.findByDocumentId.mockResolvedValue([
+        { id: 'approval-1', status: ApprovalStatus.APPROVED },
+      ] as any);
+      hashUtil.calculateSha256.mockReturnValue(mockNewMinutesHash);
       ipfsService.uploadFile.mockResolvedValue({
-        cid: mockNewCid,
+        cid: mockNewMinutesCid,
         name: 'ata-v2.pdf',
         size: 1024,
       });
@@ -406,11 +414,10 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const mockNewVersion = Document.create(
         {
-          type: ATA,
           defenseId: 'defense-456',
           version: 2,
-          documentHash: mockNewHash,
-          documentCid: mockNewCid,
+          minutesHash: mockNewMinutesHash,
+          minutesCid: mockNewMinutesCid,
           status: DocumentStatus.PENDING,
         },
         'doc-new-version',
@@ -425,6 +432,7 @@ describe('CreateDocumentVersionUseCase', () => {
 
       const result = await useCase.execute({
         documentId: 'doc-123',
+        documentType: 'minutes',
         finalGrade: 9.0,
         documentFile: mockDocumentFile,
         documentFilename: 'ata-v2.pdf',

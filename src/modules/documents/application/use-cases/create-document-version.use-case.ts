@@ -1,6 +1,6 @@
 import { Injectable, Inject, InternalServerErrorException, Logger, BadRequestException } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { Document } from '../../domain/entities';
+import { Document, DocumentType } from '../../domain/entities';
 import { HashUtil } from '../../infra/utils/hash.util';
 import { IpfsService } from '../../../ipfs/ipfs.service';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
@@ -11,6 +11,7 @@ import { ApprovalStatus } from '../../../approvals/domain/entities';
 
 interface CreateDocumentVersionRequest {
   documentId: string;
+  documentType: DocumentType;
   finalGrade?: number;
   documentFile: Buffer;
   documentFilename: string;
@@ -42,7 +43,7 @@ export class CreateDocumentVersionUseCase {
     const currentDocument = await this.findDocument(request.documentId);
     const isFullyApproved = await this.checkIfDocumentIsFullyApproved(request.documentId);
 
-    const newDocumentHash = this.calculateAndValidateHash(request.documentFile, currentDocument);
+    const newDocumentHash = this.calculateAndValidateHash(request.documentFile, currentDocument, request.documentType);
     const newDocumentCid = await this.uploadToIpfs(request.documentFile, request.documentFilename);
 
     try {
@@ -51,7 +52,8 @@ export class CreateDocumentVersionUseCase {
         isFullyApproved,
         newDocumentHash,
         newDocumentCid,
-        request.changeReason
+        request.changeReason,
+        request.documentType
       );
 
       if (wasReplaced) {
@@ -87,11 +89,17 @@ export class CreateDocumentVersionUseCase {
     return isFullyApproved;
   }
 
-  private calculateAndValidateHash(documentFile: Buffer, currentDocument: Document): string {
+  private calculateAndValidateHash(documentFile: Buffer, currentDocument: Document, documentType: DocumentType): string {
     const newDocumentHash = this.hashUtil.calculateSha256(documentFile);
 
-    if (currentDocument.documentHash === newDocumentHash) {
-      throw new BadRequestException('Nova versão deve ter conteúdo diferente da versão anterior');
+    // Get the current hash for the specific document type
+    const currentHash = documentType === 'minutes'
+      ? currentDocument.minutesHash
+      : currentDocument.evaluationHash;
+
+    if (currentHash === newDocumentHash) {
+      const docTypeLabel = documentType === 'minutes' ? 'Ata' : 'Avaliação de Desempenho';
+      throw new BadRequestException(`Nova versão da ${docTypeLabel} deve ter conteúdo diferente da versão anterior`);
     }
 
     return newDocumentHash;
@@ -118,13 +126,14 @@ export class CreateDocumentVersionUseCase {
     isFullyApproved: boolean,
     newDocumentHash: string,
     newDocumentCid: string,
-    changeReason: string
+    changeReason: string,
+    documentType: DocumentType
   ): Promise<{ createdVersion: Document; previousVersion: Document; wasReplaced: boolean }> {
     if (isFullyApproved) {
-      const result = await this.createNewVersion(currentDocument, newDocumentHash, newDocumentCid, changeReason);
+      const result = await this.createNewVersion(currentDocument, newDocumentHash, newDocumentCid, changeReason, documentType);
       return { ...result, wasReplaced: false };
     } else {
-      const result = await this.replaceCurrentDocument(currentDocument, newDocumentHash, newDocumentCid);
+      const result = await this.replaceCurrentDocument(currentDocument, newDocumentHash, newDocumentCid, documentType);
       return { ...result, wasReplaced: true };
     }
   }
@@ -133,15 +142,21 @@ export class CreateDocumentVersionUseCase {
     currentDocument: Document,
     newDocumentHash: string,
     newDocumentCid: string,
-    changeReason: string
+    changeReason: string,
+    documentType: DocumentType
   ): Promise<{ createdVersion: Document; previousVersion: Document }> {
-    this.logger.log(`Criando nova versão do documento ${currentDocument.id}`);
+    const docTypeLabel = documentType === 'minutes' ? 'Ata' : 'Avaliação de Desempenho';
+    this.logger.log(`Criando nova versão do documento ${currentDocument.id} (${docTypeLabel})`);
 
     currentDocument.inactivate(`Nova versão criada: ${changeReason}`);
     await this.documentRepository.update(currentDocument);
 
-    const newVersion = currentDocument.createNewVersion(newDocumentHash, changeReason);
-    newVersion.setDocumentCid(newDocumentCid);
+    const newVersion = currentDocument.createNewVersion(documentType, newDocumentHash, changeReason);
+    if (documentType === 'minutes') {
+      newVersion.setMinutesCid(newDocumentCid);
+    } else {
+      newVersion.setEvaluationCid(newDocumentCid);
+    }
     const createdVersion = await this.documentRepository.create(newVersion);
 
     return { createdVersion, previousVersion: currentDocument };
@@ -150,12 +165,19 @@ export class CreateDocumentVersionUseCase {
   private async replaceCurrentDocument(
     currentDocument: Document,
     newDocumentHash: string,
-    newDocumentCid: string
+    newDocumentCid: string,
+    documentType: DocumentType
   ): Promise<{ createdVersion: Document; previousVersion: Document }> {
-    this.logger.log(`Substituindo documento ${currentDocument.id} (mantendo mesma versão)`);
+    const docTypeLabel = documentType === 'minutes' ? 'Ata' : 'Avaliação de Desempenho';
+    this.logger.log(`Substituindo ${docTypeLabel} do documento ${currentDocument.id} (mantendo mesma versão)`);
 
-    currentDocument.setDocumentHash(newDocumentHash);
-    currentDocument.setDocumentCid(newDocumentCid);
+    if (documentType === 'minutes') {
+      currentDocument.setMinutesHash(newDocumentHash);
+      currentDocument.setMinutesCid(newDocumentCid);
+    } else {
+      currentDocument.setEvaluationHash(newDocumentHash);
+      currentDocument.setEvaluationCid(newDocumentCid);
+    }
     const updatedDocument = await this.documentRepository.update(currentDocument);
 
     return { createdVersion: updatedDocument, previousVersion: currentDocument };

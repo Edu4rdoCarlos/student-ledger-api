@@ -22,7 +22,12 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   async findByHash(hash: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
-      where: { documentHash: hash },
+      where: {
+        OR: [
+          { minutesHash: hash },
+          { evaluationHash: hash },
+        ],
+      },
       orderBy: { version: 'desc' },
     });
     return found ? DocumentMapper.toDomain(found) : null;
@@ -30,7 +35,12 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   async findByCid(cid: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
-      where: { documentCid: cid },
+      where: {
+        OR: [
+          { minutesCid: cid },
+          { evaluationCid: cid },
+        ],
+      },
       orderBy: { version: 'desc' },
     });
     return found ? DocumentMapper.toDomain(found) : null;
@@ -96,7 +106,12 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   async existsByHash(hash: string): Promise<boolean> {
     const count = await this.prisma.document.count({
-      where: { documentHash: hash },
+      where: {
+        OR: [
+          { minutesHash: hash },
+          { evaluationHash: hash },
+        ],
+      },
     });
     return count > 0;
   }

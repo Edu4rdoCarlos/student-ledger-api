@@ -29,8 +29,10 @@ describe('ValidateDocumentUseCase', () => {
 
   const mockBlockchainDocument = {
     documentId: 'doc-fabric-123',
-    documentHash: mockHash,
-    ipfsCid: mockCid,
+    minutesHash: mockHash,
+    minutesCid: mockCid,
+    evaluationHash: 'evaluation-hash-456',
+    evaluationCid: 'bafyEvaluationCid789',
     matriculas: ['20201234'],
     defenseDate: '2024-12-01',
     notaFinal: 9.5,
@@ -152,8 +154,10 @@ describe('ValidateDocumentUseCase', () => {
 
     it('deve incluir informações da defesa quando documento local existir', async () => {
       const mockLocalDocument = Document.create({
-        documentHash: mockHash,
-        documentCid: mockCid,
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
         defenseId: 'defense-123',
         status: DocumentStatus.APPROVED,
       });

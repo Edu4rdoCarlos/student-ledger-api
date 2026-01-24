@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -30,10 +30,11 @@ export class DocumentsController {
   @DownloadDocumentDocs()
   async download(
     @Param('id') id: string,
+    @Query('type') documentType: 'minutes' | 'evaluation' | undefined,
     @CurrentUser() currentUser: any,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { buffer, filename, mimeType } = await this.downloadDocument.execute(id, currentUser);
+    const { buffer, filename, mimeType } = await this.downloadDocument.execute(id, currentUser, documentType);
 
     res.set({
       'Content-Type': mimeType,
@@ -85,6 +86,7 @@ export class DocumentsController {
 
     const { previousVersion, newVersion } = await this.createDocumentVersion.execute({
       documentId: id,
+      documentType: dto.documentType,
       finalGrade: dto.finalGrade,
       documentFile: file.buffer,
       documentFilename: safeFilename,

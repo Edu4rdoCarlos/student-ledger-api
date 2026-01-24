@@ -9,11 +9,17 @@ export class DocumentResponseDto {
   @ApiProperty()
   version: number;
 
-  @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
-  documentHash?: string;
+  @ApiPropertyOptional({ description: 'SHA-256 hash of minutes file (Ata)' })
+  minutesHash?: string;
 
-  @ApiPropertyOptional({ description: 'IPFS CID - filled when submitted to IPFS' })
-  documentCid?: string;
+  @ApiPropertyOptional({ description: 'IPFS CID of minutes file (Ata)' })
+  minutesCid?: string;
+
+  @ApiPropertyOptional({ description: 'SHA-256 hash of evaluation file (Avaliação de Desempenho)' })
+  evaluationHash?: string;
+
+  @ApiPropertyOptional({ description: 'IPFS CID of evaluation file (Avaliação de Desempenho)' })
+  evaluationCid?: string;
 
   @ApiProperty({ enum: DocumentStatus })
   status: DocumentStatus;
@@ -40,8 +46,10 @@ export class DocumentResponseDto {
     return {
       id: doc.id,
       version: doc.version,
-      documentHash: doc.documentHash,
-      documentCid: doc.documentCid,
+      minutesHash: doc.minutesHash,
+      minutesCid: doc.minutesCid,
+      evaluationHash: doc.evaluationHash,
+      evaluationCid: doc.evaluationCid,
       status: doc.status,
       blockchainTxId: doc.blockchainTxId,
       blockchainRegisteredAt: doc.blockchainRegisteredAt,
@@ -114,11 +122,20 @@ export class SimpleDocumentDto {
   @ApiProperty()
   id: string;
 
-  @ApiPropertyOptional({ description: 'SHA-256 hash of the file content' })
-  documentHash?: string;
+  @ApiPropertyOptional({ description: 'Type of document being validated (minutes or evaluation)' })
+  documentType?: 'minutes' | 'evaluation';
 
-  @ApiPropertyOptional({ description: 'IPFS CID' })
-  documentCid?: string;
+  @ApiPropertyOptional({ description: 'SHA-256 hash of minutes file (Ata)' })
+  minutesHash?: string;
+
+  @ApiPropertyOptional({ description: 'IPFS CID of minutes file (Ata)' })
+  minutesCid?: string;
+
+  @ApiPropertyOptional({ description: 'SHA-256 hash of evaluation file (Avaliação de Desempenho)' })
+  evaluationHash?: string;
+
+  @ApiPropertyOptional({ description: 'IPFS CID of evaluation file (Avaliação de Desempenho)' })
+  evaluationCid?: string;
 
   @ApiProperty({ enum: DocumentStatus })
   status: DocumentStatus | string;
