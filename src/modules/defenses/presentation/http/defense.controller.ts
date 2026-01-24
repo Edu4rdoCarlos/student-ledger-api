@@ -72,7 +72,7 @@ export class DefenseController {
   ) {}
 
   @Post()
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new defense' })
   @ApiDefenseCreatedResponse()
@@ -93,7 +93,7 @@ export class DefenseController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'List all defenses with basic information' })
   @ApiDefenseListResponse()
   @ApiQuery({
@@ -126,7 +126,7 @@ export class DefenseController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Get defense by ID' })
   @ApiDefenseOkResponse()
   async findOne(
@@ -138,7 +138,7 @@ export class DefenseController {
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'Update defense' })
   @ApiDefenseOkResponse()
   async update(
@@ -160,7 +160,7 @@ export class DefenseController {
   }
 
   @Post(':id/result')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Submit defense result with grade and unified document file' })
@@ -200,7 +200,7 @@ export class DefenseController {
   }
 
   @Get(':id/documents/history')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({
     summary: 'List all document versions for a defense',
     description: 'Returns all versions of the defense document, ordered by version number (newest first)'
@@ -216,7 +216,7 @@ export class DefenseController {
   }
 
   @Patch(':id/cancel')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'Cancel a defense (coordinator only)' })
   @ApiDefenseCancelResponse()
   async cancel(
@@ -231,7 +231,7 @@ export class DefenseController {
   }
 
   @Patch(':id/reschedule')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'Reschedule a defense (coordinator only)' })
   @ApiDefenseRescheduleResponse()
   async reschedule(

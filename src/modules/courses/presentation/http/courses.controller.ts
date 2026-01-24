@@ -58,7 +58,7 @@ export class CoursesController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'List courses' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
@@ -69,7 +69,7 @@ export class CoursesController {
   }
 
   @Get(':code')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @ApiOperation({ summary: 'Find course by code' })
   @ApiCourseOkResponse()
   @ApiCourseFindOneErrorResponses()
@@ -80,11 +80,11 @@ export class CoursesController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @UseGuards(CoordinatorCourseGuard)
   @ApiOperation({
     summary: 'Update course data',
-    description: 'Updates name, active status and/or course coordinator. Admins can update any course, coordinators can only update their own course.'
+    description: 'Updates name, active status and/or course coordinator. Coordinators can only update their own course.'
   })
   @ApiCourseOkResponse()
   @ApiCourseUpdateErrorResponses()
@@ -94,10 +94,10 @@ export class CoursesController {
   }
 
   @Get(':id/students')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'List students from a course',
-    description: 'Returns all students enrolled in the specified course. Coordinators can only access students from their own course, admins can access any course.'
+    description: 'Returns all students enrolled in the specified course. Coordinators can only access students from their own course.'
   })
   @ApiCourseStudentsListResponse()
   @ApiCourseStudentsListErrorResponses()
@@ -110,10 +110,10 @@ export class CoursesController {
   }
 
   @Get(':id/advisors')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'List advisors from a course',
-    description: 'Returns all advisors from the specified course. Coordinators can only access advisors from their own course, admins can access any course.'
+    description: 'Returns all advisors from the specified course. Coordinators can only access advisors from their own course.'
   })
   @ApiCourseAdvisorsListResponse()
   @ApiCourseAdvisorsListErrorResponses()

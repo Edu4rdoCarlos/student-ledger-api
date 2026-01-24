@@ -27,7 +27,7 @@ export class StudentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'Register new student',
     description: 'Creates a new user with STUDENT role and links to student record. The operation is atomic: creates both or neither.'
@@ -47,7 +47,7 @@ export class StudentsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'No permission. Only coordinators and admins can register students.'
+    description: 'No permission. Only coordinators can register students.'
   })
   async create(
     @Body() dto: CreateStudentDto,
@@ -58,7 +58,7 @@ export class StudentsController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'List students' })
   @ApiStudentListResponse()
   async findAll(
@@ -69,7 +69,7 @@ export class StudentsController {
   }
 
   @Get(':registration')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'Find student by registration number with blockchain defense history' })
   @ApiStudentOkResponse()
   @ApiResponse({
@@ -93,10 +93,10 @@ export class StudentsController {
 
   @Put(':registration')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'Update student data',
-    description: 'Updates user name and/or student course. Only administrators and coordinators can update.'
+    description: 'Updates user name and/or student course. Only coordinators can update.'
   })
   @ApiStudentOkResponse()
   @ApiResponse({

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, StreamableFile, UploadedFile, UseInterceptors, Body, ParseFilePipeBuilder, HttpStatus, MaxFileSizeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -26,7 +26,7 @@ export class DocumentsController {
   ) {}
 
   @Get(':id/download')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @DownloadDocumentDocs()
   async download(
     @Param('id') id: string,
@@ -44,26 +44,29 @@ export class DocumentsController {
   }
 
   @Post('validate')
-  @Roles('ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ValidateDocumentDocs()
   async validate(
-    @UploadedFile() file: Express.Multer.File,
-    @Body('hash') hash: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addValidator(new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }))
+        .addValidator(new PdfContentValidator({}))
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+          fileIsRequired: true,
+        })
+    )
+    file: Express.Multer.File,
     @CurrentUser() currentUser: ICurrentUser,
   ) {
-    if (!file && !hash) {
-      throw new BadRequestException('Deve fornecer um arquivo ou um hash para validação');
-    }
-
-    const input = file ? file.buffer : hash;
-    const result = await this.validateDocument.execute(input, currentUser);
+    const result = await this.validateDocument.execute(file.buffer, currentUser);
     return ValidateDocumentSerializer.serialize(result, currentUser);
   }
 
   @Post(':id/versions')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @UseInterceptors(FileInterceptor('document'))
   @CreateDocumentVersionDocs()
@@ -106,7 +109,7 @@ export class DocumentsController {
   }
 
   @Get('summary')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @GetDocumentsSummaryDocs()
   async getSummary(): Promise<DocumentsSummaryResponseDto> {
     return this.getDocumentsSummary.execute();

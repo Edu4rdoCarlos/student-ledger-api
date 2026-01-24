@@ -26,7 +26,7 @@ export class AdvisorsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'Register new advisor',
     description: 'Creates a new user with ADVISOR role and links to advisor record. The operation is atomic: creates both or neither.'
@@ -42,7 +42,7 @@ export class AdvisorsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'No permission. Only coordinators and admins can register advisors.'
+    description: 'No permission. Only coordinators can register advisors.'
   })
   async create(
     @Body() dto: CreateAdvisorDto,
@@ -53,7 +53,7 @@ export class AdvisorsController {
   }
 
   @Get()
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'List advisors' })
   @ApiAdvisorListResponse()
   @ApiResponse({
@@ -68,7 +68,7 @@ export class AdvisorsController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({ summary: 'Find advisor by ID' })
   @ApiAdvisorOkResponse()
   @ApiResponse({
@@ -86,10 +86,10 @@ export class AdvisorsController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN', 'COORDINATOR')
+  @Roles('COORDINATOR')
   @ApiOperation({
     summary: 'Update advisor data',
-    description: 'Updates name, department and/or advisor course. Only administrators and coordinators can update.'
+    description: 'Updates name, department and/or advisor course. Only coordinators can update.'
   })
   @ApiAdvisorOkResponse()
   @ApiResponse({
