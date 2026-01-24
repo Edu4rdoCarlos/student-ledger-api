@@ -39,7 +39,7 @@ async function main() {
     create: {
       email: 'coordenador.cc@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Prof. Dr. Carlos Eduardo Silva',
+      name: 'Nick Fury',
       role: Role.COORDINATOR,
         },
   });
@@ -91,7 +91,7 @@ async function main() {
     create: {
       email: 'coordenador.si@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Profa. Dra. Maria Fernanda Costa',
+      name: 'Amanda Waller',
       role: Role.COORDINATOR,
         },
   });
@@ -131,7 +131,7 @@ async function main() {
     create: {
       email: 'orientador1@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Prof. Dr. João Pedro Oliveira',
+      name: 'Tony Stark',
       role: Role.ADVISOR,
         },
   });
@@ -155,7 +155,7 @@ async function main() {
     create: {
       email: 'orientador2@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Profa. Dra. Ana Paula Santos',
+      name: 'Diana Prince',
       role: Role.ADVISOR,
         },
   });
@@ -199,7 +199,7 @@ async function main() {
     create: {
       email: 'aluno1@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Lucas Silva Pereira',
+      name: 'Peter Parker',
       role: Role.STUDENT,
         },
   });
@@ -221,7 +221,7 @@ async function main() {
     create: {
       email: 'aluno2@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Mariana Costa Ferreira',
+      name: 'Gwen Stacy',
       role: Role.STUDENT,
         },
   });
@@ -243,7 +243,7 @@ async function main() {
     create: {
       email: 'aluno3@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Pedro Henrique Souza',
+      name: 'Miles Morales',
       role: Role.STUDENT,
         },
   });
@@ -265,7 +265,7 @@ async function main() {
     create: {
       email: 'aluno4@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Juliana Martins Oliveira',
+      name: 'Mary Jane Watson',
       role: Role.STUDENT,
         },
   });
@@ -287,7 +287,7 @@ async function main() {
     create: {
       email: 'aluno5@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Rafael Santos Costa',
+      name: 'Dick Grayson',
       role: Role.STUDENT,
         },
   });
@@ -309,7 +309,7 @@ async function main() {
     create: {
       email: 'aluno6@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Beatriz Lima Souza',
+      name: 'Barbara Gordon',
       role: Role.STUDENT,
         },
   });
@@ -331,7 +331,7 @@ async function main() {
     create: {
       email: 'aluno7@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Gabriel Ferreira Alves',
+      name: 'Tim Drake',
       role: Role.STUDENT,
         },
   });
@@ -353,7 +353,7 @@ async function main() {
     create: {
       email: 'aluno8@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Carolina Rocha Mendes',
+      name: 'Wanda Maximoff',
       role: Role.STUDENT,
         },
   });
@@ -375,7 +375,7 @@ async function main() {
     create: {
       email: 'aluno9@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Felipe Araújo Dias',
+      name: 'Pietro Maximoff',
       role: Role.STUDENT,
         },
   });
@@ -397,7 +397,7 @@ async function main() {
     create: {
       email: 'aluno10@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Amanda Silva Rodrigues',
+      name: 'Kamala Khan',
       role: Role.STUDENT,
         },
   });
@@ -419,7 +419,7 @@ async function main() {
     create: {
       email: 'aluno11@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Rodrigo Almeida Santos',
+      name: 'Damian Wayne',
       role: Role.STUDENT,
         },
   });
@@ -441,7 +441,7 @@ async function main() {
     create: {
       email: 'aluno12@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Isabela Mendes Carvalho',
+      name: 'Natasha Romanoff',
       role: Role.STUDENT,
         },
   });
@@ -463,7 +463,7 @@ async function main() {
     create: {
       email: 'carlos.eduardo@ufrgs.edu.br',
       password: defaultPassword,
-      name: 'Carlos Eduardo',
+      name: 'Clark Kent',
       role: Role.STUDENT,
     },
   });
@@ -515,16 +515,16 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Carlos Alberto Silva',
-            email: 'carlos.silva@ufrgs.edu.br',
+            name: 'Charles Xavier',
+            email: 'charles.xavier@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Maria Fernanda Costa',
-            email: 'maria.costa@ufrgs.edu.br',
+            name: 'Jean Grey',
+            email: 'jean.grey@ufrgs.edu.br',
           },
           {
-            name: 'Prof. Dr. João Pedro Santos',
-            email: 'joao.santos@ufrgs.edu.br',
+            name: 'Scott Summers',
+            email: 'scott.summers@ufrgs.edu.br',
           },
         ],
       },
@@ -552,12 +552,12 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Roberto Andrade',
-            email: 'roberto.andrade@ufrgs.edu.br',
+            name: 'Bruce Banner',
+            email: 'bruce.banner@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Ana Paula Oliveira',
-            email: 'ana.oliveira@ufrgs.edu.br',
+            name: 'Carol Danvers',
+            email: 'carol.danvers@ufrgs.edu.br',
           },
         ],
       },
@@ -584,16 +584,16 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Fernando Lima',
-            email: 'fernando.lima@ufrgs.edu.br',
+            name: 'Stephen Strange',
+            email: 'stephen.strange@ufrgs.edu.br',
           },
           {
-            name: 'Prof. Dr. Ricardo Soares',
-            email: 'ricardo.soares@ufrgs.edu.br',
+            name: 'Reed Richards',
+            email: 'reed.richards@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Juliana Martins',
-            email: 'juliana.martins@ufrgs.edu.br',
+            name: 'Sue Storm',
+            email: 'sue.storm@ufrgs.edu.br',
           },
         ],
       },
@@ -622,16 +622,16 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Marcelo Azevedo',
-            email: 'marcelo.azevedo@ufrgs.edu.br',
+            name: 'Victor Stone',
+            email: 'victor.stone@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Renata Oliveira',
-            email: 'renata.oliveira@ufrgs.edu.br',
+            name: 'Dinah Lance',
+            email: 'dinah.lance@ufrgs.edu.br',
           },
           {
-            name: 'Prof. Dr. Eduardo Costa',
-            email: 'eduardo.costa@ufrgs.edu.br',
+            name: 'Barry Allen',
+            email: 'barry.allen@ufrgs.edu.br',
           },
         ],
       },
@@ -659,12 +659,12 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Lucas Barbosa',
-            email: 'lucas.barbosa@ufrgs.edu.br',
+            name: 'Hal Jordan',
+            email: 'hal.jordan@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Camila Dias',
-            email: 'camila.dias@ufrgs.edu.br',
+            name: 'Zatanna Zatara',
+            email: 'zatanna.zatara@ufrgs.edu.br',
           },
         ],
       },
@@ -692,8 +692,8 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. André Moraes',
-            email: 'andre.moraes@ufrgs.edu.br',
+            name: 'Arthur Curry',
+            email: 'arthur.curry@ufrgs.edu.br',
           },
         ],
       },
@@ -732,12 +732,12 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Fábio Mendes',
-            email: 'fabio.mendes@ufrgs.edu.br',
+            name: 'Oliver Queen',
+            email: 'oliver.queen@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Patrícia Nogueira',
-            email: 'patricia.nogueira@ufrgs.edu.br',
+            name: 'Selina Kyle',
+            email: 'selina.kyle@ufrgs.edu.br',
           },
         ],
       },
@@ -765,16 +765,16 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Thiago Prado',
-            email: 'thiago.prado@ufrgs.edu.br',
+            name: 'Hank Pym',
+            email: 'hank.pym@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Larissa Campos',
-            email: 'larissa.campos@ufrgs.edu.br',
+            name: 'Janet Van Dyne',
+            email: 'janet.vandyne@ufrgs.edu.br',
           },
           {
-            name: 'Prof. Dr. Vinícius Almeida',
-            email: 'vinicius.almeida@ufrgs.edu.br',
+            name: 'T\'Challa',
+            email: 'tchalla@ufrgs.edu.br',
           },
         ],
       },
@@ -802,12 +802,12 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Roberto Silva',
-            email: 'roberto.silva@ufrgs.edu.br',
+            name: 'Clint Barton',
+            email: 'clint.barton@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Cristina Moreira',
-            email: 'cristina.moreira@ufrgs.edu.br',
+            name: 'Shuri',
+            email: 'shuri@ufrgs.edu.br',
           },
         ],
       },
@@ -835,12 +835,12 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. André Santos',
-            email: 'andre.santos@ufrgs.edu.br',
+            name: 'Steve Rogers',
+            email: 'steve.rogers@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Luciana Ferreira',
-            email: 'luciana.ferreira@ufrgs.edu.br',
+            name: 'Sharon Carter',
+            email: 'sharon.carter@ufrgs.edu.br',
           },
         ],
       },
@@ -868,16 +868,16 @@ async function main() {
       examBoard: {
         create: [
           {
-            name: 'Prof. Dr. Marcos Silva',
-            email: 'marcos.silva@ufrgs.edu.br',
+            name: 'Sam Wilson',
+            email: 'sam.wilson@ufrgs.edu.br',
           },
           {
-            name: 'Profa. Dra. Ana Costa',
-            email: 'ana.costa@ufrgs.edu.br',
+            name: 'Hope Van Dyne',
+            email: 'hope.vandyne@ufrgs.edu.br',
           },
           {
-            name: 'Prof. Dr. Ricardo Alves',
-            email: 'ricardo.alves@ufrgs.edu.br',
+            name: 'Bucky Barnes',
+            email: 'bucky.barnes@ufrgs.edu.br',
           },
         ],
       },
