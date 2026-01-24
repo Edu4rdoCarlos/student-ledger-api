@@ -2,8 +2,9 @@ model Approval {
   id            String         @id @default(uuid())
   role          ApprovalRole
   status        ApprovalStatus @default(PENDING)
-  justification String? // Required if rejected
-  approvedAt    DateTime?
+  justification            String?
+  cryptographicSignature   String? // Base64 encoded signature using org certificate
+  approvedAt               DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 

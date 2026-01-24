@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto } from '../../presentation/dtos';
+import { ValidateDocumentResponseDto, DefenseInfoDto } from '../../presentation/dtos';
 import { HashUtil } from '../../infra/utils/hash.util';
-import { Document } from '../../domain/entities';
 import { FabricService } from '../../../fabric/fabric.service';
 import { FabricUser } from '../../../fabric/application/ports';
 import { IpfsService } from '../../../ipfs/ipfs.service';
@@ -34,64 +33,31 @@ export class ValidateDocumentUseCase {
     };
   }
 
-  private async toSimpleDto(document: Document): Promise<SimpleDocumentDto> {
-    const defenseInfo = await this.getDefenseInfo(document.defenseId);
-
-    return {
-      id: document.id,
-      documentHash: document.documentHash,
-      documentCid: document.documentCid,
-      status: document.status,
-      defenseInfo,
-    };
-  }
-
   async execute(
-    fileBufferOrHash: Buffer | string,
-    currentUser: ICurrentUser
-  ): Promise<ValidateDocumentResponseDto> {
-    const isBuffer = Buffer.isBuffer(fileBufferOrHash);
-    const hash = isBuffer
-      ? this.hashUtil.calculateSha256(fileBufferOrHash)
-      : fileBufferOrHash;
-
-    const document = await this.documentRepository.findByHash(hash);
-
-    if (document) {
-      return this.validateDocumentStatus(document);
-    }
-
-    if (isBuffer) {
-      return this.validateOnBlockchain(fileBufferOrHash, hash, currentUser);
-    }
-
-    return {
-      isValid: false,
-      message: 'Documento não encontrado no sistema. Para validar via blockchain, forneça o arquivo PDF original.',
-    };
-  }
-
-  private async validateOnBlockchain(
     fileBuffer: Buffer,
-    hash: string,
     currentUser: ICurrentUser
   ): Promise<ValidateDocumentResponseDto> {
-    try {
-      const cid = await this.ipfsService.calculateCid(fileBuffer);
-
-      const fabricUser: FabricUser = {
-        id: currentUser.id,
-        email: currentUser.email,
-        role: currentUser.role,
+    if (!Buffer.isBuffer(fileBuffer)) {
+      return {
+        isValid: false,
+        message: 'Para validar a autenticidade, é necessário fornecer o arquivo PDF original.',
       };
+    }
 
+    const hash = this.hashUtil.calculateSha256(fileBuffer);
+    const cid = await this.ipfsService.calculateCid(fileBuffer);
+
+    const fabricUser: FabricUser = {
+      id: currentUser.id,
+      email: currentUser.email,
+      role: currentUser.role,
+    };
+
+    try {
       const fabricResult = await this.fabricService.verifyDocument(fabricUser, cid);
 
       if (fabricResult.valid && fabricResult.document) {
-        const localDocument = await this.documentRepository.findByCid(cid);
-        const defenseInfo = localDocument
-          ? await this.getDefenseInfo(localDocument.defenseId)
-          : undefined;
+        const defenseInfo = await this.getSupplementaryInfo(cid);
 
         return {
           isValid: true,
@@ -101,41 +67,38 @@ export class ValidateDocumentUseCase {
             documentCid: cid,
             status: 'APPROVED',
             defenseInfo,
+            blockchainData: {
+              matriculas: fabricResult.document.matriculas,
+              defenseDate: fabricResult.document.defenseDate,
+              notaFinal: fabricResult.document.notaFinal,
+              resultado: fabricResult.document.resultado,
+              versao: fabricResult.document.versao,
+              signatures: fabricResult.document.signatures,
+              validatedAt: fabricResult.document.validatedAt,
+            },
           },
           message: 'Documento válido e registrado na blockchain',
         };
       }
-    } catch (error) {
-      this.logger.error(`Falha ao verificar no Fabric: ${error.message}`);
-    }
 
-    return {
-      isValid: false,
-      message: 'Documento não encontrado no sistema',
-    };
+      return {
+        isValid: false,
+        message: fabricResult.reason || 'Documento não encontrado na blockchain',
+      };
+    } catch (error) {
+      this.logger.error(`Falha ao verificar na blockchain: ${error.message}`);
+
+      return {
+        isValid: false,
+        message: 'Não foi possível verificar o documento na blockchain. Tente novamente mais tarde.',
+      };
+    }
   }
 
-  private async validateDocumentStatus(document: Document): Promise<ValidateDocumentResponseDto> {
-    if (document.isInactive()) {
-      return {
-        isValid: false,
-        document: await this.toSimpleDto(document),
-        message: 'Documento foi inativado',
-      };
-    }
+  private async getSupplementaryInfo(cid: string): Promise<DefenseInfoDto | undefined> {
+    const localDocument = await this.documentRepository.findByCid(cid);
+    if (!localDocument) return undefined;
 
-    if (!document.isApproved()) {
-      return {
-        isValid: false,
-        document: await this.toSimpleDto(document),
-        message: 'Documento ainda não foi aprovado',
-      };
-    }
-
-    return {
-      isValid: true,
-      document: await this.toSimpleDto(document),
-      message: 'Documento válido e registrado na blockchain',
-    };
+    return this.getDefenseInfo(localDocument.defenseId);
   }
 }

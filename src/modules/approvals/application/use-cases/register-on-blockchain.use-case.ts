@@ -98,7 +98,6 @@ export class RegisterOnBlockchainUseCase {
     const isCoordinatorAlsoAdvisor =
       coordinatorApproval?.approverId === advisorApproval?.approverId;
 
-    // TODO: refatorar esta classe
     const signatures: DocumentSignature[] = approvals
       .filter(approval => !(isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.ADVISOR))
       .map(approval => {
@@ -115,6 +114,10 @@ export class RegisterOnBlockchainUseCase {
           throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
         }
 
+        if (!approval.cryptographicSignature) {
+          throw new Error(`Aprovação ${approval.id} não possui assinatura criptográfica`);
+        }
+
         const isHybridRole = isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.COORDINATOR;
 
         const fabricRole = isHybridRole ? 'coordenador_orientador' :
@@ -124,19 +127,20 @@ export class RegisterOnBlockchainUseCase {
         const userRole: Role = approval.role === ApprovalRole.STUDENT ? 'STUDENT' : 'COORDINATOR';
         const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
 
-        const signature: DocumentSignature = {
+        const documentSignature: DocumentSignature = {
           role: fabricRole,
           email: user.email,
           mspId,
+          signature: approval.cryptographicSignature,
           timestamp: approval.approvedAt.toISOString(),
           status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
         };
 
         if (approval.justification) {
-          signature.justification = approval.justification;
+          documentSignature.justification = approval.justification;
         }
 
-        return signature;
+        return documentSignature;
       });
 
     try {

@@ -15,6 +15,7 @@ interface ApprovalProps {
   role: ApprovalRole;
   status?: ApprovalStatus;
   justification?: string;
+  cryptographicSignature?: string;
   approvedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -34,12 +35,16 @@ export class Approval {
     });
   }
 
-  approve(approverId: string): void {
+  approve(approverId: string, cryptographicSignature: string): void {
     if (this.props.status !== ApprovalStatus.PENDING) {
       throw new Error('Apenas aprovações pendentes podem ser aprovadas');
     }
+    if (!cryptographicSignature) {
+      throw new Error('Assinatura criptográfica é obrigatória');
+    }
     this.props.status = ApprovalStatus.APPROVED;
     this.props.approverId = approverId;
+    this.props.cryptographicSignature = cryptographicSignature;
     this.props.approvedAt = new Date();
     this.props.updatedAt = new Date();
   }
@@ -63,6 +68,7 @@ export class Approval {
     }
     this.props.status = ApprovalStatus.PENDING;
     this.props.justification = undefined;
+    this.props.cryptographicSignature = undefined;
     this.props.approvedAt = undefined;
     this.props.updatedAt = new Date();
   }
@@ -70,6 +76,7 @@ export class Approval {
   resetForNewVersion(): void {
     this.props.status = ApprovalStatus.PENDING;
     this.props.justification = undefined;
+    this.props.cryptographicSignature = undefined;
     this.props.approvedAt = undefined;
     this.props.updatedAt = new Date();
   }
@@ -88,6 +95,10 @@ export class Approval {
 
   get justification(): string | undefined {
     return this.props.justification;
+  }
+
+  get cryptographicSignature(): string | undefined {
+    return this.props.cryptographicSignature;
   }
 
   get approvedAt(): Date | undefined {

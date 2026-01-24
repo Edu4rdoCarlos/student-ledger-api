@@ -31,6 +31,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
           include: {
             approver: {
               select: {
+                name: true,
                 email: true,
                 role: true,
               },

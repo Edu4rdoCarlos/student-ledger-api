@@ -54,12 +54,35 @@ describe('Approval Entity', () => {
       });
 
       const approverId = 'user-789';
-      approval.approve(approverId);
+      approval.approve(approverId, 'mock-cryptographic-signature');
 
       expect(approval.status).toBe(ApprovalStatus.APPROVED);
       expect(approval.approverId).toBe(approverId);
       expect(approval.approvedAt).toBeInstanceOf(Date);
       expect(approval.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('deve salvar a assinatura criptográfica ao aprovar', () => {
+      const approval = Approval.create({
+        documentId: 'doc-123',
+        role: ApprovalRole.COORDINATOR,
+      });
+
+      const signature = 'base64-encoded-cryptographic-signature';
+      approval.approve('user-789', signature);
+
+      expect(approval.cryptographicSignature).toBe(signature);
+    });
+
+    it('deve lançar erro ao tentar aprovar sem assinatura criptográfica', () => {
+      const approval = Approval.create({
+        documentId: 'doc-123',
+        role: ApprovalRole.COORDINATOR,
+      });
+
+      expect(() => approval.approve('user-123', '')).toThrow(
+        'Assinatura criptográfica é obrigatória'
+      );
     });
 
     it('deve lançar erro ao tentar aprovar aprovação já aprovada', () => {
@@ -68,9 +91,9 @@ describe('Approval Entity', () => {
         role: ApprovalRole.COORDINATOR,
       });
 
-      approval.approve('user-1');
+      approval.approve('user-1', 'mock-signature');
 
-      expect(() => approval.approve('user-2')).toThrow(
+      expect(() => approval.approve('user-2', 'sig')).toThrow(
         'Apenas aprovações pendentes podem ser aprovadas'
       );
     });
@@ -83,7 +106,7 @@ describe('Approval Entity', () => {
 
       approval.reject('user-1', 'Documento incompleto');
 
-      expect(() => approval.approve('user-2')).toThrow(
+      expect(() => approval.approve('user-2', 'sig')).toThrow(
         'Apenas aprovações pendentes podem ser aprovadas'
       );
     });
@@ -99,7 +122,7 @@ describe('Approval Entity', () => {
       // Aguarda 10ms para garantir timestamp diferente
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      approval.approve('user-123');
+      approval.approve('user-123', 'mock-signature');
       expect(approval.updatedAt?.getTime()).toBeGreaterThan(initialUpdatedAt!.getTime());
     });
   });
@@ -150,7 +173,7 @@ describe('Approval Entity', () => {
         role: ApprovalRole.ADVISOR,
       });
 
-      approval.approve('user-1');
+      approval.approve('user-1', 'mock-signature');
 
       expect(() => approval.reject('user-2', 'Motivo qualquer')).toThrow(
         'Apenas aprovações pendentes podem ser rejeitadas'
@@ -205,7 +228,7 @@ describe('Approval Entity', () => {
         role: ApprovalRole.COORDINATOR,
       });
 
-      approval.approve('coord-123');
+      approval.approve('coord-123', 'mock-signature');
 
       expect(approval.status).toBe(ApprovalStatus.APPROVED);
       expect(approval.role).toBe(ApprovalRole.COORDINATOR);
@@ -217,7 +240,7 @@ describe('Approval Entity', () => {
         role: ApprovalRole.ADVISOR,
       });
 
-      approval.approve('advisor-123');
+      approval.approve('advisor-123', 'mock-signature');
 
       expect(approval.status).toBe(ApprovalStatus.APPROVED);
       expect(approval.role).toBe(ApprovalRole.ADVISOR);
@@ -229,7 +252,7 @@ describe('Approval Entity', () => {
         role: ApprovalRole.STUDENT,
       });
 
-      approval.approve('student-123');
+      approval.approve('student-123', 'mock-signature');
 
       expect(approval.status).toBe(ApprovalStatus.APPROVED);
       expect(approval.role).toBe(ApprovalRole.STUDENT);
@@ -244,7 +267,7 @@ describe('Approval Entity', () => {
       });
 
       expect(approval.status).toBe(ApprovalStatus.PENDING);
-      approval.approve('user-123');
+      approval.approve('user-123', 'mock-signature');
       expect(approval.status).toBe(ApprovalStatus.APPROVED);
     });
 
@@ -265,9 +288,9 @@ describe('Approval Entity', () => {
         role: ApprovalRole.STUDENT,
       });
 
-      approval.approve('user-1');
+      approval.approve('user-1', 'mock-signature');
 
-      expect(() => approval.approve('user-2')).toThrow();
+      expect(() => approval.approve('user-2', 'sig')).toThrow();
       expect(() => approval.reject('user-2', 'motivo')).toThrow();
     });
   });

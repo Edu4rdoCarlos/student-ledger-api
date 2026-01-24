@@ -12,32 +12,30 @@ import {
   ApiUnauthorizedErrorResponse,
   ApiTooManyRequestsResponse,
 } from '../../../../shared/decorators';
-import { ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto } from '../dtos/response';
+import { ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto, BlockchainDataDto, BlockchainSignatureDto } from '../dtos/response';
 
 export function ValidateDocumentDocs() {
   return applyDecorators(
-    ApiExtraModels(ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto),
+    ApiExtraModels(ValidateDocumentResponseDto, SimpleDocumentDto, DefenseInfoDto, BlockchainDataDto, BlockchainSignatureDto),
     ApiConsumes('multipart/form-data'),
     ApiOperation({
       summary: 'Validate document authenticity',
       description: `
 Validates if a document was registered on blockchain and is authentic.
 
-**Input Options:**
-- Upload a PDF file (multipart/form-data with 'file' field)
-- Provide a SHA-256 hash (form field 'hash')
+**Input:**
+- Upload a PDF file (multipart/form-data with 'file' field) - **required**
 
-**Validation Flow:**
-1. If file provided: calculates SHA-256 hash of uploaded file
-2. If hash provided: uses the provided hash directly
-3. Searches in Postgres (cache) by hash
-4. If not found, searches in Hyperledger Fabric (source of truth)
-5. Returns validation result with document details
+**Validation Flow (Blockchain-First):**
+1. Calculates SHA-256 hash and IPFS CID from uploaded file
+2. Queries Hyperledger Fabric directly using the CID
+3. If found, returns complete blockchain data including all signatures
+4. Optionally enriches with local data (student names, advisor, course)
 
-**Resilient Architecture:**
-- Postgres: fast cache for recent documents
-- Fabric: source of truth, always consulted if Postgres fails
-- Automatic fallback between layers
+**Architecture:**
+- Hyperledger Fabric is the **source of truth** for document validation
+- Local database is only used for supplementary information (names, course)
+- Ensures integrity by verifying directly on the immutable blockchain
 
 **Rate Limiting:**
 - Maximum: 10 validations per hour per user
@@ -45,9 +43,13 @@ Validates if a document was registered on blockchain and is authentic.
 
 **Returned Information:**
 - Validity status (valid/invalid)
-- Document details (if found)
-- Blockchain information (txId, registration date)
-- Associated defense data
+- Document details (hash, CID, status)
+- Complete blockchain data:
+  - Student registration numbers (matriculas)
+  - Defense date and final grade
+  - Result (APPROVED/FAILED)
+  - All cryptographic signatures with timestamps
+- Associated defense data (if available locally)
       `,
     }),
     ApiOkResponse({
@@ -61,22 +63,18 @@ Validates if a document was registered on blockchain and is authentic.
         },
       },
     }),
-    ApiBadRequestResponse('Invalid file or hash not provided'),
+    ApiBadRequestResponse('PDF file is required'),
     ApiUnauthorizedErrorResponse(),
     ApiTooManyRequestsResponse('Limit of 10 validations per hour exceeded'),
     ApiBody({
       schema: {
         type: 'object',
+        required: ['file'],
         properties: {
           file: {
             type: 'string',
             format: 'binary',
-            description: 'PDF file to validate (optional if hash is provided)',
-          },
-          hash: {
-            type: 'string',
-            description: 'SHA-256 hash of the document (optional if file is provided)',
-            example: 'a3b2c1d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
+            description: 'PDF file to validate (required)',
           },
         },
       },

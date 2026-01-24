@@ -14,6 +14,7 @@ type DefenseWithRelations = PrismaDefense & {
   documents: (Document & {
     approvals: (Approval & {
       approver: {
+        name: string;
         email: string;
         role: string;
       } | null;
@@ -74,7 +75,9 @@ export class DefenseMapper {
             status: a.status,
             approvedAt: a.approvedAt ?? undefined,
             justification: a.justification ?? undefined,
+            approverId: a.approverId ?? undefined,
             approver: a.approver ? {
+              name: a.approver.name,
               email: a.approver.email,
               role: a.approver.role,
             } : undefined,

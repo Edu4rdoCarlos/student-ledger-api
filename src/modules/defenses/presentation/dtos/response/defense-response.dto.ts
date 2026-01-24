@@ -29,6 +29,12 @@ export class DocumentApprovalDto {
 
   @ApiProperty({ required: false, description: 'Justificativa em caso de rejeição' })
   justification?: string;
+
+  @ApiProperty({ required: false, description: 'ID do aprovador' })
+  approverId?: string;
+
+  @ApiProperty({ required: false, description: 'Nome do aprovador' })
+  approverName?: string;
 }
 
 export class DocumentWithApprovalsDto {
@@ -153,6 +159,8 @@ export class DefenseResponseDto {
           timestamp: approval.approvedAt,
           status: approval.status,
           justification: approval.justification,
+          approverId: approval.approverId,
+          approverName: approval.approver?.name,
         })),
       })),
       createdAt: defense.createdAt,

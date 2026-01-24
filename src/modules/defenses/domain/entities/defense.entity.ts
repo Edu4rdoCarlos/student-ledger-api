@@ -35,7 +35,9 @@ export interface DocumentInDefense {
     status: string;
     approvedAt?: Date;
     justification?: string;
+    approverId?: string;
     approver?: {
+      name: string;
       email: string;
       role: string;
     };

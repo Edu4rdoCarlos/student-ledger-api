@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, Logger, forwardRef, ForbiddenException } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { Approval, ApprovalStatus, ApprovalRole } from '../../domain/entities';
 import {
@@ -14,6 +14,7 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { SendEmailUseCase } from '../../../notifications/application/use-cases';
 import { EmailTemplateService } from '../../../notifications/application/services';
 import { EmailTemplate, NotificationContextType } from '../../../notifications/domain/enums';
+import { SignatureService } from '../../../fabric/application/services';
 
 interface ApproveDocumentRequest {
   approvalId: string;
@@ -45,6 +46,7 @@ export class ApproveDocumentUseCase {
     private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
     private readonly emailTemplateService: EmailTemplateService,
+    private readonly signatureService: SignatureService,
   ) {}
 
   async execute(request: ApproveDocumentRequest): Promise<ApproveDocumentResponse> {
@@ -58,11 +60,25 @@ export class ApproveDocumentUseCase {
       throw new ApprovalAlreadyProcessedError();
     }
 
-    approval.approve(request.userId);
+    if (approval.role === ApprovalRole.COORDINATOR) {
+      await this.validateCoordinatorCanApprove(approval.documentId);
+    }
+
+    const document = await this.documentRepository.findById(approval.documentId);
+    if (!document || !document.documentHash) {
+      throw new Error('Documento não encontrado ou sem hash');
+    }
+
+    const cryptographicSignature = this.signatureService.sign(
+      document.documentHash,
+      approval.role,
+    );
+
+    approval.approve(request.userId, cryptographicSignature);
 
     const updatedApproval = await this.approvalRepository.update(approval);
 
-    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId);
+    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId, document.documentHash);
 
     this.registerOnBlockchainUseCase.execute({ documentId: approval.documentId }).catch((error) => {
       this.logger.error(`Failed to register on blockchain: ${error.message}`);
@@ -75,9 +91,24 @@ export class ApproveDocumentUseCase {
     return { approval: updatedApproval };
   }
 
+  private async validateCoordinatorCanApprove(documentId: string): Promise<void> {
+    const approvals = await this.approvalRepository.findByDocumentId(documentId);
+
+    const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
+    const studentApprovals = approvals.filter(a => a.role === ApprovalRole.STUDENT);
+
+    const advisorApproved = advisorApproval?.status === ApprovalStatus.APPROVED;
+    const allStudentsApproved = studentApprovals.every(a => a.status === ApprovalStatus.APPROVED);
+
+    if (!advisorApproved || !allStudentsApproved) {
+      throw new ForbiddenException('Orientador e aluno(s) devem aprovar antes do coordenador');
+    }
+  }
+
   private async autoApproveAdvisorIfCoordinatorIsAdvisor(
     approval: Approval,
     userId: string,
+    documentHash: string,
   ): Promise<void> {
     if (approval.role !== ApprovalRole.COORDINATOR) {
       return;
@@ -93,7 +124,8 @@ export class ApproveDocumentUseCase {
     const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
 
     if (isCoordinatorAlsoAdvisor) {
-      advisorApproval.approve(userId);
+      const advisorSignature = this.signatureService.sign(documentHash, ApprovalRole.ADVISOR);
+      advisorApproval.approve(userId, advisorSignature);
       await this.approvalRepository.update(advisorApproval);
     }
   }

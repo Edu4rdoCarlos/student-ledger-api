@@ -14,6 +14,7 @@ export interface DocumentSignature {
   role: 'coordenador' | 'orientador' | 'aluno' | 'coordenador_orientador';
   email: string;
   mspId: string;
+  signature: string; // Base64 encoded cryptographic signature
   timestamp: string;
   status: 'APPROVED' | 'REJECTED' | 'PENDING';
   justification?: string;

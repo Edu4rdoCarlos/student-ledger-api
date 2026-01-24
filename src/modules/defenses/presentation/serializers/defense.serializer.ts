@@ -79,6 +79,8 @@ export class DefenseSerializer {
               timestamp: approval.approvedAt,
               status: approval.status,
               justification: approval.justification,
+              approverId: approval.approverId,
+              approverName: approval.approver?.name,
             })),
           }))
         : undefined,
