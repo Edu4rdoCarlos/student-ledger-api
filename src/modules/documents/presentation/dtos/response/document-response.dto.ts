@@ -147,13 +147,18 @@ export class SimpleDocumentDto {
   blockchainData?: BlockchainDataDto;
 }
 
+export type ValidationStatus = 'NOT_FOUND' | 'PENDING' | 'APPROVED' | 'INACTIVE';
+
 export class ValidateDocumentResponseDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Indica se o documento está registrado e válido na blockchain' })
   isValid: boolean;
+
+  @ApiProperty({
+    enum: ['NOT_FOUND', 'PENDING', 'APPROVED', 'INACTIVE'],
+    description: 'Status do documento: NOT_FOUND (não existe), PENDING (aguardando aprovação), APPROVED (aprovado), INACTIVE (inativado)'
+  })
+  status: ValidationStatus;
 
   @ApiPropertyOptional({ type: SimpleDocumentDto })
   document?: SimpleDocumentDto;
-
-  @ApiProperty()
-  message: string;
 }

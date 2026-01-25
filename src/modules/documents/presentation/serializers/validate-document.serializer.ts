@@ -17,7 +17,7 @@ export class ValidateDocumentSerializer {
     const serializedResult = !isAdminOrCoordinator
       ? {
           isValid: result.isValid,
-          message: result.message,
+          status: result.status,
         }
       : result;
 
