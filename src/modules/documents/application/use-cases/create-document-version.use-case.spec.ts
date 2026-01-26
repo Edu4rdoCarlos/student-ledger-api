@@ -122,6 +122,7 @@ describe('CreateDocumentVersionUseCase', () => {
           defenseDate: new Date('2024-12-01'),
           result: 'APPROVED',
           finalGrade: 8.5,
+          status: 'COMPLETED',
         },
         'defense-456',
       );
@@ -201,6 +202,7 @@ describe('CreateDocumentVersionUseCase', () => {
           defenseDate: new Date('2024-12-01'),
           result: 'APPROVED',
           finalGrade: 8.5,
+          status: 'COMPLETED',
         },
         'defense-456',
       );
@@ -396,6 +398,7 @@ describe('CreateDocumentVersionUseCase', () => {
           defenseDate: new Date('2024-12-01'),
           result: 'APPROVED',
           finalGrade: 8.5,
+          status: 'COMPLETED',
         },
         'defense-456',
       );

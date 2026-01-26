@@ -117,6 +117,9 @@ export class CreateDocumentVersionUseCase {
       return ipfsResult.cid;
     } catch (error) {
       this.logger.error(`Falha ao fazer upload para IPFS: ${error.message}`, error.stack);
+      if (error instanceof InternalServerErrorException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Falha ao fazer upload do arquivo. Tente novamente.');
     }
   }

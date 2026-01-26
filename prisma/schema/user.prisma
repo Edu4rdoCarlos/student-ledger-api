@@ -15,6 +15,7 @@ model User {
   approvals     Approval[]
   refreshTokens RefreshToken[]
   notifications Notification[]
+  certificates  UserCertificate[]
   student       Student?
   advisor       Advisor?
   coordinator   Coordinator?

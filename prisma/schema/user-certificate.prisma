@@ -1,0 +1,33 @@
+model UserCertificate {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  certificate  String            @db.Text
+  privateKey   String            @db.Text
+
+  mspId        String            @db.VarChar(50)
+  enrollmentId String            @db.VarChar(100)
+  serialNumber String            @db.VarChar(64)
+
+  notBefore    DateTime
+  notAfter     DateTime
+
+  status       CertificateStatus @default(ACTIVE)
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  revocation   CertificateRevocation?
+
+  @@unique([userId, status], name: "unique_active_cert_per_user")
+  @@index([userId])
+  @@index([serialNumber])
+  @@index([status])
+}
+
+enum CertificateStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}

@@ -74,9 +74,9 @@ export class ApproveDocumentUseCase {
 
     // Creates a combined hash for signing both documents together
     const combinedHash = `${document.minutesHash}:${document.evaluationHash}`;
-    const cryptographicSignature = this.signatureService.sign(
+    const cryptographicSignature = await this.signatureService.sign(
       combinedHash,
-      approval.role,
+      request.userId,
     );
 
     approval.approve(request.userId, cryptographicSignature);
@@ -129,7 +129,7 @@ export class ApproveDocumentUseCase {
     const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
 
     if (isCoordinatorAlsoAdvisor) {
-      const advisorSignature = this.signatureService.sign(combinedHash, ApprovalRole.ADVISOR);
+      const advisorSignature = await this.signatureService.sign(combinedHash, userId);
       advisorApproval.approve(userId, advisorSignature);
       await this.approvalRepository.update(advisorApproval);
     }

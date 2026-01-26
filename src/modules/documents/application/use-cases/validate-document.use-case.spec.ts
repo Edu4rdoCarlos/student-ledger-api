@@ -118,7 +118,7 @@ describe('ValidateDocumentUseCase', () => {
       const result = await useCase.execute('not-a-buffer' as any, mockUser);
 
       expect(result.isValid).toBe(false);
-      expect(result.message).toBe('Para validar a autenticidade, é necessário fornecer o arquivo PDF original.');
+      expect(result.status).toBe('NOT_FOUND');
       expect(fabricService.verifyDocument).not.toHaveBeenCalled();
     });
 
@@ -128,13 +128,21 @@ describe('ValidateDocumentUseCase', () => {
       fabricService.verifyDocument.mockResolvedValue({
         valid: true,
         reason: 'Document found',
+        documentType: 'minutes',
         document: mockBlockchainDocument,
       });
-      documentRepository.findByCid.mockResolvedValue(null);
+      const mockLocalDoc = Document.create({
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
+        defenseId: 'defense-123',
+        status: DocumentStatus.APPROVED,
+      });
+      documentRepository.findByCid.mockResolvedValue(mockLocalDoc);
 
       const result = await useCase.execute(mockFileBuffer, mockUser);
 
-      expect(hashUtil.calculateSha256).toHaveBeenCalledWith(mockFileBuffer);
       expect(ipfsService.calculateCid).toHaveBeenCalledWith(mockFileBuffer);
       expect(fabricService.verifyDocument).toHaveBeenCalledWith(
         {
@@ -145,11 +153,11 @@ describe('ValidateDocumentUseCase', () => {
         mockCid
       );
       expect(result.isValid).toBe(true);
+      expect(result.status).toBe('APPROVED');
       expect(result.document?.id).toBe('doc-fabric-123');
       expect(result.document?.blockchainData).toBeDefined();
       expect(result.document?.blockchainData?.matriculas).toEqual(['20201234']);
       expect(result.document?.blockchainData?.signatures).toHaveLength(1);
-      expect(result.message).toBe('Documento válido e registrado na blockchain');
     });
 
     it('deve incluir informações da defesa quando documento local existir', async () => {
@@ -173,6 +181,7 @@ describe('ValidateDocumentUseCase', () => {
       fabricService.verifyDocument.mockResolvedValue({
         valid: true,
         reason: 'Document found',
+        documentType: 'minutes',
         document: mockBlockchainDocument,
       });
       documentRepository.findByCid.mockResolvedValue(mockLocalDocument);
@@ -190,53 +199,91 @@ describe('ValidateDocumentUseCase', () => {
     it('deve retornar inválido quando documento não for encontrado na blockchain', async () => {
       hashUtil.calculateSha256.mockReturnValue(mockHash);
       ipfsService.calculateCid.mockResolvedValue(mockCid);
+      const mockLocalDoc = Document.create({
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
+        defenseId: 'defense-123',
+        status: DocumentStatus.PENDING,
+      });
+      documentRepository.findByCid.mockResolvedValue(mockLocalDoc);
       fabricService.verifyDocument.mockResolvedValue({
         valid: false,
         reason: 'Document not found in blockchain',
+        documentType: null,
         document: null,
       });
 
       const result = await useCase.execute(mockFileBuffer, mockUser);
 
       expect(result.isValid).toBe(false);
-      expect(result.message).toBe('Document not found in blockchain');
+      expect(result.status).toBe('PENDING');
     });
 
     it('deve retornar mensagem padrão quando blockchain retornar inválido sem razão', async () => {
       hashUtil.calculateSha256.mockReturnValue(mockHash);
       ipfsService.calculateCid.mockResolvedValue(mockCid);
+      const mockLocalDoc = Document.create({
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
+        defenseId: 'defense-123',
+        status: DocumentStatus.PENDING,
+      });
+      documentRepository.findByCid.mockResolvedValue(mockLocalDoc);
       fabricService.verifyDocument.mockResolvedValue({
         valid: false,
         reason: '',
+        documentType: null,
         document: null,
       });
 
       const result = await useCase.execute(mockFileBuffer, mockUser);
 
       expect(result.isValid).toBe(false);
-      expect(result.message).toBe('Documento não encontrado na blockchain');
+      expect(result.status).toBe('PENDING');
     });
 
     it('deve tratar erro de conexão com a blockchain graciosamente', async () => {
       hashUtil.calculateSha256.mockReturnValue(mockHash);
       ipfsService.calculateCid.mockResolvedValue(mockCid);
+      const mockLocalDoc = Document.create({
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
+        defenseId: 'defense-123',
+        status: DocumentStatus.PENDING,
+      });
+      documentRepository.findByCid.mockResolvedValue(mockLocalDoc);
       fabricService.verifyDocument.mockRejectedValue(new Error('Fabric connection failed'));
 
       const result = await useCase.execute(mockFileBuffer, mockUser);
 
       expect(result.isValid).toBe(false);
-      expect(result.message).toBe('Não foi possível verificar o documento na blockchain. Tente novamente mais tarde.');
+      expect(result.status).toBe('PENDING');
     });
 
     it('deve retornar dados completos da blockchain na resposta', async () => {
       hashUtil.calculateSha256.mockReturnValue(mockHash);
       ipfsService.calculateCid.mockResolvedValue(mockCid);
+      const mockLocalDoc = Document.create({
+        minutesHash: mockHash,
+        minutesCid: mockCid,
+        evaluationHash: 'evaluation-hash-456',
+        evaluationCid: 'bafyEvaluationCid789',
+        defenseId: 'defense-123',
+        status: DocumentStatus.APPROVED,
+      });
+      documentRepository.findByCid.mockResolvedValue(mockLocalDoc);
       fabricService.verifyDocument.mockResolvedValue({
         valid: true,
         reason: 'Document found',
+        documentType: 'minutes',
         document: mockBlockchainDocument,
       });
-      documentRepository.findByCid.mockResolvedValue(null);
 
       const result = await useCase.execute(mockFileBuffer, mockUser);
 

@@ -1,0 +1,22 @@
+model CertificateRevocation {
+  id            String          @id @default(uuid())
+  certificateId String          @unique
+  certificate   UserCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  // Detalhes da revogacao
+  reason        RevocationReason
+  revokedBy     String // userId de quem revogou
+  revokedAt     DateTime         @default(now())
+  notes         String?          @db.Text
+
+  @@index([revokedBy])
+  @@index([revokedAt])
+}
+
+enum RevocationReason {
+  KEY_COMPROMISE
+  AFFILIATION_CHANGED
+  SUPERSEDED
+  CESSATION_OF_OPERATION
+  PRIVILEGE_WITHDRAWN
+}

@@ -26,7 +26,9 @@
     "prisma:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
     "prisma:validate": "prisma validate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "seed:certificates": "ts-node -r tsconfig-paths/register scripts/seed-with-certificates.ts",
+    "test:certificates": "ts-node -r tsconfig-paths/register scripts/test-certificate-flow.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -49,6 +51,7 @@
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
+    "fabric-ca-client": "^2.2.20",
     "form-data": "^4.0.5",
     "ioredis": "^5.8.2",
     "mongodb": "^7.0.0",
