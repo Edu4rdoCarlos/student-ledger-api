@@ -20,10 +20,10 @@ async function main() {
   console.log('👤 Creating Admin User...');
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@ufrgs.edu.br' },
+    where: { email: 'admin@academico.example.com' },
     update: {},
     create: {
-      email: 'admin@ufrgs.edu.br',
+      email: 'admin@academico.example.com',
       password: defaultPassword,
       name: 'Administrador do Sistema',
       role: Role.ADMIN,
@@ -34,10 +34,10 @@ async function main() {
   console.log('\n🎓 Creating Coordinators...');
 
   const coordUser1 = await prisma.user.upsert({
-    where: { email: 'coordenador.cc@ufrgs.edu.br' },
+    where: { email: 'coordenador.cc@academico.example.com' },
     update: {},
     create: {
-      email: 'coordenador.cc@ufrgs.edu.br',
+      email: 'coordenador.cc@academico.example.com',
       password: defaultPassword,
       name: 'Nick Fury',
       role: Role.COORDINATOR,
@@ -47,31 +47,31 @@ async function main() {
   console.log('\n📚 Creating Courses...');
 
   const courseCC = await prisma.course.upsert({
-    where: { code: 'CC-UFRGS' },
+    where: { code: 'CC-IES' },
     update: {},
     create: {
       name: 'Ciência da Computação',
-      code: 'CC-UFRGS',
+      code: 'CC-IES',
       active: true,
     },
   });
 
   const courseSI = await prisma.course.upsert({
-    where: { code: 'SI-UFRGS' },
+    where: { code: 'SI-IES' },
     update: {},
     create: {
       name: 'Sistemas de Informação',
-      code: 'SI-UFRGS',
+      code: 'SI-IES',
       active: true,
     },
   });
 
   const courseES = await prisma.course.upsert({
-    where: { code: 'ES-UFRGS' },
+    where: { code: 'ES-IES' },
     update: {},
     create: {
       name: 'Engenharia de Software',
-      code: 'ES-UFRGS',
+      code: 'ES-IES',
       active: true,
     },
   });
@@ -86,10 +86,10 @@ async function main() {
   });
 
   const coordUser2 = await prisma.user.upsert({
-    where: { email: 'coordenador.si@ufrgs.edu.br' },
+    where: { email: 'coordenador.si@academico.example.com' },
     update: {},
     create: {
-      email: 'coordenador.si@ufrgs.edu.br',
+      email: 'coordenador.si@academico.example.com',
       password: defaultPassword,
       name: 'Amanda Waller',
       role: Role.COORDINATOR,
@@ -109,11 +109,11 @@ async function main() {
   console.log(`  ✓ ${coordUser2.email}`);
 
   const courseInativo = await prisma.course.upsert({
-    where: { code: 'EC-UFRGS' },
+    where: { code: 'EC-IES' },
     update: {},
     create: {
       name: 'Engenharia de Computação',
-      code: 'EC-UFRGS',
+      code: 'EC-IES',
       active: false,
     },
   });
@@ -126,10 +126,10 @@ async function main() {
   console.log('\n👨‍🏫 Creating Advisors...');
 
   const advisorUser1 = await prisma.user.upsert({
-    where: { email: 'orientador1@ufrgs.edu.br' },
+    where: { email: 'orientador1@academico.example.com' },
     update: {},
     create: {
-      email: 'orientador1@ufrgs.edu.br',
+      email: 'orientador1@academico.example.com',
       password: defaultPassword,
       name: 'Tony Stark',
       role: Role.ADVISOR,
@@ -150,10 +150,10 @@ async function main() {
   });
 
   const advisorUser2 = await prisma.user.upsert({
-    where: { email: 'orientador2@ufrgs.edu.br' },
+    where: { email: 'orientador2@academico.example.com' },
     update: {},
     create: {
-      email: 'orientador2@ufrgs.edu.br',
+      email: 'orientador2@academico.example.com',
       password: defaultPassword,
       name: 'Diana Prince',
       role: Role.ADVISOR,
@@ -194,10 +194,10 @@ async function main() {
 
   // Estudante 1: TCC Aprovado (nota 9.5) - defesa completa e documentos na blockchain
   const studentUser1 = await prisma.user.upsert({
-    where: { email: 'aluno1@ufrgs.edu.br' },
+    where: { email: 'aluno1@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno1@ufrgs.edu.br',
+      email: 'aluno1@academico.example.com',
       password: defaultPassword,
       name: 'Peter Parker',
       role: Role.STUDENT,
@@ -216,10 +216,10 @@ async function main() {
 
   // Estudante 2: TCC Reprovado (nota 4.0)
   const studentUser2 = await prisma.user.upsert({
-    where: { email: 'aluno2@ufrgs.edu.br' },
+    where: { email: 'aluno2@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno2@ufrgs.edu.br',
+      email: 'aluno2@academico.example.com',
       password: defaultPassword,
       name: 'Gwen Stacy',
       role: Role.STUDENT,
@@ -238,10 +238,10 @@ async function main() {
 
   // Estudante 3: TCC Pendente - defesa agendada para o futuro
   const studentUser3 = await prisma.user.upsert({
-    where: { email: 'aluno3@ufrgs.edu.br' },
+    where: { email: 'aluno3@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno3@ufrgs.edu.br',
+      email: 'aluno3@academico.example.com',
       password: defaultPassword,
       name: 'Miles Morales',
       role: Role.STUDENT,
@@ -260,10 +260,10 @@ async function main() {
 
   // Estudante 4: Sem TCC ainda - apenas cadastrado no sistema
   const studentUser4 = await prisma.user.upsert({
-    where: { email: 'aluno4@ufrgs.edu.br' },
+    where: { email: 'aluno4@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno4@ufrgs.edu.br',
+      email: 'aluno4@academico.example.com',
       password: defaultPassword,
       name: 'Mary Jane Watson',
       role: Role.STUDENT,
@@ -282,10 +282,10 @@ async function main() {
 
   // Estudante 5: TCC em dupla com estudante 6 - Aprovado com nota 8.0
   const studentUser5 = await prisma.user.upsert({
-    where: { email: 'aluno5@ufrgs.edu.br' },
+    where: { email: 'aluno5@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno5@ufrgs.edu.br',
+      email: 'aluno5@academico.example.com',
       password: defaultPassword,
       name: 'Dick Grayson',
       role: Role.STUDENT,
@@ -304,10 +304,10 @@ async function main() {
 
   // Estudante 6: TCC em dupla com estudante 5 - Aprovado com nota 8.0
   const studentUser6 = await prisma.user.upsert({
-    where: { email: 'aluno6@ufrgs.edu.br' },
+    where: { email: 'aluno6@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno6@ufrgs.edu.br',
+      email: 'aluno6@academico.example.com',
       password: defaultPassword,
       name: 'Barbara Gordon',
       role: Role.STUDENT,
@@ -326,10 +326,10 @@ async function main() {
 
   // Estudante 7: TCC agendado - documentos sob aprovação (aprovações parciais)
   const studentUser7 = await prisma.user.upsert({
-    where: { email: 'aluno7@ufrgs.edu.br' },
+    where: { email: 'aluno7@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno7@ufrgs.edu.br',
+      email: 'aluno7@academico.example.com',
       password: defaultPassword,
       name: 'Tim Drake',
       role: Role.STUDENT,
@@ -348,10 +348,10 @@ async function main() {
 
   // Estudante 8: TCC cancelado - defesa foi cancelada
   const studentUser8 = await prisma.user.upsert({
-    where: { email: 'aluno8@ufrgs.edu.br' },
+    where: { email: 'aluno8@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno8@ufrgs.edu.br',
+      email: 'aluno8@academico.example.com',
       password: defaultPassword,
       name: 'Wanda Maximoff',
       role: Role.STUDENT,
@@ -370,10 +370,10 @@ async function main() {
 
   // Estudante 9: TCC aprovado no limite - nota 7.0
   const studentUser9 = await prisma.user.upsert({
-    where: { email: 'aluno9@ufrgs.edu.br' },
+    where: { email: 'aluno9@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno9@ufrgs.edu.br',
+      email: 'aluno9@academico.example.com',
       password: defaultPassword,
       name: 'Pietro Maximoff',
       role: Role.STUDENT,
@@ -392,10 +392,10 @@ async function main() {
 
   // Estudante 10: TCC com documento rejeitado e versão ajustada - nova versão aprovada
   const studentUser10 = await prisma.user.upsert({
-    where: { email: 'aluno10@ufrgs.edu.br' },
+    where: { email: 'aluno10@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno10@ufrgs.edu.br',
+      email: 'aluno10@academico.example.com',
       password: defaultPassword,
       name: 'Kamala Khan',
       role: Role.STUDENT,
@@ -414,10 +414,10 @@ async function main() {
 
   // Estudante 11: Com múltiplas defesas - uma cancelada e uma completa
   const studentUser11 = await prisma.user.upsert({
-    where: { email: 'aluno11@ufrgs.edu.br' },
+    where: { email: 'aluno11@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno11@ufrgs.edu.br',
+      email: 'aluno11@academico.example.com',
       password: defaultPassword,
       name: 'Damian Wayne',
       role: Role.STUDENT,
@@ -436,10 +436,10 @@ async function main() {
 
   // Estudante 12: TCC aguardando aprovações iniciais - nenhum orientador ou coordenador assinou
   const studentUser12 = await prisma.user.upsert({
-    where: { email: 'aluno12@ufrgs.edu.br' },
+    where: { email: 'aluno12@academico.example.com' },
     update: {},
     create: {
-      email: 'aluno12@ufrgs.edu.br',
+      email: 'aluno12@academico.example.com',
       password: defaultPassword,
       name: 'Natasha Romanoff',
       role: Role.STUDENT,
@@ -458,10 +458,10 @@ async function main() {
 
   // Estudante 13: Carlos Eduardo - TCC com aprovação do aluno e rejeição do orientador
   const studentCarlosEduardo = await prisma.user.upsert({
-    where: { email: 'carlos.eduardo@ufrgs.edu.br' },
+    where: { email: 'carlos.eduardo@academico.example.com' },
     update: {},
     create: {
-      email: 'carlos.eduardo@ufrgs.edu.br',
+      email: 'carlos.eduardo@academico.example.com',
       password: defaultPassword,
       name: 'Clark Kent',
       role: Role.STUDENT,
@@ -516,15 +516,15 @@ async function main() {
         create: [
           {
             name: 'Charles Xavier',
-            email: 'charles.xavier@ufrgs.edu.br',
+            email: 'charles.xavier@academico.example.com',
           },
           {
             name: 'Jean Grey',
-            email: 'jean.grey@ufrgs.edu.br',
+            email: 'jean.grey@academico.example.com',
           },
           {
             name: 'Scott Summers',
-            email: 'scott.summers@ufrgs.edu.br',
+            email: 'scott.summers@academico.example.com',
           },
         ],
       },
@@ -553,11 +553,11 @@ async function main() {
         create: [
           {
             name: 'Bruce Banner',
-            email: 'bruce.banner@ufrgs.edu.br',
+            email: 'bruce.banner@academico.example.com',
           },
           {
             name: 'Carol Danvers',
-            email: 'carol.danvers@ufrgs.edu.br',
+            email: 'carol.danvers@academico.example.com',
           },
         ],
       },
@@ -585,15 +585,15 @@ async function main() {
         create: [
           {
             name: 'Stephen Strange',
-            email: 'stephen.strange@ufrgs.edu.br',
+            email: 'stephen.strange@academico.example.com',
           },
           {
             name: 'Reed Richards',
-            email: 'reed.richards@ufrgs.edu.br',
+            email: 'reed.richards@academico.example.com',
           },
           {
             name: 'Sue Storm',
-            email: 'sue.storm@ufrgs.edu.br',
+            email: 'sue.storm@academico.example.com',
           },
         ],
       },
@@ -623,15 +623,15 @@ async function main() {
         create: [
           {
             name: 'Victor Stone',
-            email: 'victor.stone@ufrgs.edu.br',
+            email: 'victor.stone@academico.example.com',
           },
           {
             name: 'Dinah Lance',
-            email: 'dinah.lance@ufrgs.edu.br',
+            email: 'dinah.lance@academico.example.com',
           },
           {
             name: 'Barry Allen',
-            email: 'barry.allen@ufrgs.edu.br',
+            email: 'barry.allen@academico.example.com',
           },
         ],
       },
@@ -660,11 +660,11 @@ async function main() {
         create: [
           {
             name: 'Hal Jordan',
-            email: 'hal.jordan@ufrgs.edu.br',
+            email: 'hal.jordan@academico.example.com',
           },
           {
             name: 'Zatanna Zatara',
-            email: 'zatanna.zatara@ufrgs.edu.br',
+            email: 'zatanna.zatara@academico.example.com',
           },
         ],
       },
@@ -693,7 +693,7 @@ async function main() {
         create: [
           {
             name: 'Arthur Curry',
-            email: 'arthur.curry@ufrgs.edu.br',
+            email: 'arthur.curry@academico.example.com',
           },
         ],
       },
@@ -733,11 +733,11 @@ async function main() {
         create: [
           {
             name: 'Oliver Queen',
-            email: 'oliver.queen@ufrgs.edu.br',
+            email: 'oliver.queen@academico.example.com',
           },
           {
             name: 'Selina Kyle',
-            email: 'selina.kyle@ufrgs.edu.br',
+            email: 'selina.kyle@academico.example.com',
           },
         ],
       },
@@ -766,15 +766,15 @@ async function main() {
         create: [
           {
             name: 'Hank Pym',
-            email: 'hank.pym@ufrgs.edu.br',
+            email: 'hank.pym@academico.example.com',
           },
           {
             name: 'Janet Van Dyne',
-            email: 'janet.vandyne@ufrgs.edu.br',
+            email: 'janet.vandyne@academico.example.com',
           },
           {
             name: 'T\'Challa',
-            email: 'tchalla@ufrgs.edu.br',
+            email: 'tchalla@academico.example.com',
           },
         ],
       },
@@ -803,11 +803,11 @@ async function main() {
         create: [
           {
             name: 'Clint Barton',
-            email: 'clint.barton@ufrgs.edu.br',
+            email: 'clint.barton@academico.example.com',
           },
           {
             name: 'Shuri',
-            email: 'shuri@ufrgs.edu.br',
+            email: 'shuri@academico.example.com',
           },
         ],
       },
@@ -836,11 +836,11 @@ async function main() {
         create: [
           {
             name: 'Steve Rogers',
-            email: 'steve.rogers@ufrgs.edu.br',
+            email: 'steve.rogers@academico.example.com',
           },
           {
             name: 'Sharon Carter',
-            email: 'sharon.carter@ufrgs.edu.br',
+            email: 'sharon.carter@academico.example.com',
           },
         ],
       },
@@ -869,15 +869,15 @@ async function main() {
         create: [
           {
             name: 'Sam Wilson',
-            email: 'sam.wilson@ufrgs.edu.br',
+            email: 'sam.wilson@academico.example.com',
           },
           {
             name: 'Hope Van Dyne',
-            email: 'hope.vandyne@ufrgs.edu.br',
+            email: 'hope.vandyne@academico.example.com',
           },
           {
             name: 'Bucky Barnes',
-            email: 'bucky.barnes@ufrgs.edu.br',
+            email: 'bucky.barnes@academico.example.com',
           },
         ],
       },
@@ -905,9 +905,8 @@ async function main() {
     update: {},
     create: {
       id: 'doc-ata-1',
-      
       version: 1,
-      documentHash: docHash1,
+      minutesHash: docHash1,
       status: DocumentStatus.APPROVED,
       defenseId: defenseAprovada.id,
       blockchainTxId: 'tx_abc123def456',
@@ -924,7 +923,7 @@ async function main() {
       id: 'doc-ata-reprovada',
       
       version: 1,
-      documentHash: docHash2,
+      minutesHash: docHash2,
       status: DocumentStatus.APPROVED,
       defenseId: defenseReprovada.id,
       blockchainTxId: 'tx_reprovada456xyz',
@@ -943,7 +942,7 @@ async function main() {
       id: 'doc-ata-dupla',
       
       version: 1,
-      documentHash: docHash4,
+      minutesHash: docHash4,
       status: DocumentStatus.APPROVED,
       defenseId: defenseDupla.id,
       blockchainTxId: 'tx_dupla456xyz789',
@@ -960,7 +959,7 @@ async function main() {
       id: 'doc-ata-parcial',
       
       version: 1,
-      documentHash: docHash5,
+      minutesHash: docHash5,
       status: DocumentStatus.PENDING,
       defenseId: defenseAprovacaoParcial.id,
     },
@@ -975,7 +974,7 @@ async function main() {
       id: 'doc-ata-minima',
       
       version: 1,
-      documentHash: docHash6,
+      minutesHash: docHash6,
       status: DocumentStatus.APPROVED,
       defenseId: defenseNotaMinima.id,
       blockchainTxId: 'tx_minima789abc123',
@@ -993,7 +992,7 @@ async function main() {
       id: 'doc-ata-ajustada-v1',
 
       version: 1,
-      documentHash: docHash7,
+      minutesHash: docHash7,
       status: DocumentStatus.INACTIVE,
       inactivationReason: 'Nova versão criada: Correção de formatação e atualização dos dados da banca examinadora',
       inactivatedAt: new Date('2024-07-22T16:00:00Z'),
@@ -1012,7 +1011,7 @@ async function main() {
       id: 'doc-ata-ajustada-v2',
       
       version: 2,
-      documentHash: docHash8,
+      minutesHash: docHash8,
       status: DocumentStatus.APPROVED,
       changeReason: 'Correção de formatação e atualização dos dados da banca examinadora',
       previousVersionId: docAjustadaV1.id,
@@ -1031,7 +1030,7 @@ async function main() {
       id: 'doc-ata-aguardando',
 
       version: 1,
-      documentHash: docHash9,
+      minutesHash: docHash9,
       status: DocumentStatus.PENDING,
       defenseId: defenseAguardandoAprovacoes.id,
     },
@@ -1046,7 +1045,7 @@ async function main() {
       id: 'doc-ata-carlos-eduardo',
 
       version: 1,
-      documentHash: docHash10,
+      minutesHash: docHash10,
       status: DocumentStatus.PENDING,
       defenseId: defenseCarlosEduardo.id,
     },
@@ -1061,7 +1060,7 @@ async function main() {
       id: 'doc-ata-carlos-estudante',
 
       version: 1,
-      documentHash: docHash11,
+      minutesHash: docHash11,
       status: DocumentStatus.PENDING,
       defenseId: defenseCarlosEstudante.id,
     },

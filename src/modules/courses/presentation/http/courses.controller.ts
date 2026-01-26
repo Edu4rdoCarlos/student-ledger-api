@@ -58,7 +58,7 @@ export class CoursesController {
   }
 
   @Get()
-  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT', 'ADMIN')
   @ApiOperation({ summary: 'List courses' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
@@ -69,7 +69,7 @@ export class CoursesController {
   }
 
   @Get(':code')
-  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT')
+  @Roles('COORDINATOR', 'ADVISOR', 'STUDENT', 'ADMIN')
   @ApiOperation({ summary: 'Find course by code' })
   @ApiCourseOkResponse()
   @ApiCourseFindOneErrorResponses()
@@ -80,7 +80,7 @@ export class CoursesController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles('COORDINATOR')
+  @Roles('COORDINATOR', 'ADMIN')
   @UseGuards(CoordinatorCourseGuard)
   @ApiOperation({
     summary: 'Update course data',
@@ -94,7 +94,7 @@ export class CoursesController {
   }
 
   @Get(':id/students')
-  @Roles('COORDINATOR')
+  @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({
     summary: 'List students from a course',
     description: 'Returns all students enrolled in the specified course. Coordinators can only access students from their own course.'
@@ -110,7 +110,7 @@ export class CoursesController {
   }
 
   @Get(':id/advisors')
-  @Roles('COORDINATOR')
+  @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({
     summary: 'List advisors from a course',
     description: 'Returns all advisors from the specified course. Coordinators can only access advisors from their own course.'

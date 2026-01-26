@@ -22,6 +22,12 @@ export class CoordinatorResponseDto {
   @ApiProperty({ example: 'uuid-do-coordenador' })
   userId: string;
 
+  @ApiProperty({ example: 'Prof. Dr. João Silva' })
+  name: string;
+
+  @ApiProperty({ example: 'coordenador@universidade.edu.br' })
+  email: string;
+
   @ApiProperty({ required: false, description: 'Informações do curso' })
   course?: CourseBasicDto;
 
@@ -37,6 +43,8 @@ export class CoordinatorResponseDto {
   static fromEntity(coordinator: Coordinator): CoordinatorResponseDto {
     return {
       userId: coordinator.id,
+      name: coordinator.name,
+      email: coordinator.email,
       course: coordinator.course ? {
         id: coordinator.course.id,
         code: coordinator.course.code,

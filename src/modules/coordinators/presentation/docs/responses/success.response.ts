@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiCreatedResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { CoordinatorResponseDto } from '../../dtos';
+import { PaginationMetadata } from '../../../../../shared/dtos';
 
 export const ApiCoordinatorCreatedResponse = () =>
   applyDecorators(
@@ -12,6 +13,26 @@ export const ApiCoordinatorCreatedResponse = () =>
         properties: {
           data: {
             $ref: getSchemaPath(CoordinatorResponseDto),
+          },
+        },
+      },
+    }),
+  );
+
+export const ApiCoordinatorListResponse = () =>
+  applyDecorators(
+    ApiExtraModels(CoordinatorResponseDto, PaginationMetadata),
+    ApiOkResponse({
+      description: 'Lista de coordenadores com metadados de paginação',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: { $ref: getSchemaPath(CoordinatorResponseDto) },
+          },
+          metadata: {
+            $ref: getSchemaPath(PaginationMetadata),
           },
         },
       },

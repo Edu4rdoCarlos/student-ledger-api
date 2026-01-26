@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma';
 import { Coordinator } from '../../domain/entities';
-import { ICoordinatorRepository } from '../../application/ports';
+import {
+  ICoordinatorRepository,
+  FindAllCoordinatorsOptions,
+  FindAllCoordinatorsResult,
+} from '../../application/ports';
 import { CoordinatorMapper } from './coordinator.mapper';
 
 @Injectable()
@@ -88,5 +92,29 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async existsByUserId(userId: string): Promise<boolean> {
     const count = await this.prisma.coordinator.count({ where: { id: userId } });
     return count > 0;
+  }
+
+  async findAllPaginated(
+    options: FindAllCoordinatorsOptions = {},
+  ): Promise<FindAllCoordinatorsResult> {
+    const { skip = 0, take = 10 } = options;
+
+    const [coordinators, total] = await Promise.all([
+      this.prisma.coordinator.findMany({
+        skip,
+        take,
+        include: {
+          user: true,
+          course: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.coordinator.count(),
+    ]);
+
+    return {
+      items: coordinators.map(CoordinatorMapper.toDomain),
+      total,
+    };
   }
 }

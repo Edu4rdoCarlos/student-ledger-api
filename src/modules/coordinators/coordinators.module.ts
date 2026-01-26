@@ -5,7 +5,7 @@ import { CoursesModule } from '../courses/courses.module';
 import { COORDINATOR_REPOSITORY } from './application/ports';
 import { PrismaCoordinatorRepository } from './infra/persistence';
 import { CoordinatorsController } from './presentation/http';
-import { CreateCoordinatorUseCase } from './application/use-cases';
+import { CreateCoordinatorUseCase, ListCoordinatorsUseCase } from './application/use-cases';
 
 @Module({
   imports: [PrismaModule, AuthModule, forwardRef(() => CoursesModule)],
@@ -16,6 +16,7 @@ import { CreateCoordinatorUseCase } from './application/use-cases';
       useClass: PrismaCoordinatorRepository,
     },
     CreateCoordinatorUseCase,
+    ListCoordinatorsUseCase,
   ],
   exports: [COORDINATOR_REPOSITORY],
 })
