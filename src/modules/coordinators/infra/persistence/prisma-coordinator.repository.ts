@@ -80,6 +80,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
       where: { id: coordinator.id },
       data: {
         isActive: data.isActive,
+        courseId: data.courseId,
       },
       include: {
         user: true,

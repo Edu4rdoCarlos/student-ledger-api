@@ -32,9 +32,15 @@ export class CreateCoordinatorUseCase {
       throw new CourseRequiredError();
     }
 
-    const courseExists = await this.courseRepository.findByCode(dto.courseId);
+    const courseExists = await this.courseRepository.findById(dto.courseId);
     if (!courseExists) {
-      throw new NotFoundException(`Curso com código ${dto.courseId} não encontrado`);
+      throw new NotFoundException(`Curso não encontrado`);
+    }
+
+    // Verificar se o curso já tem um coordenador ativo
+    const existingCoordinator = await this.coordinatorRepository.findByCourseId(dto.courseId);
+    if (existingCoordinator && existingCoordinator.isActive) {
+      throw new ConflictException('Este curso já possui um coordenador ativo. Inative o coordenador atual antes de atribuir um novo.');
     }
 
     const [emailExists, coordinatorExists] = await Promise.all([

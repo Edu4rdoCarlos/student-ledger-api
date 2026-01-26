@@ -9,7 +9,7 @@ type PrismaCoordinatorWithRelations = PrismaCoordinator & {
 
 export class CoordinatorMapper {
   static toDomain(prisma: PrismaCoordinatorWithRelations): Coordinator {
-    const courseId = prisma.course?.id || '';
+    const courseId = prisma.courseId || null;
 
     return Coordinator.create({
       id: prisma.id,
@@ -19,7 +19,7 @@ export class CoordinatorMapper {
       isFirstAccess: prisma.user.isFirstAccess,
       courseId: courseId,
       isActive: prisma.isActive,
-      course: prisma.course ? Course.create({
+      course: (prisma.course && courseId) ? Course.create({
         code: prisma.course.code,
         name: prisma.course.name,
         active: prisma.course.active,
@@ -36,6 +36,7 @@ export class CoordinatorMapper {
     return {
       id: coordinator.id,
       isActive: coordinator.isActive,
+      courseId: coordinator.courseId,
     };
   }
 }

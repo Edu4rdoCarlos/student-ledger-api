@@ -34,6 +34,10 @@ export class CreateAdvisorUseCase {
         throw new ForbiddenException('Coordenador não encontrado');
       }
 
+      if (!coordinator.isActive || !coordinator.courseId) {
+        throw new ForbiddenException('Coordenadores inativos ou sem curso não podem criar orientadores');
+      }
+
       if (dto.courseId && dto.courseId !== coordinator.courseId) {
         throw new ForbiddenException('Você só pode criar orientadores para o seu curso');
       }

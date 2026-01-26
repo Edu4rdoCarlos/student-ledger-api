@@ -2,16 +2,17 @@ import { UserBase, UserBaseProps } from '../../../user/domain/entities/user-base
 import { Course } from '../../../courses/domain/entities';
 
 export interface CoordinatorProps extends UserBaseProps {
-  courseId: string;
+  courseId: string | null;
   isActive?: boolean;
   course?: Course;
 }
 
 export class Coordinator extends UserBase {
   private constructor(props: CoordinatorProps) {
-    const { isActive, ...baseProps } = props;
+    const { isActive, courseId, ...baseProps } = props;
     super(baseProps);
     (this.props as any).isActive = isActive ?? true;
+    (this.props as any).courseId = courseId;
   }
 
   static create(props: CoordinatorProps): Coordinator {
@@ -26,7 +27,7 @@ export class Coordinator extends UserBase {
     return this.id;
   }
 
-  get courseId(): string {
+  get courseId(): string | null {
     return (this.props as CoordinatorProps).courseId;
   }
 
@@ -40,6 +41,7 @@ export class Coordinator extends UserBase {
 
   deactivate(): void {
     (this.props as any).isActive = false;
+    (this.props as any).courseId = null;
     (this.props as any).updatedAt = new Date();
   }
 
@@ -50,6 +52,16 @@ export class Coordinator extends UserBase {
 
   updateCourse(courseId: string): void {
     (this.props as any).courseId = courseId;
+    (this.props as any).updatedAt = new Date();
+  }
+
+  updateName(name: string): void {
+    (this.props as any).name = name;
+    (this.props as any).updatedAt = new Date();
+  }
+
+  removeCourse(): void {
+    (this.props as any).courseId = null;
     (this.props as any).updatedAt = new Date();
   }
 }

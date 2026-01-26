@@ -1,11 +1,11 @@
-import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Query, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators';
-import { CreateCoordinatorUseCase, ListCoordinatorsUseCase, ListCoordinatorsResponse } from '../../application/use-cases';
-import { CreateCoordinatorDto, ListCoordinatorsDto, CoordinatorResponseDto } from '../dtos';
+import { CreateCoordinatorUseCase, ListCoordinatorsUseCase, UpdateCoordinatorUseCase, ListCoordinatorsResponse } from '../../application/use-cases';
+import { CreateCoordinatorDto, ListCoordinatorsDto, UpdateCoordinatorDto, CoordinatorResponseDto } from '../dtos';
 import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
-import { ApiCreateCoordinator, ApiListCoordinators } from '../docs';
+import { ApiCreateCoordinator, ApiListCoordinators, ApiUpdateCoordinator } from '../docs';
 
 @ApiTags('Coordinators')
 @ApiBearerAuth()
@@ -14,6 +14,7 @@ export class CoordinatorsController {
   constructor(
     private readonly createCoordinator: CreateCoordinatorUseCase,
     private readonly listCoordinators: ListCoordinatorsUseCase,
+    private readonly updateCoordinator: UpdateCoordinatorUseCase,
   ) {}
 
   @Get()
@@ -29,6 +30,18 @@ export class CoordinatorsController {
   @ApiCreateCoordinator()
   async create(@Body() dto: CreateCoordinatorDto): Promise<HttpResponse<CoordinatorResponseDto>> {
     const coordinator = await this.createCoordinator.execute(dto);
+    return HttpResponseSerializer.serialize(coordinator);
+  }
+
+  @Put(':userId')
+  @HttpCode(HttpStatus.OK)
+  @Roles('ADMIN')
+  @ApiUpdateCoordinator()
+  async update(
+    @Param('userId') userId: string,
+    @Body() dto: UpdateCoordinatorDto,
+  ): Promise<HttpResponse<CoordinatorResponseDto>> {
+    const coordinator = await this.updateCoordinator.execute(userId, dto);
     return HttpResponseSerializer.serialize(coordinator);
   }
 }
