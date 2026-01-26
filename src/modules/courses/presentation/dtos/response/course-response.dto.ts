@@ -39,6 +39,9 @@ export class CourseResponseDto {
   @ApiProperty({ description: 'Nome do curso' })
   name: string;
 
+  @ApiProperty({ description: 'Status do curso (ativo/inativo)' })
+  active: boolean;
+
   @ApiProperty({ required: false, description: 'Informações do coordenador' })
   coordinator?: CoordinatorBasicDto;
 
@@ -53,6 +56,7 @@ export class CourseResponseDto {
     dto.id = course.id;
     dto.code = course.code;
     dto.name = course.name;
+    dto.active = course.active;
     dto.coordinator = course.coordinator ? {
       id: course.coordinator.id,
       email: course.coordinator.email,

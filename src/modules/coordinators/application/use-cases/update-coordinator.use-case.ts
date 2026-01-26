@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../ports';
 import { UpdateCoordinatorDto, CoordinatorResponseDto } from '../../presentation/dtos';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
@@ -47,6 +47,10 @@ export class UpdateCoordinatorUseCase {
           throw new NotFoundException(`Curso não encontrado`);
         }
 
+        if (!courseExists.active) {
+          throw new BadRequestException('Não é possível atribuir um coordenador a um curso inativo');
+        }
+
         // Verificar se o curso já tem um coordenador ativo
         const existingCoordinator = await this.coordinatorRepository.findByCourseId(dto.courseId);
         if (existingCoordinator && existingCoordinator.userId !== userId && existingCoordinator.isActive) {
@@ -61,6 +65,10 @@ export class UpdateCoordinatorUseCase {
       const courseExists = await this.courseRepository.findById(dto.courseId);
       if (!courseExists) {
         throw new NotFoundException(`Curso não encontrado`);
+      }
+
+      if (!courseExists.active) {
+        throw new BadRequestException('Não é possível atribuir um coordenador a um curso inativo');
       }
 
       // Se mudou o curso, verificar se o novo curso já tem coordenador ativo

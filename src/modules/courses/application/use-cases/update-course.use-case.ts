@@ -29,12 +29,25 @@ export class UpdateCourseUseCase {
         throw new BadRequestException('Coordenador está inativo');
       }
 
+      const courseWillBeInactive = dto.active === false || (!course.active && dto.active !== true);
+      if (courseWillBeInactive) {
+        throw new BadRequestException('Não é possível atribuir um coordenador a um curso inativo');
+      }
+
       if (course.coordinatorId && course.coordinatorId !== dto.coordinatorId) {
         const previousCoordinator = await this.coordinatorRepository.findById(course.coordinatorId);
         if (previousCoordinator) {
           previousCoordinator.deactivate();
           await this.coordinatorRepository.update(previousCoordinator);
         }
+      }
+    }
+
+    if (dto.active === false && course.coordinatorId) {
+      const coordinator = await this.coordinatorRepository.findById(course.coordinatorId);
+      if (coordinator) {
+        coordinator.removeCourse();
+        await this.coordinatorRepository.update(coordinator);
       }
     }
 
