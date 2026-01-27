@@ -1,4 +1,4 @@
-import { applyDecorators, HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 
 /**
@@ -136,25 +136,3 @@ export function ApiInternalServerErrorResponse(description?: string) {
   });
 }
 
-/**
- * Aplica todas as respostas de erro comuns de autenticação
- */
-export function ApiCommonAuthErrors() {
-  return applyDecorators(
-    ApiUnauthorizedErrorResponse(),
-    ApiForbiddenErrorResponse(),
-  );
-}
-
-/**
- * Aplica respostas de erro comuns para endpoints CRUD
- */
-export function ApiCommonCrudErrors() {
-  return applyDecorators(
-    ApiBadRequestResponse(),
-    ApiUnauthorizedErrorResponse(),
-    ApiForbiddenErrorResponse(),
-    ApiNotFoundErrorResponse(),
-    ApiInternalServerErrorResponse(),
-  );
-}

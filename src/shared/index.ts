@@ -6,4 +6,3 @@ export * from './guards';
 export * from './serializers';
 export * from './types';
 export * from './utils';
-export * from './kernel';

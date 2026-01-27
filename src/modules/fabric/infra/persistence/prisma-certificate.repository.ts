@@ -36,6 +36,16 @@ export class PrismaCertificateRepository implements ICertificateRepository {
     });
   }
 
+  async findActiveByMspId(mspId: string): Promise<UserCertificateData | null> {
+    return this.prisma.userCertificate.findFirst({
+      where: {
+        mspId,
+        status: CertificateStatus.ACTIVE,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findByUserId(userId: string): Promise<UserCertificateData[]> {
     return this.prisma.userCertificate.findMany({
       where: { userId },

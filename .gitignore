@@ -38,5 +38,3 @@ temp/
 # Docs (guia interno - apenas na raiz)
 /docs/
 
-# Blockchain certificates (sensitive)
-src/blockchain/certs/*/

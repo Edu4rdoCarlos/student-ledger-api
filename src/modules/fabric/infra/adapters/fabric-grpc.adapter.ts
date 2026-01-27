@@ -1,10 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as grpc from '@grpc/grpc-js';
 import { connect, Contract, Identity, Signer, signers, Gateway } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import * as path from 'path';
 import {
   IFabricGateway,
   FabricUser,
@@ -15,6 +14,8 @@ import {
   OrgName,
   UserRole,
   DefenseResult,
+  ICertificateRepository,
+  CERTIFICATE_REPOSITORY,
 } from '../../application/ports';
 import {
   FabricConnectionError,
@@ -41,6 +42,8 @@ export class FabricGrpcAdapter implements IFabricGateway {
   private readonly logger = new Logger(FabricGrpcAdapter.name);
   private readonly channelName: string;
   private readonly chaincodeName: string;
+  private readonly tlsCaCertPath: string;
+  private readonly tlsCaCertPem: string;
 
   private readonly organizations: Record<OrgName, OrgConfig>;
 
@@ -51,9 +54,15 @@ export class FabricGrpcAdapter implements IFabricGateway {
     STUDENT: 'aluno',
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @Inject(CERTIFICATE_REPOSITORY)
+    private readonly certRepository: ICertificateRepository,
+  ) {
     this.channelName = this.configService.get<string>('FABRIC_CHANNEL', 'studentchannel');
     this.chaincodeName = this.configService.get<string>('FABRIC_CHAINCODE', 'student-ledger');
+    this.tlsCaCertPath = this.configService.get<string>('FABRIC_TLS_CA_CERT_PATH', '');
+    this.tlsCaCertPem = this.configService.get<string>('FABRIC_TLS_CA_CERT', '');
 
     this.organizations = {
       coordenacao: {
@@ -83,48 +92,49 @@ export class FabricGrpcAdapter implements IFabricGateway {
     };
   }
 
+  private getTlsCredentials(): grpc.ChannelCredentials {
+    // Prioridade: PEM inline > path de arquivo
+    if (this.tlsCaCertPem) {
+      const tlsRootCert = Buffer.from(this.tlsCaCertPem);
+      return grpc.credentials.createSsl(tlsRootCert);
+    }
+
+    if (this.tlsCaCertPath) {
+      if (!fs.existsSync(this.tlsCaCertPath)) {
+        throw new FabricCertificateNotFoundError('TLS CA', this.tlsCaCertPath);
+      }
+      const tlsRootCert = fs.readFileSync(this.tlsCaCertPath);
+      return grpc.credentials.createSsl(tlsRootCert);
+    }
+
+    throw new FabricCertificateNotFoundError(
+      'TLS CA',
+      'Configure FABRIC_TLS_CA_CERT (PEM inline) ou FABRIC_TLS_CA_CERT_PATH (caminho do arquivo)',
+    );
+  }
+
   async healthCheck(): Promise<FabricHealthStatus> {
     try {
       const orgConfig = this.organizations.coordenacao;
-      const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
-      const certPath = path.join(certsBasePath, 'coordenacao', 'cert.pem');
-      const keyPath = path.join(certsBasePath, 'coordenacao', 'key.pem');
-      const tlsCertPath = path.join(certsBasePath, 'coordenacao', 'tls-ca.crt');
+      const tlsCredentials = this.getTlsCredentials();
 
-      if (!fs.existsSync(certPath)) {
-        throw new FabricCertificateNotFoundError('Certificado', certPath);
-      }
-      if (!fs.existsSync(keyPath)) {
-        throw new FabricCertificateNotFoundError('Chave privada', keyPath);
-      }
-      if (!fs.existsSync(tlsCertPath)) {
-        throw new FabricCertificateNotFoundError('TLS CA', tlsCertPath);
-      }
-
-      const tlsRootCert = fs.readFileSync(tlsCertPath);
-      const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
       const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
         'grpc.ssl_target_name_override': orgConfig.peerName,
         'grpc.default_authority': orgConfig.peerName,
       });
 
-      const identity = await this.createIdentity(certPath, orgConfig.mspId);
-      const signer = await this.createSigner(keyPath);
-
-      const gateway = connect({
-        client,
-        identity,
-        signer,
-        evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
+      // Verificar conectividade TLS com o peer sem precisar de identidade
+      await new Promise<void>((resolve, reject) => {
+        const deadline = Date.now() + 5000;
+        client.waitForReady(deadline, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
       });
 
-      const network = gateway.getNetwork(this.channelName);
-      const contract = network.getContract(this.chaincodeName);
-
-      // Fazer uma chamada real ao chaincode para verificar conectividade
-      await contract.evaluateTransaction('HealthCheck');
-
-      gateway.close();
       client.close();
 
       return { status: 'ok', message: 'Fabric conectado com sucesso' };
@@ -151,31 +161,23 @@ export class FabricGrpcAdapter implements IFabricGateway {
     const orgName = this.getOrgForRole(user.role);
     const orgConfig = this.organizations[orgName];
 
-    const certsBasePath = path.resolve(process.cwd(), 'src/blockchain/certs');
-    const certPath = path.join(certsBasePath, orgName, 'cert.pem');
-    const keyPath = path.join(certsBasePath, orgName, 'key.pem');
-    const tlsCertPath = path.join(certsBasePath, orgName, 'tls-ca.crt');
-
-    if (!fs.existsSync(certPath)) {
-      throw new FabricCertificateNotFoundError('Certificado', certPath);
-    }
-    if (!fs.existsSync(keyPath)) {
-      throw new FabricCertificateNotFoundError('Chave privada', keyPath);
-    }
-    if (!fs.existsSync(tlsCertPath)) {
-      throw new FabricCertificateNotFoundError('TLS CA', tlsCertPath);
+    const certData = await this.certRepository.findActiveByUserId(user.id);
+    if (!certData) {
+      throw new FabricCertificateNotFoundError(
+        'Certificado',
+        `Nenhum certificado ativo encontrado para o usuário ${user.id}`,
+      );
     }
 
-    const tlsRootCert = fs.readFileSync(tlsCertPath);
-    const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
+    const tlsCredentials = this.getTlsCredentials();
 
     const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
       'grpc.ssl_target_name_override': orgConfig.peerName,
       'grpc.default_authority': orgConfig.peerName,
     });
 
-    const identity = await this.createIdentity(certPath, orgConfig.mspId);
-    const signer = await this.createSigner(keyPath);
+    const identity = this.createIdentityFromPem(certData.certificate, certData.mspId);
+    const signer = this.createSignerFromPem(certData.privateKey);
 
     const gateway = connect({
       client,
@@ -215,13 +217,12 @@ export class FabricGrpcAdapter implements IFabricGateway {
     }
   }
 
-  private async createIdentity(certPath: string, mspId: string): Promise<Identity> {
-    const credentials = fs.readFileSync(certPath);
+  private createIdentityFromPem(certPem: string, mspId: string): Identity {
+    const credentials = Buffer.from(certPem);
     return { mspId, credentials };
   }
 
-  private async createSigner(keyPath: string): Promise<Signer> {
-    const privateKeyPem = fs.readFileSync(keyPath);
+  private createSignerFromPem(privateKeyPem: string): Signer {
     const privateKey = crypto.createPrivateKey(privateKeyPem);
     return signers.newPrivateKeySigner(privateKey);
   }
