@@ -1,3 +1,7 @@
+import { DefenseResult, DefenseStatus } from '@prisma/client';
+
+export { DefenseResult, DefenseStatus };
+
 export interface AdvisorInDefense {
   id: string;
   name: string;
@@ -58,8 +62,8 @@ export interface DefenseProps {
   defenseDate: Date;
   location?: string;
   finalGrade?: number;
-  result: 'PENDING' | 'APPROVED' | 'FAILED';
-  status: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+  result: DefenseResult;
+  status: DefenseStatus;
   advisorId: string;
   studentIds: string[];
   examBoard?: ExamBoardMember[];
@@ -90,8 +94,8 @@ export class Defense {
     return new Defense(
       {
         ...props,
-        result: props.result ?? 'PENDING',
-        status: props.status ?? 'SCHEDULED',
+        result: props.result ?? DefenseResult.PENDING,
+        status: props.status ?? DefenseStatus.SCHEDULED,
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
@@ -119,11 +123,11 @@ export class Defense {
     return this.props.finalGrade;
   }
 
-  get result(): 'PENDING' | 'APPROVED' | 'FAILED' {
+  get result(): DefenseResult {
     return this.props.result;
   }
 
-  get status(): 'SCHEDULED' | 'CANCELED' | 'COMPLETED' {
+  get status(): DefenseStatus {
     return this.props.status;
   }
 
@@ -165,8 +169,8 @@ export class Defense {
     }
 
     this.props.finalGrade = grade;
-    this.props.result = grade >= 7 ? 'APPROVED' : 'FAILED';
-    this.props.status = 'COMPLETED';
+    this.props.result = grade >= 7 ? DefenseResult.APPROVED : DefenseResult.FAILED;
+    this.props.status = DefenseStatus.COMPLETED;
     this.props.updatedAt = new Date();
   }
 
@@ -178,20 +182,20 @@ export class Defense {
   }
 
   cancel(reason: string): void {
-    if (this.props.status === 'COMPLETED') {
+    if (this.props.status === DefenseStatus.COMPLETED) {
       throw new Error('Não é possível cancelar uma defesa já concluída');
     }
     if (!reason || reason.trim().length === 0) {
       throw new Error('Motivo do cancelamento é obrigatório');
     }
-    this.props.status = 'CANCELED';
-    this.props.result = 'FAILED';
+    this.props.status = DefenseStatus.CANCELED;
+    this.props.result = DefenseResult.FAILED;
     this.props.finalGrade = 0;
     this.props.updatedAt = new Date();
   }
 
   reschedule(newDate: Date, reason: string): void {
-    if (this.props.status === 'COMPLETED') {
+    if (this.props.status === DefenseStatus.COMPLETED) {
       throw new Error('Não é possível reagendar uma defesa já concluída');
     }
     if (!reason || reason.trim().length === 0) {

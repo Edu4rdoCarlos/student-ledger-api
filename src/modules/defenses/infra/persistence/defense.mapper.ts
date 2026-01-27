@@ -31,8 +31,8 @@ export class DefenseMapper {
         defenseDate: prisma.defenseDate,
         location: prisma.location ?? undefined,
         finalGrade: prisma.finalGrade ?? undefined,
-        result: prisma.result as 'PENDING' | 'APPROVED' | 'FAILED',
-        status: prisma.status as 'SCHEDULED' | 'CANCELED' | 'COMPLETED',
+        result: prisma.result,
+        status: prisma.status,
         advisorId: prisma.advisorId,
         studentIds: prisma.students.map((s) => s.studentId),
         examBoard: prisma.examBoard.map((member) => ({

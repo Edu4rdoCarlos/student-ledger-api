@@ -34,7 +34,7 @@ export const STUDENT_RESPONSE_EXAMPLE = {
       id: 'student-uuid-789',
       registration: '00678901',
       name: 'Beatriz Lima Souza',
-      email: 'aluno6@ufrgs.edu.br',
+      email: 'aluno6@academico.example.com',
     },
   ],
   signatures: [

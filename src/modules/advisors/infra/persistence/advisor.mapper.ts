@@ -34,8 +34,8 @@ export class AdvisorMapper {
         defenseDate: defense.defenseDate,
         location: defense.location ?? undefined,
         finalGrade: defense.finalGrade ?? undefined,
-        result: defense.result as 'PENDING' | 'APPROVED' | 'FAILED',
-        status: defense.status as 'SCHEDULED' | 'CANCELED' | 'COMPLETED',
+        result: defense.result,
+        status: defense.status,
         advisorId: defense.advisorId,
         studentIds: defense.students.map(s => s.studentId),
         students: defense.students.map(s => ({

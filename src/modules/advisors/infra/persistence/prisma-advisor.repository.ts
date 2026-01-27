@@ -1,8 +1,36 @@
 import { Injectable } from '@nestjs/common';
+import { DefenseStatus } from '@prisma/client';
 import { PrismaService } from '../../../../database/prisma';
 import { Advisor } from '../../domain/entities';
 import { IAdvisorRepository, FindAllOptions, FindAllResult } from '../../application/ports';
 import { AdvisorMapper } from './advisor.mapper';
+
+const ACTIVE_DEFENSE_STATUSES: DefenseStatus[] = [
+  DefenseStatus.SCHEDULED,
+  DefenseStatus.COMPLETED,
+];
+
+const ADVISOR_BASE_INCLUDE = {
+  user: true,
+  course: true,
+};
+
+const DEFENSE_INCLUDE = {
+  students: {
+    include: {
+      student: { include: { user: true } },
+    },
+  },
+  examBoard: true,
+};
+
+const ADVISOR_WITH_DEFENSES_INCLUDE = {
+  ...ADVISOR_BASE_INCLUDE,
+  defenses: {
+    where: { status: { in: ACTIVE_DEFENSE_STATUSES } },
+    include: DEFENSE_INCLUDE,
+  },
+};
 
 @Injectable()
 export class PrismaAdvisorRepository implements IAdvisorRepository {
@@ -12,10 +40,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     const data = AdvisorMapper.toPrisma(advisor);
     const created = await this.prisma.advisor.create({
       data,
-      include: {
-        user: true,
-        course: true,
-      }
+      include: ADVISOR_BASE_INCLUDE,
     });
     return AdvisorMapper.toDomain(created);
   }
@@ -23,29 +48,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   async findById(id: string): Promise<Advisor | null> {
     const found = await this.prisma.advisor.findUnique({
       where: { id },
-      include: {
-        user: true,
-        course: true,
-        defenses: {
-          where: {
-            status: {
-              in: ['SCHEDULED', 'COMPLETED']
-            }
-          },
-          include: {
-            students: {
-              include: {
-                student: {
-                  include: {
-                    user: true,
-                  },
-                },
-              },
-            },
-            examBoard: true,
-          },
-        },
-      },
+      include: ADVISOR_WITH_DEFENSES_INCLUDE,
     });
     return found ? AdvisorMapper.toDomain(found) : null;
   }
@@ -53,10 +56,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   async findByUserId(userId: string): Promise<Advisor | null> {
     const found = await this.prisma.advisor.findUnique({
       where: { id: userId },
-      include: {
-        user: true,
-        course: true,
-      },
+      include: ADVISOR_BASE_INCLUDE,
     });
     return found ? AdvisorMapper.toDomain(found) : null;
   }
@@ -64,98 +64,84 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
   async findByCourseId(courseId: string): Promise<Advisor[]> {
     const advisors = await this.prisma.advisor.findMany({
       where: { courseId },
-      include: {
-        user: true,
-        course: true,
-      },
+      include: ADVISOR_BASE_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
     return advisors.map(AdvisorMapper.toDomain);
   }
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    let where = {};
-    let coordinatorWhere: any = {};
+    const where = this.buildCourseFilter(options);
 
-    if (options?.courseIds && options.courseIds.length > 0) {
-      where = { courseId: { in: options.courseIds } };
-      coordinatorWhere = { courseId: { in: options.courseIds } };
-    } else if (options?.courseId) {
-      where = { courseId: options.courseId };
-      coordinatorWhere = { courseId: options.courseId };
-    }
-
-    // Buscar advisors e coordenadores em paralelo
     const [advisors, coordinators, advisorCount] = await Promise.all([
       this.prisma.advisor.findMany({
         where,
         skip: options?.skip,
         take: options?.take,
-        include: {
-          user: true,
-          course: true,
-          defenses: {
-            where: {
-              status: {
-                in: ['SCHEDULED', 'COMPLETED']
-              }
-            },
-            include: {
-              students: {
-                include: {
-                  student: {
-                    include: {
-                      user: true,
-                    },
-                  },
-                },
-              },
-              examBoard: true,
-            },
-          }
-        },
+        include: ADVISOR_WITH_DEFENSES_INCLUDE,
         orderBy: { createdAt: 'asc' },
       }),
-      // Buscar coordenadores que também são advisors
       this.prisma.coordinator.findMany({
-        where: Object.keys(coordinatorWhere).length > 0 ? coordinatorWhere : undefined,
-        include: {
-          user: true,
-          course: true,
-        },
+        where: Object.keys(where).length > 0 ? where : undefined,
+        include: ADVISOR_BASE_INCLUDE,
       }),
       this.prisma.advisor.count({ where }),
     ]);
 
-    // Converter coordenadores para formato de Advisor
-    const coordinatorsAsAdvisors = await Promise.all(
-      coordinators.map(async (coordinator) => {
-        // Buscar se o coordenador já existe como advisor
-        const existingAdvisor = advisors.find(a => a.id === coordinator.id);
-        if (existingAdvisor) {
-          return null; // Já está na lista de advisors
-        }
+    const coordinatorsAsAdvisors = await this.mapCoordinatorsToAdvisors(
+      coordinators,
+      advisors,
+    );
 
-        // Buscar as defesas do coordenador
+    const allAdvisors = [...advisors, ...coordinatorsAsAdvisors];
+
+    return {
+      items: allAdvisors.map(AdvisorMapper.toDomain),
+      total: advisorCount + coordinatorsAsAdvisors.length,
+    };
+  }
+
+  async update(advisor: Advisor): Promise<Advisor> {
+    const data = AdvisorMapper.toPrisma(advisor);
+    const updated = await this.prisma.advisor.update({
+      where: { id: advisor.id },
+      data,
+      include: ADVISOR_WITH_DEFENSES_INCLUDE,
+    });
+    return AdvisorMapper.toDomain(updated);
+  }
+
+  async existsByUserId(userId: string): Promise<boolean> {
+    const count = await this.prisma.advisor.count({ where: { id: userId } });
+    return count > 0;
+  }
+
+  private buildCourseFilter(options?: FindAllOptions): Record<string, any> {
+    if (options?.courseIds && options.courseIds.length > 0) {
+      return { courseId: { in: options.courseIds } };
+    }
+    if (options?.courseId) {
+      return { courseId: options.courseId };
+    }
+    return {};
+  }
+
+  private async mapCoordinatorsToAdvisors(
+    coordinators: any[],
+    existingAdvisors: any[],
+  ): Promise<any[]> {
+    const existingIds = new Set(existingAdvisors.map(a => a.id));
+
+    const newCoordinators = coordinators.filter(c => !existingIds.has(c.id));
+
+    return Promise.all(
+      newCoordinators.map(async (coordinator) => {
         const defenses = await this.prisma.defense.findMany({
           where: {
             advisorId: coordinator.id,
-            status: {
-              in: ['SCHEDULED', 'COMPLETED']
-            }
+            status: { in: ACTIVE_DEFENSE_STATUSES },
           },
-          include: {
-            students: {
-              include: {
-                student: {
-                  include: {
-                    user: true,
-                  },
-                },
-              },
-            },
-            examBoard: true,
-          },
+          include: DEFENSE_INCLUDE,
         });
 
         return {
@@ -169,50 +155,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
           course: coordinator.course || null,
           defenses,
         };
-      })
+      }),
     );
-
-    // Filtrar nulos e combinar com advisors
-    const allAdvisors = [
-      ...advisors,
-      ...coordinatorsAsAdvisors.filter(c => c !== null),
-    ];
-
-    return {
-      items: allAdvisors.map(AdvisorMapper.toDomain),
-      total: advisorCount + coordinatorsAsAdvisors.filter(c => c !== null).length,
-    };
-  }
-
-  async update(advisor: Advisor): Promise<Advisor> {
-    const data = AdvisorMapper.toPrisma(advisor);
-    const updated = await this.prisma.advisor.update({
-      where: { id: advisor.id },
-      data,
-      include: {
-        user: true,
-        course: true,
-        defenses: {
-          include: {
-            students: {
-              include: {
-                student: {
-                  include: {
-                    user: true,
-                  },
-                },
-              },
-            },
-            examBoard: true,
-          },
-        },
-      }
-    });
-    return AdvisorMapper.toDomain(updated);
-  }
-
-  async existsByUserId(userId: string): Promise<boolean> {
-    const count = await this.prisma.advisor.count({ where: { id: userId } });
-    return count > 0;
   }
 }

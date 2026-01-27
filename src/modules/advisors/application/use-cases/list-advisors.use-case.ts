@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
-import { AdvisorResponseDto } from '../../presentation/dtos';
+import { Advisor } from '../../domain/entities';
 import { PaginationMetadata } from '../../../../shared/dtos';
 import { ICurrentUser } from '../../../../shared/types';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
@@ -12,7 +12,7 @@ export interface ListAdvisorsQuery {
 }
 
 export interface ListAdvisorsResponse {
-  data: AdvisorResponseDto[];
+  data: Advisor[];
   metadata: PaginationMetadata;
 }
 
@@ -48,7 +48,7 @@ export class ListAdvisorsUseCase {
     });
 
     return {
-      data: items.map(advisor => AdvisorResponseDto.fromEntity(advisor, advisor.activeAdvisorshipsCount)),
+      data: items,
       metadata: new PaginationMetadata({ page, perPage, total }),
     };
   }

@@ -53,7 +53,7 @@ export class CoStudent {
   @ApiProperty({ description: 'Nome do estudante', example: 'Beatriz Lima Souza' })
   name: string;
 
-  @ApiProperty({ description: 'Email do estudante', example: 'aluno6@ufrgs.edu.br' })
+  @ApiProperty({ description: 'Email do estudante', example: 'aluno6@academico.example.com' })
   email: string;
 }
 

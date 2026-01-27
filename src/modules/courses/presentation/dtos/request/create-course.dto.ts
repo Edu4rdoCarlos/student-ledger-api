@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsUUID, IsOptional, IsBoolean, MinLength, MaxLength } from 'class-validator';
 
 export class CreateCourseDto {
-  @ApiProperty({ example: 'CC-UFRGS', description: 'Código único do curso' })
+  @ApiProperty({ example: 'CC-IES', description: 'Código único do curso' })
   @IsString()
   @IsNotEmpty()
   @MinLength(2, { message: 'Código do curso deve ter no mínimo 2 caracteres' })

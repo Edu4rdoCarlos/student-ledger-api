@@ -12,6 +12,8 @@ export interface AdvisorProps extends UserBaseProps {
 }
 
 export class Advisor extends UserBase {
+  protected declare readonly props: AdvisorProps;
+
   private constructor(props: AdvisorProps) {
     super(props);
   }
@@ -29,33 +31,35 @@ export class Advisor extends UserBase {
   }
 
   get specialization(): string {
-    return (this.props as AdvisorProps).specialization;
+    return this.props.specialization;
   }
 
   get courseId(): string | undefined {
-    return (this.props as AdvisorProps).courseId;
+    return this.props.courseId;
   }
 
   get course(): Course | undefined {
-    return (this.props as AdvisorProps).course;
+    return this.props.course;
   }
 
   get isActive(): boolean {
-    return (this.props as AdvisorProps).isActive;
+    return this.props.isActive;
   }
 
   get activeAdvisorshipsCount(): number {
-    return (this.props as AdvisorProps).activeAdvisorshipsCount ?? 0;
+    return this.props.activeAdvisorshipsCount ?? 0;
   }
 
   get defenses(): Defense[] | undefined {
-    return (this.props as AdvisorProps).defenses;
+    return this.props.defenses;
   }
 
   update(data: Partial<Pick<AdvisorProps, 'specialization' | 'courseId' | 'isActive'>>): void {
-    if (data.specialization !== undefined) (this.props as any).specialization = data.specialization;
-    if (data.courseId !== undefined) (this.props as any).courseId = data.courseId;
-    if (data.isActive !== undefined) (this.props as any).isActive = data.isActive;
-    (this.props as any).updatedAt = new Date();
+    Object.assign(this.props, {
+      ...data.specialization !== undefined && { specialization: data.specialization },
+      ...data.courseId !== undefined && { courseId: data.courseId },
+      ...data.isActive !== undefined && { isActive: data.isActive },
+      updatedAt: new Date(),
+    });
   }
 }

@@ -7,7 +7,7 @@ export class CreateStudentDto {
   @IsNotEmpty()
   registration: string;
 
-  @ApiProperty({ example: 'aluno@ufrgs.edu.br', description: 'Email do aluno' })
+  @ApiProperty({ example: 'aluno@academico.example.com', description: 'Email do aluno' })
   @IsEmail()
   @IsNotEmpty()
   email: string;

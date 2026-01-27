@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { AdvisorNotFoundError } from '../../domain/errors';
-import { AdvisorResponseDto } from '../../presentation/dtos';
+import { Advisor } from '../../domain/entities';
 
 @Injectable()
 export class GetAdvisorUseCase {
@@ -10,11 +10,11 @@ export class GetAdvisorUseCase {
     private readonly advisorRepository: IAdvisorRepository,
   ) {}
 
-  async execute(id: string): Promise<AdvisorResponseDto> {
+  async execute(id: string): Promise<Advisor> {
     const advisor = await this.advisorRepository.findById(id);
     if (!advisor) {
       throw new AdvisorNotFoundError(id);
     }
-    return AdvisorResponseDto.fromEntity(advisor, advisor.activeAdvisorshipsCount);
+    return advisor;
   }
 }

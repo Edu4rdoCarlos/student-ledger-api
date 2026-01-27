@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsUUID, IsEmail, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 export class CreateAdvisorDto {
-  @ApiProperty({ example: 'orientador@ufrgs.edu.br', description: 'Email do orientador' })
+  @ApiProperty({ example: 'orientador@academico.example.com', description: 'Email do orientador' })
   @IsEmail()
   @IsNotEmpty()
   email: string;

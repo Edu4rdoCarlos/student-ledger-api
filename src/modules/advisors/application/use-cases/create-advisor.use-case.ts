@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { Advisor } from '../../domain/entities';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
-import { CreateAdvisorDto, AdvisorResponseDto } from '../../presentation/dtos';
+import { CreateAdvisorInput } from '../dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../shared/utils';
 import { SendEmailUseCase } from '../../../notifications/application/use-cases';
@@ -26,7 +26,7 @@ export class CreateAdvisorUseCase {
     private readonly certificateQueue: CertificateQueueService,
   ) {}
 
-  async execute(dto: CreateAdvisorDto, currentUser: any): Promise<AdvisorResponseDto> {
+  async execute(input: CreateAdvisorInput, currentUser: any): Promise<Advisor> {
     if (currentUser.role === Role.COORDINATOR) {
       const coordinator = await this.coordinatorRepository.findByUserId(currentUser.id);
 
@@ -38,15 +38,16 @@ export class CreateAdvisorUseCase {
         throw new ForbiddenException('Coordenadores inativos ou sem curso não podem criar orientadores');
       }
 
-      if (dto.courseId && dto.courseId !== coordinator.courseId) {
+      if (input.courseId && input.courseId !== coordinator.courseId) {
         throw new ForbiddenException('Você só pode criar orientadores para o seu curso');
       }
 
-      if (!dto.courseId) {
-        dto.courseId = coordinator.courseId;
+      if (!input.courseId) {
+        input.courseId = coordinator.courseId;
       }
     }
-    const emailExists = await this.userRepository.existsByEmail(dto.email);
+
+    const emailExists = await this.userRepository.existsByEmail(input.email);
     if (emailExists) {
       throw new ConflictException('Não foi possível criar o orientador. Verifique os dados fornecidos.');
     }
@@ -55,9 +56,9 @@ export class CreateAdvisorUseCase {
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
     const user = await this.userRepository.create({
-      email: dto.email,
+      email: input.email,
       password: hashedPassword,
-      name: dto.name,
+      name: input.name,
       role: Role.ADVISOR,
     });
 
@@ -66,8 +67,8 @@ export class CreateAdvisorUseCase {
       email: user.email,
       name: user.name,
       role: user.role,
-      specialization: dto.specialization,
-      courseId: dto.courseId,
+      specialization: input.specialization,
+      courseId: input.courseId,
       isActive: true,
     });
 
@@ -96,6 +97,6 @@ export class CreateAdvisorUseCase {
       this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`);
     });
 
-    return AdvisorResponseDto.fromEntity(created);
+    return created;
   }
 }
