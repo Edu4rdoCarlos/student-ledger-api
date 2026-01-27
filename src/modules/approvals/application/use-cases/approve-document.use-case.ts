@@ -1,10 +1,7 @@
 import { Injectable, Inject, Logger, forwardRef, ForbiddenException } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
-import { Approval, ApprovalStatus, ApprovalRole } from '../../domain/entities';
-import {
-  ApprovalNotFoundError,
-  ApprovalAlreadyProcessedError,
-} from '../../domain/errors';
+import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
+import { ApprovalNotFoundError, ApprovalAlreadyProcessedError } from '../../domain/errors';
 import { RegisterOnBlockchainUseCase } from './register-on-blockchain.use-case';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
@@ -56,7 +53,7 @@ export class ApproveDocumentUseCase {
       throw new ApprovalNotFoundError();
     }
 
-    if (approval.status !== 'PENDING') {
+    if (approval.status !== ApprovalStatus.PENDING) {
       throw new ApprovalAlreadyProcessedError();
     }
 
@@ -72,7 +69,6 @@ export class ApproveDocumentUseCase {
       throw new Error('Documento sem hashes da ata e avaliação de desempenho');
     }
 
-    // Creates a combined hash for signing both documents together
     const combinedHash = `${document.minutesHash}:${document.evaluationHash}`;
     const cryptographicSignature = await this.signatureService.sign(
       combinedHash,
@@ -169,7 +165,7 @@ export class ApproveDocumentUseCase {
 
     const studentsNames = validStudents.map(s => s.name).filter(Boolean).join(', ');
 
-    const coordinatorApproval = approvals.find(a => a.role === 'COORDINATOR');
+    const coordinatorApproval = approvals.find(a => a.role === ApprovalRole.COORDINATOR);
 
     const emailPromises = [];
 

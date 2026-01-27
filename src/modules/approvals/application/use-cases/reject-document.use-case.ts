@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger, ForbiddenException } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
-import { Approval, ApprovalRole } from '../../domain/entities';
+import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import {
   ApprovalNotFoundError,
   ApprovalAlreadyProcessedError,
@@ -33,11 +33,10 @@ export class RejectDocumentUseCase {
       throw new ApprovalNotFoundError();
     }
 
-    if (approval.status !== 'PENDING') {
+    if (approval.status !== ApprovalStatus.PENDING) {
       throw new ApprovalAlreadyProcessedError();
     }
 
-    // Coordinators cannot reject documents
     if (approval.role === ApprovalRole.COORDINATOR) {
       throw new ForbiddenException('Coordenadores não podem rejeitar documentos. Apenas orientadores e estudantes podem rejeitar.');
     }

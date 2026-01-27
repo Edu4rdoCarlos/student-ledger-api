@@ -1,6 +1,6 @@
-import { Approval } from '../../domain/entities';
-import { ApprovalResponseDto, PendingApprovalResponseDto, GroupedApprovalResponseDto } from '../dtos/response';
-import { ApprovalWithDetails, GroupedDocumentApprovals } from '../../application/ports';
+import { Approval, ApprovalStatus } from '../../domain/entities';
+import { ApprovalResponseDto, GroupedApprovalResponseDto } from '../dtos/response';
+import { GroupedDocumentApprovals } from '../../application/ports';
 import { HttpResponse } from '../../../../shared/dtos';
 import { HttpResponseSerializer } from '../../../../shared/serializers';
 
@@ -19,39 +19,8 @@ export class ApprovalSerializer {
     };
   }
 
-  static toDtoList(approvals: Approval[]): ApprovalResponseDto[] {
-    return approvals.map(this.toDto);
-  }
-
   static toHttpResponse(approval: Approval): HttpResponse<ApprovalResponseDto> {
     return HttpResponseSerializer.serialize(this.toDto(approval));
-  }
-
-  static toHttpResponseList(approvals: Approval[]): HttpResponse<ApprovalResponseDto[]> {
-    return HttpResponseSerializer.serialize(this.toDtoList(approvals));
-  }
-
-  static toPendingApprovalDto(approvalWithDetails: ApprovalWithDetails): PendingApprovalResponseDto {
-    return {
-      id: approvalWithDetails.approval.id!,
-      role: approvalWithDetails.approval.role,
-      status: approvalWithDetails.approval.status,
-      createdAt: approvalWithDetails.approval.createdAt!,
-      documentId: approvalWithDetails.approval.documentId,
-      documentTitle: approvalWithDetails.documentTitle,
-      students: approvalWithDetails.students,
-      courseName: approvalWithDetails.courseName,
-      signatures: approvalWithDetails.allSignatures,
-      approverId: approvalWithDetails.approval.approverId,
-    };
-  }
-
-  static toPendingApprovalDtoList(approvalsWithDetails: ApprovalWithDetails[]): PendingApprovalResponseDto[] {
-    return approvalsWithDetails.map(this.toPendingApprovalDto);
-  }
-
-  static toHttpResponsePendingList(approvalsWithDetails: ApprovalWithDetails[]): HttpResponse<PendingApprovalResponseDto[]> {
-    return HttpResponseSerializer.serialize(this.toPendingApprovalDtoList(approvalsWithDetails));
   }
 
   static toGroupedApprovalDto(grouped: GroupedDocumentApprovals): GroupedApprovalResponseDto {
@@ -67,9 +36,9 @@ export class ApprovalSerializer {
 
     const summary = {
       total: approvals.length,
-      approved: approvals.filter((a) => a.status === 'APPROVED').length,
-      pending: approvals.filter((a) => a.status === 'PENDING').length,
-      rejected: approvals.filter((a) => a.status === 'REJECTED').length,
+      approved: approvals.filter((a) => a.status === ApprovalStatus.APPROVED).length,
+      pending: approvals.filter((a) => a.status === ApprovalStatus.PENDING).length,
+      rejected: approvals.filter((a) => a.status === ApprovalStatus.REJECTED).length,
     };
 
     return {
@@ -83,11 +52,7 @@ export class ApprovalSerializer {
     };
   }
 
-  static toGroupedApprovalDtoList(groupedList: GroupedDocumentApprovals[]): GroupedApprovalResponseDto[] {
-    return groupedList.map(this.toGroupedApprovalDto);
-  }
-
   static toHttpResponseGroupedList(groupedList: GroupedDocumentApprovals[]): HttpResponse<GroupedApprovalResponseDto[]> {
-    return HttpResponseSerializer.serialize(this.toGroupedApprovalDtoList(groupedList));
+    return HttpResponseSerializer.serialize(groupedList.map(this.toGroupedApprovalDto));
   }
 }

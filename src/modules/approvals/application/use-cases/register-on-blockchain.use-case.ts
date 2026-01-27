@@ -7,6 +7,7 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { ApprovalStatus, ApprovalRole } from '../../domain/entities';
 import { FabricOrganizationConfig } from '../../../fabric/infra/config/fabric-organization.config';
 import { Role } from '@prisma/client';
+import { DefenseResult } from '../../../defenses/domain/entities';
 
 interface RegisterOnBlockchainRequest {
   documentId: string;
@@ -143,7 +144,7 @@ export class RegisterOnBlockchainUseCase {
           mspId,
           signature: approval.cryptographicSignature,
           timestamp: approval.approvedAt.toISOString(),
-          status: approval.status as 'APPROVED' | 'REJECTED' | 'PENDING',
+          status: approval.status,
         };
 
         if (approval.justification) {
@@ -190,7 +191,7 @@ export class RegisterOnBlockchainUseCase {
         throw new Error('Defesa não possui resultado');
       }
 
-      if (defense.result !== 'APPROVED' && defense.result !== 'FAILED') {
+      if (defense.result !== DefenseResult.APPROVED && defense.result !== DefenseResult.FAILED) {
         this.logger.error(`Defesa ${defense.id} possui resultado inválido: ${defense.result}`);
         throw new Error(`Defesa possui resultado inválido para registro no blockchain: ${defense.result}`);
       }

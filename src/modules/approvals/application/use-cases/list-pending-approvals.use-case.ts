@@ -3,6 +3,7 @@ import { IApprovalRepository, APPROVAL_REPOSITORY, GroupedDocumentApprovals } fr
 import { ApprovalStatus } from '../../domain/entities';
 import { calculateConsolidatedStatus } from '../../domain/helpers';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
+import { Role } from '@prisma/client';
 
 interface ListPendingApprovalsRequest {
   userId: string;
@@ -26,13 +27,13 @@ export class ListPendingApprovalsUseCase {
   async execute(request: ListPendingApprovalsRequest): Promise<ListPendingApprovalsResponse> {
     let approvals: GroupedDocumentApprovals[];
 
-    if (request.userRole === 'COORDINATOR') {
+    if (request.userRole === Role.COORDINATOR) {
       const coordinator = await this.coordinatorRepository.findByUserId(request.userId);
       if (!coordinator || !coordinator.courseId) {
         return { approvals: [] };
       }
       approvals = await this.approvalRepository.findGroupedByCourseId(coordinator.courseId);
-    } else if (request.userRole === 'ADMIN') {
+    } else if (request.userRole === Role.ADMIN) {
       approvals = await this.approvalRepository.findAllGrouped();
     } else {
       approvals = await this.approvalRepository.findGroupedByParticipant(request.userId);
