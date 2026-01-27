@@ -10,6 +10,8 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/applic
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
+import { CertificateQueueService } from '../../../fabric/application/services/certificate-queue.service';
+import { Role } from '@prisma/client';
 
 interface CreateApprovalsRequest {
   documentId: string;
@@ -40,6 +42,7 @@ export class CreateApprovalsUseCase {
     private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
     private readonly emailTemplateService: EmailTemplateService,
+    private readonly certificateQueue: CertificateQueueService,
   ) {}
 
   async execute(request: CreateApprovalsRequest): Promise<CreateApprovalsResponse> {
@@ -97,6 +100,9 @@ export class CreateApprovalsUseCase {
     const createdAdvisorApproval = await this.approvalRepository.create(advisorApproval);
     approvals.push(createdAdvisorApproval);
 
+    this.certificateQueue.enqueueCertificateGeneration(advisor.id, advisor.email, Role.ADVISOR, createdAdvisorApproval.id)
+      .catch(error => this.logger.error(`Falha ao enfileirar certificado do orientador: ${error.message}`));
+
     if (!isCoordinatorAlsoAdvisor) {
       this.sendApprovalEmail(createdAdvisorApproval, document, defense, advisor, validStudents)
         .catch(error => {
@@ -112,6 +118,9 @@ export class CreateApprovalsUseCase {
       });
       const createdStudentApproval = await this.approvalRepository.create(studentApproval);
       approvals.push(createdStudentApproval);
+
+      this.certificateQueue.enqueueCertificateGeneration(student.id, student.email, Role.STUDENT, createdStudentApproval.id)
+        .catch(error => this.logger.error(`Falha ao enfileirar certificado do aluno: ${error.message}`));
       this.sendApprovalEmail(createdStudentApproval, document, defense, advisor, [student])
         .catch(error => {
           this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);

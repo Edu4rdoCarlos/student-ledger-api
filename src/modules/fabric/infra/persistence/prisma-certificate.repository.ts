@@ -15,6 +15,7 @@ export class PrismaCertificateRepository implements ICertificateRepository {
     return this.prisma.userCertificate.create({
       data: {
         userId: data.userId,
+        approvalId: data.approvalId,
         certificate: data.certificate,
         privateKey: data.privateKey,
         mspId: data.mspId,
@@ -31,6 +32,15 @@ export class PrismaCertificateRepository implements ICertificateRepository {
     return this.prisma.userCertificate.findFirst({
       where: {
         userId,
+        status: CertificateStatus.ACTIVE,
+      },
+    });
+  }
+
+  async findActiveByApprovalId(approvalId: string): Promise<UserCertificateData | null> {
+    return this.prisma.userCertificate.findFirst({
+      where: {
+        approvalId,
         status: CertificateStatus.ACTIVE,
       },
     });

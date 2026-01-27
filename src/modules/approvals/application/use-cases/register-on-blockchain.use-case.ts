@@ -6,7 +6,8 @@ import { IFabricGateway, FABRIC_GATEWAY, DocumentSignature } from '../../../fabr
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ApprovalStatus, ApprovalRole } from '../../domain/entities';
 import { FabricOrganizationConfig } from '../../../fabric/infra/config/fabric-organization.config';
-import { Role } from '@prisma/client';
+import { CertificateManagementService } from '../../../fabric/application/services/certificate-management.service';
+import { Role, RevocationReason } from '@prisma/client';
 import { DefenseResult } from '../../../defenses/domain/entities';
 
 interface RegisterOnBlockchainRequest {
@@ -34,6 +35,7 @@ export class RegisterOnBlockchainUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
     private readonly fabricOrgConfig: FabricOrganizationConfig,
+    private readonly certificateManagement: CertificateManagementService,
   ) {}
 
   async execute(request: RegisterOnBlockchainRequest): Promise<RegisterOnBlockchainResponse> {
@@ -216,6 +218,9 @@ export class RegisterOnBlockchainUseCase {
 
       await this.documentRepository.update(document);
 
+      this.revokeNonCoordinatorCertificates(approvals, coordinator.id)
+        .catch(error => this.logger.error(`Falha ao revogar certificados: ${error.message}`));
+
       return {
         registered: true,
         blockchainTxId: result.documentId,
@@ -223,6 +228,28 @@ export class RegisterOnBlockchainUseCase {
     } catch (error) {
       this.logger.error(`Failed to register document on blockchain: ${error.message}`, error.stack);
       throw new Error(`Falha ao registrar documento no blockchain: ${error.message}`);
+    }
+  }
+
+  private async revokeNonCoordinatorCertificates(
+    approvals: { id?: string; approverId?: string; role: ApprovalRole }[],
+    coordinatorId: string,
+  ): Promise<void> {
+    const nonCoordinatorApprovals = approvals.filter(
+      a => a.role !== ApprovalRole.COORDINATOR,
+    );
+
+    for (const approval of nonCoordinatorApprovals) {
+      if (!approval.id) continue;
+      try {
+        await this.certificateManagement.revokeCertificateByApprovalId(
+          approval.id,
+          RevocationReason.CESSATION_OF_OPERATION,
+          coordinatorId,
+        );
+      } catch (error) {
+        this.logger.warn(`Falha ao revogar certificado da approval ${approval.id}: ${error.message}`);
+      }
     }
   }
 }

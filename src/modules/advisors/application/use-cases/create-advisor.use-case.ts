@@ -9,7 +9,6 @@ import { generateRandomPassword } from '../../../../shared/utils';
 import { SendEmailUseCase } from '../../../notifications/application/use-cases';
 import { EmailTemplate } from '../../../notifications/domain/enums';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
-import { CertificateQueueService } from '../../../fabric/application/services/certificate-queue.service';
 
 @Injectable()
 export class CreateAdvisorUseCase {
@@ -23,7 +22,6 @@ export class CreateAdvisorUseCase {
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
-    private readonly certificateQueue: CertificateQueueService,
   ) {}
 
   async execute(input: CreateAdvisorInput, currentUser: any): Promise<Advisor> {
@@ -73,12 +71,6 @@ export class CreateAdvisorUseCase {
     });
 
     const created = await this.advisorRepository.create(advisor);
-
-    await this.certificateQueue.enqueueCertificateGeneration(
-      created.id,
-      created.email,
-      Role.ADVISOR,
-    );
 
     this.sendEmailUseCase.execute({
       userId: created.id,

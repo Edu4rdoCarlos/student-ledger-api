@@ -10,8 +10,10 @@ export class SignatureService {
     private readonly certificateService: CertificateManagementService,
   ) {}
 
-  async sign(hash: string, userId: string): Promise<string> {
-    const certData = await this.certificateService.getUserCertificate(userId);
+  async sign(hash: string, userId: string, approvalId?: string): Promise<string> {
+    const certData = approvalId
+      ? await this.certificateService.getUserCertificateByApprovalId(approvalId)
+      : await this.certificateService.getUserCertificate(userId);
 
     if (!certData) {
       this.logger.error(`Certificado não encontrado para usuário ${userId}`);

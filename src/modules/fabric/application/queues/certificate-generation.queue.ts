@@ -6,4 +6,5 @@ export interface CertificateGenerationJobData {
   userId: string;
   email: string;
   role: Role;
+  approvalId?: string;
 }

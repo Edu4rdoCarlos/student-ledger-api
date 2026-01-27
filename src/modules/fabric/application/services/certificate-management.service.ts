@@ -23,12 +23,20 @@ export class CertificateManagementService {
     userId: string,
     email: string,
     role: Role,
+    approvalId?: string,
   ): Promise<void> {
-    // Check if user already has an active certificate
-    const existingCert = await this.certRepository.findActiveByUserId(userId);
-    if (existingCert) {
-      this.logger.log(`User ${userId} already has an active certificate, skipping generation`);
-      return;
+    if (approvalId) {
+      const existingCert = await this.certRepository.findActiveByApprovalId(approvalId);
+      if (existingCert) {
+        this.logger.log(`Approval ${approvalId} já possui certificado ativo, pulando geração`);
+        return;
+      }
+    } else {
+      const existingCert = await this.certRepository.findActiveByUserId(userId);
+      if (existingCert) {
+        this.logger.log(`Usuário ${userId} já possui certificado ativo, pulando geração`);
+        return;
+      }
     }
 
     const { orgName, mspId, affiliation } = this.getOrgInfo(role);
@@ -65,6 +73,7 @@ export class CertificateManagementService {
 
       await this.certRepository.create({
         userId,
+        approvalId,
         certificate: enrollment.certificate,
         privateKey: enrollment.privateKey,
         mspId,
@@ -104,6 +113,47 @@ export class CertificateManagementService {
     };
   }
 
+  async getUserCertificateByApprovalId(approvalId: string): Promise<{
+    cert: string;
+    key: string;
+    mspId: string;
+  } | null> {
+    const certData = await this.certRepository.findActiveByApprovalId(approvalId);
+
+    if (!certData) {
+      return null;
+    }
+
+    if (new Date() > certData.notAfter) {
+      await this.certRepository.updateStatus(certData.id, 'EXPIRED');
+      return null;
+    }
+
+    return {
+      cert: certData.certificate,
+      key: certData.privateKey,
+      mspId: certData.mspId,
+    };
+  }
+
+  async revokeCertificateByApprovalId(
+    approvalId: string,
+    reason: string,
+    revokedBy: string,
+  ): Promise<void> {
+    const certData = await this.certRepository.findActiveByApprovalId(approvalId);
+
+    if (!certData) {
+      this.logger.warn(`Nenhum certificado ativo encontrado para approval ${approvalId}`);
+      return;
+    }
+
+    await this.fabricCA.revoke(certData.enrollmentId, reason);
+    await this.certRepository.revoke(certData.id, reason as any, revokedBy);
+
+    this.logger.log(`Certificado revogado para approval ${approvalId}`);
+  }
+
   async revokeCertificate(
     userId: string,
     reason: string,
@@ -112,7 +162,7 @@ export class CertificateManagementService {
     const certData = await this.certRepository.findActiveByUserId(userId);
 
     if (!certData) {
-      throw new Error('No active certificate found for user');
+      throw new Error('Nenhum certificado ativo encontrado para o usuário');
     }
 
     await this.fabricCA.revoke(certData.enrollmentId, reason);

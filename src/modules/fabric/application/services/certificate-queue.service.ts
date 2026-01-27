@@ -20,10 +20,11 @@ export class CertificateQueueService {
     userId: string,
     email: string,
     role: Role,
+    approvalId?: string,
   ): Promise<void> {
     try {
       await this.certificateQueue.add(
-        { userId, email, role },
+        { userId, email, role, approvalId },
         {
           attempts: 5,
           backoff: {

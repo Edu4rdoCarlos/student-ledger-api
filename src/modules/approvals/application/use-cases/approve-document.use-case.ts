@@ -73,6 +73,7 @@ export class ApproveDocumentUseCase {
     const cryptographicSignature = await this.signatureService.sign(
       combinedHash,
       request.userId,
+      approval.id,
     );
 
     approval.approve(request.userId, cryptographicSignature);
@@ -125,7 +126,7 @@ export class ApproveDocumentUseCase {
     const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
 
     if (isCoordinatorAlsoAdvisor) {
-      const advisorSignature = await this.signatureService.sign(combinedHash, userId);
+      const advisorSignature = await this.signatureService.sign(combinedHash, userId, advisorApproval.id);
       advisorApproval.approve(userId, advisorSignature);
       await this.approvalRepository.update(advisorApproval);
     }

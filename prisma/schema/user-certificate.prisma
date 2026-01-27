@@ -3,6 +3,9 @@ model UserCertificate {
   userId       String
   user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  approvalId   String?           @unique
+  approval     Approval?         @relation(fields: [approvalId], references: [id], onDelete: SetNull)
+
   certificate  String            @db.Text
   privateKey   String            @db.Text
 
@@ -20,10 +23,10 @@ model UserCertificate {
 
   revocation   CertificateRevocation?
 
-  @@unique([userId, status], name: "unique_active_cert_per_user")
   @@index([userId])
   @@index([serialNumber])
   @@index([status])
+  @@index([approvalId])
 }
 
 enum CertificateStatus {

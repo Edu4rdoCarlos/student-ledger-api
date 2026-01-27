@@ -13,6 +13,8 @@ model Approval {
   approverId String?
   approver   User?    @relation(fields: [approverId], references: [id])
 
+  certificate UserCertificate?
+
   @@unique([documentId, role, approverId])
   @@index([documentId])
   @@index([approverId])

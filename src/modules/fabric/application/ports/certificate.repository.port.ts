@@ -3,6 +3,7 @@ import { CertificateStatus, RevocationReason } from '@prisma/client';
 export interface UserCertificateData {
   id: string;
   userId: string;
+  approvalId?: string | null;
   certificate: string;
   privateKey: string;
   mspId: string;
@@ -17,6 +18,7 @@ export interface UserCertificateData {
 
 export interface CreateCertificateInput {
   userId: string;
+  approvalId?: string | null;
   certificate: string;
   privateKey: string;
   mspId: string;
@@ -29,6 +31,7 @@ export interface CreateCertificateInput {
 export interface ICertificateRepository {
   create(data: CreateCertificateInput): Promise<UserCertificateData>;
   findActiveByUserId(userId: string): Promise<UserCertificateData | null>;
+  findActiveByApprovalId(approvalId: string): Promise<UserCertificateData | null>;
   findActiveByMspId(mspId: string): Promise<UserCertificateData | null>;
   findByUserId(userId: string): Promise<UserCertificateData[]>;
   revoke(

@@ -17,10 +17,10 @@ export class CertificateGenerationProcessor {
 
   @Process()
   async handleCertificateGeneration(job: Job<CertificateGenerationJobData>) {
-    const { userId, email, role } = job.data;
+    const { userId, email, role, approvalId } = job.data;
 
     try {
-      await this.certificateService.generateUserCertificate(userId, email, role);
+      await this.certificateService.generateUserCertificate(userId, email, role, approvalId);
       this.logger.log(`Certificado gerado com sucesso para usuário ${userId} (${email})`);
     } catch (error) {
       this.logger.error(

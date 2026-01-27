@@ -38,3 +38,5 @@ temp/
 # Docs (guia interno - apenas na raiz)
 /docs/
 
+# Scripts
+/scripts
