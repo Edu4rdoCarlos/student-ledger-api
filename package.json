@@ -28,7 +28,8 @@
     "prisma:validate": "prisma validate",
     "prisma:seed": "ts-node prisma/seed.ts",
     "seed:certificates": "ts-node -r tsconfig-paths/register scripts/seed-with-certificates.ts",
-    "test:certificates": "ts-node -r tsconfig-paths/register scripts/test-certificate-flow.ts"
+    "test:certificates": "ts-node -r tsconfig-paths/register scripts/test-certificate-flow.ts",
+    "test:full-flow": "ts-node -r tsconfig-paths/register scripts/test-full-flow.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -84,6 +85,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
+    "pdf-lib": "^1.17.1",
     "prettier": "^3.0.0",
     "prisma": "^5.7.0",
     "source-map-support": "^0.5.21",

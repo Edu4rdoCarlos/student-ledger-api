@@ -17,9 +17,20 @@ import { HashUtil } from './infra/utils/hash.util';
 import { IpfsModule } from '../ipfs/ipfs.module';
 import { DefensesModule } from '../defenses/defenses.module';
 import { ApprovalsModule } from '../approvals/approvals.module';
+import { StudentsModule } from '../students/students.module';
+import { AdvisorsModule } from '../advisors/advisors.module';
+import { CoordinatorsModule } from '../coordinators/coordinators.module';
 
 @Module({
-  imports: [PrismaModule, IpfsModule, forwardRef(() => DefensesModule), forwardRef(() => ApprovalsModule)],
+  imports: [
+    PrismaModule,
+    IpfsModule,
+    forwardRef(() => DefensesModule),
+    forwardRef(() => ApprovalsModule),
+    forwardRef(() => StudentsModule),
+    forwardRef(() => AdvisorsModule),
+    forwardRef(() => CoordinatorsModule),
+  ],
   controllers: [DocumentsController],
   providers: [
     // Repository

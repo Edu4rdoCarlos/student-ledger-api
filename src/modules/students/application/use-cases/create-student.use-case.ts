@@ -10,7 +10,7 @@ import { generateRandomPassword } from '../../../../shared/utils';
 import { ICurrentUser } from '../../../../shared/types';
 import { SendEmailUseCase } from '../../../notifications/application/use-cases';
 import { EmailTemplate } from '../../../notifications/domain/enums';
-
+import { CertificateQueueService } from '../../../fabric/application/services/certificate-queue.service';
 
 @Injectable()
 export class CreateStudentUseCase {
@@ -24,6 +24,7 @@ export class CreateStudentUseCase {
     @Inject(COURSE_REPOSITORY)
     private readonly courseRepository: ICourseRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
+    private readonly certificateQueue: CertificateQueueService,
   ) {}
 
   async execute(dto: CreateStudentDto, currentUser?: ICurrentUser): Promise<StudentResponseDto> {
@@ -70,6 +71,12 @@ export class CreateStudentUseCase {
     });
 
     const created = await this.studentRepository.create(student);
+
+    await this.certificateQueue.enqueueCertificateGeneration(
+      created.id,
+      created.email,
+      Role.STUDENT,
+    );
 
     this.sendEmailUseCase.execute({
       userId: created.id,

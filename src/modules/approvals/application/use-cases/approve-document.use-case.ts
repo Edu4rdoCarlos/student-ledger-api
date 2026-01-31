@@ -58,7 +58,7 @@ export class ApproveDocumentUseCase {
     }
 
     if (approval.role === ApprovalRole.COORDINATOR) {
-      await this.validateCoordinatorCanApprove(approval.documentId);
+      await this.validateCoordinatorCanApprove(approval.documentId, approval.approverId);
     }
 
     const document = await this.documentRepository.findById(approval.documentId);
@@ -70,10 +70,12 @@ export class ApproveDocumentUseCase {
     }
 
     const combinedHash = `${document.minutesHash}:${document.evaluationHash}`;
+    // COORDINATOR usa certificado base (permanente), não passa approvalId
+    const approvalIdForSign = approval.role === ApprovalRole.COORDINATOR ? undefined : approval.id;
     const cryptographicSignature = await this.signatureService.sign(
       combinedHash,
       request.userId,
-      approval.id,
+      approvalIdForSign,
     );
 
     approval.approve(request.userId, cryptographicSignature);
@@ -93,17 +95,21 @@ export class ApproveDocumentUseCase {
     return { approval: updatedApproval };
   }
 
-  private async validateCoordinatorCanApprove(documentId: string): Promise<void> {
+  private async validateCoordinatorCanApprove(documentId: string, coordinatorApproverId?: string): Promise<void> {
     const approvals = await this.approvalRepository.findByDocumentId(documentId);
 
     const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
     const studentApprovals = approvals.filter(a => a.role === ApprovalRole.STUDENT);
 
-    const advisorApproved = advisorApproval?.status === ApprovalStatus.APPROVED;
+    const isCoordinatorAlsoAdvisor = advisorApproval?.approverId === coordinatorApproverId;
+    const advisorApproved = advisorApproval?.status === ApprovalStatus.APPROVED || isCoordinatorAlsoAdvisor;
     const allStudentsApproved = studentApprovals.every(a => a.status === ApprovalStatus.APPROVED);
 
     if (!advisorApproved || !allStudentsApproved) {
-      throw new ForbiddenException('Orientador e aluno(s) devem aprovar antes do coordenador');
+      const message = isCoordinatorAlsoAdvisor
+        ? 'Aluno(s) devem aprovar antes do coordenador'
+        : 'Orientador e aluno(s) devem aprovar antes do coordenador';
+      throw new ForbiddenException(message);
     }
   }
 

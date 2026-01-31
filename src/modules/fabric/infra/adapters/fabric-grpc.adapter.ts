@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import * as grpc from '@grpc/grpc-js';
 import { connect, Contract, Identity, Signer, signers, Gateway } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
-import * as fs from 'fs';
 import {
   IFabricGateway,
   FabricUser,
@@ -28,6 +27,7 @@ interface OrgConfig {
   mspId: string;
   peerEndpoint: string;
   peerName: string;
+  tlsCaCert: string;
 }
 
 interface FabricConnection {
@@ -42,8 +42,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
   private readonly logger = new Logger(FabricGrpcAdapter.name);
   private readonly channelName: string;
   private readonly chaincodeName: string;
-  private readonly tlsCaCertPath: string;
-  private readonly tlsCaCertPem: string;
 
   private readonly organizations: Record<OrgName, OrgConfig>;
 
@@ -61,8 +59,6 @@ export class FabricGrpcAdapter implements IFabricGateway {
   ) {
     this.channelName = this.configService.get<string>('FABRIC_CHANNEL', 'studentchannel');
     this.chaincodeName = this.configService.get<string>('FABRIC_CHAINCODE', 'student-ledger');
-    this.tlsCaCertPath = this.configService.get<string>('FABRIC_TLS_CA_CERT_PATH', '');
-    this.tlsCaCertPem = this.configService.get<string>('FABRIC_TLS_CA_CERT', '');
 
     this.organizations = {
       coordenacao: {
@@ -73,6 +69,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
           'FABRIC_COORDENACAO_PEER_NAME',
           'peer0.coordenacao.ifal.local',
         ),
+        tlsCaCert: this.configService.get<string>('FABRIC_COORDENACAO_TLS_CA_CERT', ''),
       },
       orientador: {
         name: 'orientador',
@@ -82,41 +79,34 @@ export class FabricGrpcAdapter implements IFabricGateway {
           'FABRIC_ORIENTADOR_PEER_NAME',
           'peer0.orientador.ifal.local',
         ),
+        tlsCaCert: this.configService.get<string>('FABRIC_ORIENTADOR_TLS_CA_CERT', ''),
       },
       aluno: {
         name: 'aluno',
         mspId: this.configService.get<string>('FABRIC_ALUNO_MSP_ID', 'AlunoMSP'),
         peerEndpoint: this.configService.get<string>('FABRIC_ALUNO_PEER_ENDPOINT', 'localhost:9051'),
         peerName: this.configService.get<string>('FABRIC_ALUNO_PEER_NAME', 'peer0.aluno.ifal.local'),
+        tlsCaCert: this.configService.get<string>('FABRIC_ALUNO_TLS_CA_CERT', ''),
       },
     };
   }
 
-  private getTlsCredentials(): grpc.ChannelCredentials {
-    // Prioridade: PEM inline > path de arquivo
-    if (this.tlsCaCertPem) {
-      const tlsRootCert = Buffer.from(this.tlsCaCertPem);
-      return grpc.credentials.createSsl(tlsRootCert);
+  private getTlsCredentials(orgConfig: OrgConfig): grpc.ChannelCredentials {
+    if (!orgConfig.tlsCaCert) {
+      throw new FabricCertificateNotFoundError(
+        'TLS CA',
+        `Configure FABRIC_${orgConfig.name.toUpperCase()}_TLS_CA_CERT para a organização ${orgConfig.name}`,
+      );
     }
 
-    if (this.tlsCaCertPath) {
-      if (!fs.existsSync(this.tlsCaCertPath)) {
-        throw new FabricCertificateNotFoundError('TLS CA', this.tlsCaCertPath);
-      }
-      const tlsRootCert = fs.readFileSync(this.tlsCaCertPath);
-      return grpc.credentials.createSsl(tlsRootCert);
-    }
-
-    throw new FabricCertificateNotFoundError(
-      'TLS CA',
-      'Configure FABRIC_TLS_CA_CERT (PEM inline) ou FABRIC_TLS_CA_CERT_PATH (caminho do arquivo)',
-    );
+    const tlsRootCert = Buffer.from(orgConfig.tlsCaCert);
+    return grpc.credentials.createSsl(tlsRootCert);
   }
 
   async healthCheck(): Promise<FabricHealthStatus> {
     try {
       const orgConfig = this.organizations.coordenacao;
-      const tlsCredentials = this.getTlsCredentials();
+      const tlsCredentials = this.getTlsCredentials(orgConfig);
 
       const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
         'grpc.ssl_target_name_override': orgConfig.peerName,
@@ -169,7 +159,7 @@ export class FabricGrpcAdapter implements IFabricGateway {
       );
     }
 
-    const tlsCredentials = this.getTlsCredentials();
+    const tlsCredentials = this.getTlsCredentials(orgConfig);
 
     const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
       'grpc.ssl_target_name_override': orgConfig.peerName,
@@ -217,6 +207,67 @@ export class FabricGrpcAdapter implements IFabricGateway {
     }
   }
 
+  /**
+   * Executa operação de escrita no blockchain.
+   * SEMPRE conecta ao peer da Coordenação para endorsement,
+   * pois a política de endorsement exige apenas CoordenacaoMSP.
+   */
+  private async withWriteConnection<T>(
+    user: FabricUser,
+    operation: (contract: Contract) => Promise<T>,
+  ): Promise<T> {
+    // Sempre usar o peer da Coordenação para transações de escrita
+    const orgConfig = this.organizations.coordenacao;
+
+    // Para transações de escrita, precisamos especificamente do certificado CoordenacaoMSP
+    // O coordenador pode ter múltiplos certificados (ex: também é orientador)
+    const certData = await this.certRepository.findActiveByUserIdAndMspId(
+      user.id,
+      orgConfig.mspId, // CoordenacaoMSP
+    );
+    if (!certData) {
+      throw new FabricCertificateNotFoundError(
+        'Certificado',
+        `Nenhum certificado CoordenacaoMSP ativo encontrado para o usuário ${user.id}. ` +
+        `É necessário um certificado da organização Coordenação para transações de escrita.`,
+      );
+    }
+
+    const tlsCredentials = this.getTlsCredentials(orgConfig);
+    const client = new grpc.Client(orgConfig.peerEndpoint, tlsCredentials, {
+      'grpc.ssl_target_name_override': orgConfig.peerName,
+      'grpc.default_authority': orgConfig.peerName,
+    });
+
+    try {
+      const identity = this.createIdentityFromPem(certData.certificate, certData.mspId);
+      const signer = this.createSignerFromPem(certData.privateKey);
+
+      const gateway = connect({
+        client,
+        identity,
+        signer,
+        evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
+        endorseOptions: () => ({ deadline: Date.now() + 30000 }),
+        submitOptions: () => ({ deadline: Date.now() + 10000 }),
+        commitStatusOptions: () => ({ deadline: Date.now() + 120000 }),
+      });
+
+      try {
+        const network = gateway.getNetwork(this.channelName);
+        const contract = network.getContract(this.chaincodeName, 'DocumentContract');
+
+        this.logger.log(`Conectado ao peer ${orgConfig.peerName} para transação de escrita`);
+
+        return await operation(contract);
+      } finally {
+        gateway.close();
+      }
+    } finally {
+      client.close();
+    }
+  }
+
   private createIdentityFromPem(certPem: string, mspId: string): Identity {
     const credentials = Buffer.from(certPem);
     return { mspId, credentials };
@@ -241,9 +292,14 @@ export class FabricGrpcAdapter implements IFabricGateway {
     signatures: DocumentSignature[],
     validatedAt: string,
   ): Promise<DocumentRecord> {
-    return this.withConnection(user, async (connection) => {
+    // Para transações de escrita, conectar ao peer da Coordenação
+    // pois a política de endorsement exige apenas CoordenacaoMSP
+    return this.withWriteConnection(user, async (contract: Contract) => {
       try {
-        const result = await connection.contract.submitTransaction(
+        // Translate result to Portuguese for chaincode
+        const resultadoPt = resultado === 'APPROVED' ? 'APROVADO' : 'REPROVADO';
+
+        const result = await contract.submitTransaction(
           'registerDocument',
           minutesHash,
           minutesCid,
@@ -252,14 +308,21 @@ export class FabricGrpcAdapter implements IFabricGateway {
           JSON.stringify(matriculas),
           defenseDate,
           notaFinal.toString(),
-          resultado,
+          resultadoPt,
           motivo,
-          'APPROVED',
+          'APROVADO',
           JSON.stringify(signatures),
           validatedAt,
         );
         return JSON.parse(Buffer.from(result).toString('utf-8'));
       } catch (error) {
+        // Log detailed error information
+        this.logger.error(`registerDocument error details: ${JSON.stringify({
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          cause: error.cause?.message,
+        })}`);
         throw new FabricTransactionError('registerDocument', error.message);
       }
     });

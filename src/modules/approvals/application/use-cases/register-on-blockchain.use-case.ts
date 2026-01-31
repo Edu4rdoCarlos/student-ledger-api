@@ -111,50 +111,71 @@ export class RegisterOnBlockchainUseCase {
     const isCoordinatorAlsoAdvisor =
       coordinatorApproval?.approverId === advisorApproval?.approverId;
 
-    const signatures: DocumentSignature[] = approvals
-      .filter(approval => !(isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.ADVISOR))
-      .map(approval => {
-        if (!approval.approverId) {
-          throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
-        }
+    const signatures: DocumentSignature[] = [];
 
-        const user = userMap.get(approval.approverId);
-        if (!user) {
-          throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
-        }
+    for (const approval of approvals) {
+      if (!approval.approverId) {
+        throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
+      }
 
-        if (!approval.approvedAt) {
-          throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
-        }
+      const user = userMap.get(approval.approverId);
+      if (!user) {
+        throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
+      }
 
-        if (!approval.cryptographicSignature) {
-          throw new Error(`Aprovação ${approval.id} não possui assinatura criptográfica`);
-        }
+      if (!approval.approvedAt) {
+        throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
+      }
 
-        const isHybridRole = isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.COORDINATOR;
+      if (!approval.cryptographicSignature) {
+        throw new Error(`Aprovação ${approval.id} não possui assinatura criptográfica`);
+      }
 
-        const fabricRole = isHybridRole ? 'coordenador_orientador' :
-          approval.role === ApprovalRole.COORDINATOR ? 'coordenador' :
-          approval.role === ApprovalRole.ADVISOR ? 'orientador' : 'aluno';
+      // Quando coordenador é também orientador, cria assinatura do coordenador
+      // A assinatura do orientador será criada abaixo com os dados do orientador original
+      if (isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.ADVISOR) {
+        // Pula a aprovação de orientador - será gerada a partir do coordenador
+        continue;
+      }
 
-        const userRole: Role = approval.role === ApprovalRole.STUDENT ? 'STUDENT' : 'COORDINATOR';
-        const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
+      const fabricRole =
+        approval.role === ApprovalRole.COORDINATOR ? 'coordenador' :
+        approval.role === ApprovalRole.ADVISOR ? 'orientador' : 'aluno';
 
-        const documentSignature: DocumentSignature = {
-          role: fabricRole,
+      const userRole: Role =
+        approval.role === ApprovalRole.STUDENT ? 'STUDENT' :
+        approval.role === ApprovalRole.ADVISOR ? 'ADVISOR' : 'COORDINATOR';
+      const mspId = this.fabricOrgConfig.getMspIdByRole(userRole);
+
+      const documentSignature: DocumentSignature = {
+        role: fabricRole,
+        email: user.email,
+        mspId,
+        signature: approval.cryptographicSignature,
+        timestamp: approval.approvedAt.toISOString(),
+        status: approval.status,
+      };
+
+      if (approval.justification) {
+        documentSignature.justification = approval.justification;
+      }
+
+      signatures.push(documentSignature);
+
+      // Se coordenador é também orientador, adiciona assinatura de orientador
+      // usando a mesma assinatura criptográfica mas com role e MSP diferentes
+      if (isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.COORDINATOR) {
+        const advisorSignature: DocumentSignature = {
+          role: 'orientador',
           email: user.email,
-          mspId,
-          signature: approval.cryptographicSignature,
-          timestamp: approval.approvedAt.toISOString(),
-          status: approval.status,
+          mspId: this.fabricOrgConfig.getMspIdByRole('ADVISOR'), // OrientadorMSP
+          signature: advisorApproval?.cryptographicSignature || approval.cryptographicSignature,
+          timestamp: advisorApproval?.approvedAt?.toISOString() || approval.approvedAt.toISOString(),
+          status: advisorApproval?.status || approval.status,
         };
-
-        if (approval.justification) {
-          documentSignature.justification = approval.justification;
-        }
-
-        return documentSignature;
-      });
+        signatures.push(advisorSignature);
+      }
+    }
 
     try {
       const coordinatorApproval = approvals.find(
