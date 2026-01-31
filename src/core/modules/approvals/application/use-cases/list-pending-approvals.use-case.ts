@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { IApprovalRepository, APPROVAL_REPOSITORY, GroupedDocumentApprovals } from '../ports';
 import { ApprovalStatus } from '../../domain/entities';
 import { calculateConsolidatedStatus } from '../../domain/helpers';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
-import { Role } from '@prisma/client';
 
 interface ListPendingApprovalsRequest {
   userId: string;
@@ -25,27 +25,43 @@ export class ListPendingApprovalsUseCase {
   ) {}
 
   async execute(request: ListPendingApprovalsRequest): Promise<ListPendingApprovalsResponse> {
-    let approvals: GroupedDocumentApprovals[];
+    const approvals = await this.fetchApprovalsByRole(request.userId, request.userRole);
+    const filtered = this.filterByStatus(approvals, request.status);
 
-    if (request.userRole === Role.COORDINATOR) {
-      const coordinator = await this.coordinatorRepository.findByUserId(request.userId);
-      if (!coordinator || !coordinator.courseId) {
-        return { approvals: [] };
-      }
-      approvals = await this.approvalRepository.findGroupedByCourseId(coordinator.courseId);
-    } else if (request.userRole === Role.ADMIN) {
-      approvals = await this.approvalRepository.findAllGrouped();
-    } else {
-      approvals = await this.approvalRepository.findGroupedByParticipant(request.userId);
+    return { approvals: filtered };
+  }
+
+  private async fetchApprovalsByRole(userId: string, userRole: string): Promise<GroupedDocumentApprovals[]> {
+    switch (userRole) {
+      case Role.COORDINATOR:
+        return this.fetchCoordinatorApprovals(userId);
+
+      default:
+        return this.approvalRepository.findGroupedByParticipant(userId);
+    }
+  }
+
+  private async fetchCoordinatorApprovals(userId: string): Promise<GroupedDocumentApprovals[]> {
+    const coordinator = await this.coordinatorRepository.findByUserId(userId);
+
+    if (!coordinator?.courseId) {
+      return [];
     }
 
-    if (request.status) {
-      approvals = approvals.filter((doc) => {
-        const consolidatedStatus = calculateConsolidatedStatus(doc.approvals);
-        return consolidatedStatus === request.status;
-      });
+    return this.approvalRepository.findGroupedByCourseId(coordinator.courseId);
+  }
+
+  private filterByStatus(
+    approvals: GroupedDocumentApprovals[],
+    status?: ApprovalStatus,
+  ): GroupedDocumentApprovals[] {
+    if (!status) {
+      return approvals;
     }
 
-    return { approvals };
+    return approvals.filter(doc => {
+      const consolidatedStatus = calculateConsolidatedStatus(doc.approvals);
+      return consolidatedStatus === status;
+    });
   }
 }

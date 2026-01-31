@@ -22,6 +22,7 @@ interface CreateDocumentVersionRequest {
   documentFile: Buffer;
   documentFilename: string;
   changeReason: string;
+  coordinatorId: string;
 }
 
 interface CreateDocumentVersionResponse {
@@ -73,7 +74,7 @@ export class CreateDocumentVersionUseCase {
       if (wasReplaced) {
         await this.resetApprovalsStatus(createdVersion.id);
       } else {
-        await this.createNewApprovals(createdVersion.id);
+        await this.createNewApprovals(createdVersion.id, request.coordinatorId);
       }
       await this.updateDefenseGrade(currentDocument.defenseId, request.finalGrade);
 
@@ -296,10 +297,10 @@ export class CreateDocumentVersionUseCase {
     }
   }
 
-  private async createNewApprovals(documentId: string): Promise<void> {
+  private async createNewApprovals(documentId: string, coordinatorId: string): Promise<void> {
     this.logger.log(`Criando novas aprovações para documento ${documentId}`);
 
-    this.createApprovalsUseCase.execute({ documentId }).catch((error) => {
+    this.createApprovalsUseCase.execute({ documentId, coordinatorId }).catch((error) => {
       this.logger.error(`Falha ao criar aprovações: ${error.message}`);
     });
   }

@@ -5,6 +5,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Roles, CurrentUser } from '../../../../../shared/decorators';
 import { ICurrentUser } from '../../../../../shared/types';
+import { DocumentType } from '../../domain/entities';
 import { ValidateDocumentUseCase, DownloadDocumentUseCase, CreateDocumentVersionUseCase, ListDocumentVersionsUseCase, GetDocumentsSummaryUseCase } from '../../application/use-cases';
 import { CreateDocumentVersionResponseDto, DocumentsSummaryResponseDto } from '../dtos/response';
 import { CreateDocumentVersionDto } from '../dtos/request';
@@ -30,7 +31,7 @@ export class DocumentsController {
   @DownloadDocumentDocs()
   async download(
     @Param('id') id: string,
-    @Query('type') documentType: 'minutes' | 'evaluation' | undefined,
+    @Query('type') documentType: DocumentType | undefined,
     @CurrentUser() currentUser: any,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -81,6 +82,7 @@ export class DocumentsController {
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY })
     )
     file: Express.Multer.File,
+    @CurrentUser() currentUser: ICurrentUser,
   ) {
     const safeFilename = sanitizeFilename(file.originalname);
 
@@ -91,6 +93,7 @@ export class DocumentsController {
       documentFile: file.buffer,
       documentFilename: safeFilename,
       changeReason: dto.changeReason,
+      coordinatorId: currentUser.id,
     });
 
     // Buscar todas as versões do documento pela defenseId

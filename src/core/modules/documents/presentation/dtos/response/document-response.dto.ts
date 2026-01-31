@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Document, DocumentStatus } from '../../../domain/entities';
+import { Document, DocumentStatus, DocumentType } from '../../../domain/entities';
 
 export class DocumentResponseDto {
   @ApiProperty()
@@ -122,8 +122,8 @@ export class SimpleDocumentDto {
   @ApiProperty()
   id: string;
 
-  @ApiPropertyOptional({ description: 'Type of document being validated (minutes or evaluation)' })
-  documentType?: 'minutes' | 'evaluation';
+  @ApiPropertyOptional({ description: 'Type of document being validated (minutes or evaluation)', enum: DocumentType })
+  documentType?: DocumentType;
 
   @ApiPropertyOptional({ description: 'SHA-256 hash of minutes file (Ata)' })
   minutesHash?: string;

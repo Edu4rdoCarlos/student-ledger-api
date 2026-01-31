@@ -4,7 +4,15 @@ export enum DocumentStatus {
   INACTIVE = 'INACTIVE',
 }
 
-export type DocumentType = 'minutes' | 'evaluation';
+export enum DocumentType {
+  MINUTES = 'minutes',
+  EVALUATION = 'evaluation',
+}
+
+export const DocumentTypeLabel: Record<DocumentType, string> = {
+  [DocumentType.MINUTES]: 'Ata de Defesa',
+  [DocumentType.EVALUATION]: 'Avaliação de Desempenho',
+};
 
 export interface DocumentProps {
   version: number;

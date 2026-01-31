@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
+import { DocumentType } from '../../domain/entities';
 import { ValidateDocumentResponseDto, DefenseInfoDto } from '../../presentation/dtos';
 import { FabricService } from '../../../../toolkit/fabric/fabric.service';
 import { FabricUser } from '../../../../toolkit/fabric/application/ports';
@@ -59,7 +60,7 @@ export class ValidateDocumentUseCase {
     const defenseInfo = await this.getDefenseInfo(localDocument.defenseId);
 
     // Determinar qual tipo de documento está sendo validado
-    const documentType = localDocument.minutesCid === cid ? 'minutes' : 'evaluation';
+    const documentType = localDocument.minutesCid === cid ? DocumentType.MINUTES : DocumentType.EVALUATION;
 
     // 2. Se documento está inativo
     if (localDocument.status === 'INACTIVE') {
@@ -96,7 +97,7 @@ export class ValidateDocumentUseCase {
           status: 'APPROVED',
           document: {
             id: fabricResult.document.documentId,
-            documentType: fabricResult.documentType,
+            documentType: fabricResult.documentType as DocumentType,
             minutesHash: fabricResult.document.minutesHash,
             minutesCid: fabricResult.document.minutesCid,
             evaluationHash: fabricResult.document.evaluationHash,

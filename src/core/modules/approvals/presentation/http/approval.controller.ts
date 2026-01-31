@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard } from '../../../../../shared/guards';
 import { CurrentUser } from '../../../../../shared/decorators';
+import { ICurrentUser } from '../../../../../shared';
 import {
   ApproveDocumentUseCase,
   RejectDocumentUseCase,
@@ -40,7 +41,7 @@ export class ApprovalController {
   @HttpCode(HttpStatus.OK)
   @ListPendingApprovalsDocs()
   async listPending(
-    @CurrentUser() user: any,
+    @CurrentUser() user: ICurrentUser,
     @Query() query: ListApprovalsQueryDto,
   ) {
     const { approvals } = await this.listPendingApprovalsUseCase.execute({
@@ -57,7 +58,7 @@ export class ApprovalController {
   @ApproveDocumentDocs()
   async approve(
     @Param('documentId') documentId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: ICurrentUser,
   ) {
     const { approval } = await this.approveDocumentUseCase.execute({
       approvalId: documentId,
@@ -73,7 +74,7 @@ export class ApprovalController {
   async reject(
     @Param('documentId') documentId: string,
     @Body() dto: RejectDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: ICurrentUser,
   ) {
     const { approval } = await this.rejectDocumentUseCase.execute({
       approvalId: documentId,
@@ -90,7 +91,7 @@ export class ApprovalController {
   async overrideRejection(
     @Param('approvalId') approvalId: string,
     @Body() dto: OverrideRejectionDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: ICurrentUser,
   ) {
     const { approval } = await this.overrideRejectionUseCase.execute({
       approvalId,

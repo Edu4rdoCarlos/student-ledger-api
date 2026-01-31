@@ -127,7 +127,10 @@ export class SubmitDefenseResultUseCase {
         this.logger.error(`Falha ao enviar notificação: ${error.message}`);
       });
 
-      this.createApprovalsUseCase.execute({ documentId: createdDocument.id }).catch((error) => {
+      this.createApprovalsUseCase.execute({
+        documentId: createdDocument.id,
+        coordinatorId: request.currentUser!.id,
+      }).catch((error) => {
         this.logger.error(`Falha ao criar aprovações: ${error.message}`);
       });
 

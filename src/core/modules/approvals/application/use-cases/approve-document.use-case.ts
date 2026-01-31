@@ -4,9 +4,13 @@ import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { ApprovalNotFoundError, ApprovalAlreadyProcessedError } from '../../domain/errors';
 import { RegisterOnBlockchainUseCase } from './register-on-blockchain.use-case';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
+import { Document, DocumentType, DocumentTypeLabel } from '../../../documents/domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { Defense } from '../../../defenses/domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
+import { Student } from '../../../students/domain/entities';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { Advisor } from '../../../advisors/domain/entities';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplateService } from '../../../../toolkit/notifications/application/services';
@@ -20,6 +24,14 @@ interface ApproveDocumentRequest {
 
 interface ApproveDocumentResponse {
   approval: Approval;
+}
+
+interface LoadedEntities {
+  document: Document;
+  defense: Defense;
+  advisor: Advisor;
+  students: Student[];
+  approvals: Approval[];
 }
 
 @Injectable()
@@ -47,7 +59,28 @@ export class ApproveDocumentUseCase {
   ) {}
 
   async execute(request: ApproveDocumentRequest): Promise<ApproveDocumentResponse> {
-    const approval = await this.approvalRepository.findById(request.approvalId);
+    const approval = await this.findAndValidateApproval(request.approvalId);
+    const entities = await this.loadRequiredEntities(approval.documentId);
+    const isCoordinatorAlsoAdvisor = this.checkCoordinatorIsAdvisor(approval, entities.approvals);
+
+    if (approval.role === ApprovalRole.COORDINATOR) {
+      this.validateCoordinatorCanApprove(entities.approvals, isCoordinatorAlsoAdvisor);
+    }
+
+    const combinedHash = this.getCombinedHash(entities.document);
+    const updatedApproval = await this.processApproval(approval, request.userId, combinedHash);
+
+    if (isCoordinatorAlsoAdvisor) {
+      await this.autoApproveAdvisor(entities.approvals, request.userId, combinedHash);
+    }
+
+    this.triggerPostApprovalActions(approval.documentId, entities, isCoordinatorAlsoAdvisor);
+
+    return { approval: updatedApproval };
+  }
+
+  private async findAndValidateApproval(approvalId: string): Promise<Approval> {
+    const approval = await this.approvalRepository.findById(approvalId);
 
     if (!approval) {
       throw new ApprovalNotFoundError();
@@ -57,51 +90,50 @@ export class ApproveDocumentUseCase {
       throw new ApprovalAlreadyProcessedError();
     }
 
-    if (approval.role === ApprovalRole.COORDINATOR) {
-      await this.validateCoordinatorCanApprove(approval.documentId, approval.approverId);
-    }
+    return approval;
+  }
 
-    const document = await this.documentRepository.findById(approval.documentId);
+  private async loadRequiredEntities(documentId: string): Promise<LoadedEntities> {
+    const document = await this.documentRepository.findById(documentId);
     if (!document) {
       throw new Error('Documento não encontrado');
     }
-    if (!document.minutesHash || !document.evaluationHash) {
-      throw new Error('Documento sem hashes da ata e avaliação de desempenho');
+
+    const defense = await this.defenseRepository.findById(document.defenseId);
+    if (!defense) {
+      throw new Error('Defesa não encontrada');
     }
 
-    const combinedHash = `${document.minutesHash}:${document.evaluationHash}`;
-    // COORDINATOR usa certificado base (permanente), não passa approvalId
-    const approvalIdForSign = approval.role === ApprovalRole.COORDINATOR ? undefined : approval.id;
-    const cryptographicSignature = await this.signatureService.sign(
-      combinedHash,
-      request.userId,
-      approvalIdForSign,
-    );
+    const advisor = await this.advisorRepository.findById(defense.advisorId);
+    if (!advisor) {
+      throw new Error('Orientador não encontrado');
+    }
 
-    approval.approve(request.userId, cryptographicSignature);
-
-    const updatedApproval = await this.approvalRepository.update(approval);
-
-    await this.autoApproveAdvisorIfCoordinatorIsAdvisor(approval, request.userId, combinedHash);
-
-    this.registerOnBlockchainUseCase.execute({ documentId: approval.documentId }).catch((error) => {
-      this.logger.error(`Failed to register on blockchain: ${error.message}`);
-    });
-
-    this.checkAndNotifyAllApproved(approval.documentId).catch((error) => {
-      this.logger.error(`Failed to send approval completion emails: ${error.message}`);
-    });
-
-    return { approval: updatedApproval };
-  }
-
-  private async validateCoordinatorCanApprove(documentId: string, coordinatorApproverId?: string): Promise<void> {
+    const students = await this.loadStudents(defense.studentIds);
     const approvals = await this.approvalRepository.findByDocumentId(documentId);
 
+    return { document, defense, advisor, students, approvals };
+  }
+
+  private async loadStudents(studentIds: string[]): Promise<Student[]> {
+    const students = await Promise.all(
+      studentIds.map(id => this.studentRepository.findById(id))
+    );
+    return students.filter((s): s is Student => s !== null);
+  }
+
+  private checkCoordinatorIsAdvisor(approval: Approval, approvals: Approval[]): boolean {
+    if (approval.role !== ApprovalRole.COORDINATOR) {
+      return false;
+    }
+    const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
+    return advisorApproval?.approverId === approval.approverId;
+  }
+
+  private validateCoordinatorCanApprove(approvals: Approval[], isCoordinatorAlsoAdvisor: boolean): void {
     const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
     const studentApprovals = approvals.filter(a => a.role === ApprovalRole.STUDENT);
 
-    const isCoordinatorAlsoAdvisor = advisorApproval?.approverId === coordinatorApproverId;
     const advisorApproved = advisorApproval?.status === ApprovalStatus.APPROVED || isCoordinatorAlsoAdvisor;
     const allStudentsApproved = studentApprovals.every(a => a.status === ApprovalStatus.APPROVED);
 
@@ -113,101 +145,84 @@ export class ApproveDocumentUseCase {
     }
   }
 
-  private async autoApproveAdvisorIfCoordinatorIsAdvisor(
-    approval: Approval,
-    userId: string,
-    combinedHash: string,
-  ): Promise<void> {
-    if (approval.role !== ApprovalRole.COORDINATOR) {
-      return;
+  private getCombinedHash(document: Document): string {
+    if (!document.minutesHash || !document.evaluationHash) {
+      throw new Error('Documento sem hashes da ata e avaliação de desempenho');
     }
+    return `${document.minutesHash}:${document.evaluationHash}`;
+  }
 
-    const approvals = await this.approvalRepository.findByDocumentId(approval.documentId);
+  private async processApproval(approval: Approval, userId: string, combinedHash: string): Promise<Approval> {
+    const approvalIdForSign = approval.role === ApprovalRole.COORDINATOR ? undefined : approval.id;
+    const cryptographicSignature = await this.signatureService.sign(combinedHash, userId, approvalIdForSign);
+
+    approval.approve(userId, cryptographicSignature);
+
+    return this.approvalRepository.update(approval);
+  }
+
+  private async autoApproveAdvisor(approvals: Approval[], userId: string, combinedHash: string): Promise<void> {
     const advisorApproval = approvals.find(a => a.role === ApprovalRole.ADVISOR);
 
     if (!advisorApproval || advisorApproval.status !== ApprovalStatus.PENDING) {
       return;
     }
 
-    const isCoordinatorAlsoAdvisor = advisorApproval.approverId === approval.approverId;
-
-    if (isCoordinatorAlsoAdvisor) {
-      const advisorSignature = await this.signatureService.sign(combinedHash, userId, advisorApproval.id);
-      advisorApproval.approve(userId, advisorSignature);
-      await this.approvalRepository.update(advisorApproval);
-    }
+    const advisorSignature = await this.signatureService.sign(combinedHash, userId, advisorApproval.id);
+    advisorApproval.approve(userId, advisorSignature);
+    await this.approvalRepository.update(advisorApproval);
   }
 
-  private async checkAndNotifyAllApproved(documentId: string): Promise<void> {
-    const approvals = await this.approvalRepository.findByDocumentId(documentId);
+  private triggerPostApprovalActions(
+    documentId: string,
+    entities: LoadedEntities,
+    isCoordinatorAlsoAdvisor: boolean,
+  ): void {
+    this.registerOnBlockchainUseCase.execute({ documentId }).catch(error => {
+      this.logger.error(`Failed to register on blockchain: ${error.message}`);
+    });
 
-    const allApproved = approvals.every(approval => approval.status === ApprovalStatus.APPROVED);
+    this.notifyIfAllApproved(entities, isCoordinatorAlsoAdvisor).catch(error => {
+      this.logger.error(`Failed to send approval completion emails: ${error.message}`);
+    });
+  }
 
+  private async notifyIfAllApproved(entities: LoadedEntities, isCoordinatorAlsoAdvisor: boolean): Promise<void> {
+    const { document, defense, advisor, students, approvals } = entities;
+
+    const allApproved = approvals.every(a => a.status === ApprovalStatus.APPROVED);
     if (!allApproved) {
       return;
     }
 
-    const document = await this.documentRepository.findById(documentId);
-    if (!document) {
-      this.logger.warn(`Documento ${documentId} não encontrado`);
-      return;
-    }
-
-    const defense = await this.defenseRepository.findById(document.defenseId);
-    if (!defense) {
-      this.logger.warn(`Defesa ${document.defenseId} não encontrada`);
-      return;
-    }
-
-    const students = await Promise.all(
-      defense.studentIds.map(id => this.studentRepository.findById(id))
-    );
-    const validStudents = students.filter(s => s !== null);
-
-    const advisor = await this.advisorRepository.findById(defense.advisorId);
-    if (!advisor) {
-      this.logger.warn(`Orientador ${defense.advisorId} não encontrado`);
-      return;
-    }
-
-    const studentsNames = validStudents.map(s => s.name).filter(Boolean).join(', ');
-
+    const studentsNames = students.map(s => s.name).filter(Boolean).join(', ');
     const coordinatorApproval = approvals.find(a => a.role === ApprovalRole.COORDINATOR);
 
-    const emailPromises = [];
+    const recipientIds = new Set<string>();
 
     if (coordinatorApproval?.approverId) {
-      emailPromises.push(this.sendApprovalCompletionEmail(
-        coordinatorApproval.approverId,
-        document,
-        defense,
-        studentsNames
-      ));
+      recipientIds.add(coordinatorApproval.approverId);
     }
 
-    emailPromises.push(this.sendApprovalCompletionEmail(
-      advisor.id,
-      document,
-      defense,
-      studentsNames
-    ));
-
-    for (const student of validStudents) {
-      emailPromises.push(this.sendApprovalCompletionEmail(
-        student.id,
-        document,
-        defense,
-        studentsNames
-      ));
+    if (!isCoordinatorAlsoAdvisor) {
+      recipientIds.add(advisor.id);
     }
+
+    for (const student of students) {
+      recipientIds.add(student.id);
+    }
+
+    const emailPromises = Array.from(recipientIds).map(userId =>
+      this.sendApprovalCompletionEmail(userId, document, defense, studentsNames)
+    );
 
     await Promise.all(emailPromises);
   }
 
   private async sendApprovalCompletionEmail(
     userId: string,
-    document: any,
-    defense: any,
+    document: Document,
+    defense: Defense,
     studentsNames: string,
   ): Promise<void> {
     const user = await this.userRepository.findById(userId);
@@ -219,7 +234,7 @@ export class ApproveDocumentUseCase {
     const emailContent = this.emailTemplateService.generateTemplate(
       EmailTemplate.DOCUMENT_APPROVED,
       {
-        documentType: document.type,
+        documentType: DocumentTypeLabel[DocumentType.MINUTES],
         defenseTitle: defense.title,
         studentsNames,
         approvedBy: 'Todos os aprovadores',

@@ -5,20 +5,33 @@ import { SendEmailUseCase } from '../../../../toolkit/notifications/application/
 import { EmailTemplateService } from '../../../../toolkit/notifications/application/services';
 import { EmailTemplate, NotificationContextType } from '../../../../toolkit/notifications/domain/enums';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { Defense } from '../../../defenses/domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
+import { Student } from '../../../students/domain/entities';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
+import { Advisor } from '../../../advisors/domain/entities';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { Coordinator } from '../../../coordinators/domain/entities';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
+import { Document, DocumentType, DocumentTypeLabel } from '../../../documents/domain/entities';
 import { CertificateQueueService } from '../../../../toolkit/fabric/application/services/certificate-queue.service';
 import { Role } from '@prisma/client';
 
 interface CreateApprovalsRequest {
   documentId: string;
+  coordinatorId: string;
 }
 
 interface CreateApprovalsResponse {
   approvals: Approval[];
+}
+
+interface LoadedEntities {
+  document: Document;
+  defense: Defense;
+  advisor: Advisor;
+  students: Student[];
+  coordinator: Coordinator;
 }
 
 @Injectable()
@@ -38,15 +51,22 @@ export class CreateApprovalsUseCase {
     private readonly advisorRepository: IAdvisorRepository,
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
     private readonly emailTemplateService: EmailTemplateService,
     private readonly certificateQueue: CertificateQueueService,
   ) {}
 
   async execute(request: CreateApprovalsRequest): Promise<CreateApprovalsResponse> {
-    const document = await this.documentRepository.findById(request.documentId);
+    const entities = await this.loadRequiredEntities(request.documentId, request.coordinatorId);
+    const isCoordinatorAlsoAdvisor = entities.coordinator.id === entities.advisor.id;
+
+    const approvals = await this.createAllApprovals(request.documentId, entities, isCoordinatorAlsoAdvisor);
+
+    return { approvals };
+  }
+
+  private async loadRequiredEntities(documentId: string, coordinatorId: string): Promise<LoadedEntities> {
+    const document = await this.documentRepository.findById(documentId);
     if (!document) {
       throw new Error('Documento não encontrado');
     }
@@ -61,151 +81,167 @@ export class CreateApprovalsUseCase {
       throw new Error('Orientador não encontrado');
     }
 
-    const students = await Promise.all(
-      defense.studentIds.map(id => this.studentRepository.findById(id))
-    );
-    const validStudents = students.filter(s => s !== null);
-
-    if (validStudents.length === 0) {
+    const students = await this.loadStudents(defense.studentIds);
+    if (students.length === 0) {
       throw new Error('Nenhum aluno encontrado para a defesa');
     }
 
-    const approvals: Approval[] = [];
-
-    const firstStudent = validStudents[0];
-    const studentWithCourse = await this.studentRepository.findById(firstStudent.id);
-    const coordinator = studentWithCourse?.courseId
-      ? await this.coordinatorRepository.findByCourseId(studentWithCourse.courseId)
-      : null;
-
-    const isCoordinatorAlsoAdvisor = coordinator?.id === advisor.id;
-
-    const coordinatorApproval = Approval.create({
-      role: ApprovalRole.COORDINATOR,
-      documentId: request.documentId,
-      approverId: coordinator?.id,
-    });
-    const createdCoordinatorApproval = await this.approvalRepository.create(coordinatorApproval);
-    approvals.push(createdCoordinatorApproval);
-    this.sendApprovalEmail(createdCoordinatorApproval, document, defense, advisor, validStudents)
-      .catch(error => {
-        this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
-      });
-
-    const advisorApproval = Approval.create({
-      role: ApprovalRole.ADVISOR,
-      documentId: request.documentId,
-      approverId: advisor.id,
-    });
-    const createdAdvisorApproval = await this.approvalRepository.create(advisorApproval);
-    approvals.push(createdAdvisorApproval);
-
-    this.certificateQueue.enqueueCertificateGeneration(advisor.id, advisor.email, Role.ADVISOR, createdAdvisorApproval.id)
-      .catch(error => this.logger.error(`Falha ao enfileirar certificado do orientador: ${error.message}`));
-
-    if (!isCoordinatorAlsoAdvisor) {
-      this.sendApprovalEmail(createdAdvisorApproval, document, defense, advisor, validStudents)
-        .catch(error => {
-          this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
-        });
+    const coordinator = await this.coordinatorRepository.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error('Coordenador não encontrado');
     }
 
-    for (const student of validStudents) {
-      const studentApproval = Approval.create({
-        role: ApprovalRole.STUDENT,
-        documentId: request.documentId,
-        approverId: student.id,
-      });
-      const createdStudentApproval = await this.approvalRepository.create(studentApproval);
-      approvals.push(createdStudentApproval);
-
-      this.certificateQueue.enqueueCertificateGeneration(student.id, student.email, Role.STUDENT, createdStudentApproval.id)
-        .catch(error => this.logger.error(`Falha ao enfileirar certificado do aluno: ${error.message}`));
-      this.sendApprovalEmail(createdStudentApproval, document, defense, advisor, [student])
-        .catch(error => {
-          this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
-        });
-    }
-
-    return { approvals };
+    return { document, defense, advisor, students, coordinator };
   }
 
-  private async sendApprovalEmail(
+  private async loadStudents(studentIds: string[]): Promise<Student[]> {
+    const students = await Promise.all(
+      studentIds.map(id => this.studentRepository.findById(id))
+    );
+    return students.filter((s): s is Student => s !== null);
+  }
+
+  private async createAllApprovals(
+    documentId: string,
+    entities: LoadedEntities,
+    isCoordinatorAlsoAdvisor: boolean,
+  ): Promise<Approval[]> {
+    const { document, defense, advisor, students, coordinator } = entities;
+    const approvals: Approval[] = [];
+
+    const coordinatorApproval = await this.createCoordinatorApproval(documentId, coordinator);
+    approvals.push(coordinatorApproval);
+    this.notifyApprover(coordinatorApproval, document, defense, advisor, students, coordinator);
+
+    const advisorApproval = await this.createAdvisorApproval(documentId, advisor);
+    approvals.push(advisorApproval);
+    if (!isCoordinatorAlsoAdvisor) {
+      this.notifyApprover(advisorApproval, document, defense, advisor, students, coordinator);
+    }
+
+    const studentApprovals = await this.createStudentApprovals(documentId, students, document, defense, advisor, coordinator);
+    approvals.push(...studentApprovals);
+
+    return approvals;
+  }
+
+  private async createCoordinatorApproval(documentId: string, coordinator: Coordinator): Promise<Approval> {
+    const approval = Approval.create({
+      role: ApprovalRole.COORDINATOR,
+      documentId,
+      approverId: coordinator.id,
+    });
+    return this.approvalRepository.create(approval);
+  }
+
+  private async createAdvisorApproval(documentId: string, advisor: Advisor): Promise<Approval> {
+    const approval = Approval.create({
+      role: ApprovalRole.ADVISOR,
+      documentId,
+      approverId: advisor.id,
+    });
+    const created = await this.approvalRepository.create(approval);
+
+    this.enqueueCertificate(advisor.id, advisor.email, Role.ADVISOR, created.id!);
+
+    return created;
+  }
+
+  private async createStudentApprovals(
+    documentId: string,
+    students: Student[],
+    document: Document,
+    defense: Defense,
+    advisor: Advisor,
+    coordinator: Coordinator,
+  ): Promise<Approval[]> {
+    const approvals: Approval[] = [];
+
+    for (const student of students) {
+      const approval = Approval.create({
+        role: ApprovalRole.STUDENT,
+        documentId,
+        approverId: student.id,
+      });
+      const created = await this.approvalRepository.create(approval);
+      approvals.push(created);
+
+      this.enqueueCertificate(student.id, student.email, Role.STUDENT, created.id!);
+      this.notifyApprover(created, document, defense, advisor, [student], coordinator);
+    }
+
+    return approvals;
+  }
+
+  private enqueueCertificate(userId: string, email: string, role: Role, approvalId: string): void {
+    this.certificateQueue
+      .enqueueCertificateGeneration(userId, email, role, approvalId)
+      .catch(error => this.logger.error(`Falha ao enfileirar certificado: ${error.message}`));
+  }
+
+  private notifyApprover(
     approval: Approval,
-    document: any,
-    defense: any,
-    advisor: any,
-    students: any[],
-  ): Promise<void> {
-    let recipientEmail: string;
-    let userId: string;
+    document: Document,
+    defense: Defense,
+    advisor: Advisor,
+    students: Student[],
+    coordinator: Coordinator,
+  ): void {
+    const recipient = this.resolveRecipient(approval, advisor, students, coordinator);
+    if (!recipient) return;
 
-    const studentsNames = this.getStudentsNames(students);
+    this.sendApprovalEmail(recipient, document, defense, students).catch(error => {
+      this.logger.error(`Falha ao enviar email de aprovação: ${error.message}`);
+    });
+  }
 
+  private resolveRecipient(
+    approval: Approval,
+    advisor: Advisor,
+    students: Student[],
+    coordinator: Coordinator,
+  ): { id: string; email: string } | null {
     switch (approval.role) {
       case ApprovalRole.COORDINATOR:
-        if (students.length === 0) {
-          this.logger.warn('Nenhum aluno encontrado para buscar coordenador');
-          return;
-        }
-        const firstStudent = students[0];
-        const studentWithCourse = await this.studentRepository.findById(firstStudent.id);
-        if (!studentWithCourse || !studentWithCourse.courseId) {
-          this.logger.warn('Curso do aluno não encontrado');
-          return;
-        }
-
-        const coordinator = await this.coordinatorRepository.findByCourseId(studentWithCourse.courseId);
-        if (!coordinator) {
-          this.logger.warn(`Coordenador não encontrado para o curso ${studentWithCourse.courseId}`);
-          return;
-        }
-
-        const coordinatorUser = await this.userRepository.findById(coordinator.id);
-        if (!coordinatorUser) {
-          this.logger.warn(`Usuário coordenador não encontrado: ${coordinator.id}`);
-          return;
-        }
-
-        recipientEmail = coordinatorUser.email;
-        userId = coordinatorUser.id;
-        break;
+        return { id: coordinator.id, email: coordinator.email };
 
       case ApprovalRole.ADVISOR:
-        recipientEmail = advisor.email;
-        userId = advisor.id;
-        break;
+        return { id: advisor.id, email: advisor.email };
 
       case ApprovalRole.STUDENT:
-        if (students.length === 0) {
-          this.logger.warn('Nenhum aluno encontrado para envio de email');
-          return;
+        const student = students.find(s => s.id === approval.approverId);
+        if (!student) {
+          this.logger.warn('Aluno não encontrado para envio de email');
+          return null;
         }
-        const student = students[0];
-        recipientEmail = student.email;
-        userId = student.id;
-        break;
+        return { id: student.id, email: student.email };
 
       default:
         this.logger.warn(`Tipo de aprovação não reconhecido: ${approval.role}`);
-        return;
+        return null;
     }
+  }
 
+  private async sendApprovalEmail(
+    recipient: { id: string; email: string },
+    document: Document,
+    defense: Defense,
+    students: Student[],
+  ): Promise<void> {
     const emailContent = this.emailTemplateService.generateTemplate(
       EmailTemplate.DOCUMENT_APPROVAL_REQUEST,
       {
-        documentType: document.type,
+        documentType: DocumentTypeLabel[DocumentType.MINUTES],
         defenseTitle: defense.title,
-        studentsNames,
+        studentsNames: this.getStudentsNames(students),
         submittedAt: document.createdAt,
-        approvalId: approval.id,
         documentId: document.id,
       },
     );
 
     await this.sendEmailUseCase.execute({
-      userId,
-      to: recipientEmail,
+      userId: recipient.id,
+      to: recipient.email,
       subject: emailContent.subject,
       html: emailContent.html,
       contextType: NotificationContextType.DOCUMENT_APPROVAL,
@@ -213,10 +249,7 @@ export class CreateApprovalsUseCase {
     });
   }
 
-  private getStudentsNames(students: any[]): string {
-    return students
-      .map(s => s.name)
-      .filter(Boolean)
-      .join(', ');
+  private getStudentsNames(students: Student[]): string {
+    return students.map(s => s.name).filter(Boolean).join(', ');
   }
 }

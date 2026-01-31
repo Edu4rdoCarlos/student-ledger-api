@@ -1,8 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { Approval as PrismaApproval, Document as PrismaDocument } from '@prisma/client';
 import { PrismaService } from '../../../../../database/prisma';
-import { IApprovalRepository, GroupedDocumentApprovals } from '../../application/ports';
+import { IApprovalRepository, GroupedDocumentApprovals, ApprovalItem, StudentInfo } from '../../application/ports';
 import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { ApprovalMapper } from './approval.mapper';
+
+type DocumentWithRelations = PrismaDocument & {
+  defense: {
+    title: string;
+    students: Array<{
+      student: {
+        registration: string;
+        user: { name: string; email: string };
+        course: { name: string };
+      };
+    }>;
+  };
+  approvals: Array<PrismaApproval & { approver: { name: string } | null }>;
+};
 
 const DOCUMENT_WITH_DEFENSE_INCLUDE = {
   defense: {
@@ -80,7 +95,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
       include: DOCUMENT_WITH_DEFENSE_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
-    return documents.map(this.mapToGroupedApprovals);
+    return documents.map(doc => this.mapToGroupedApprovals(doc as DocumentWithRelations));
   }
 
   async findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]> {
@@ -96,7 +111,7 @@ export class PrismaApprovalRepository implements IApprovalRepository {
       include: DOCUMENT_WITH_DEFENSE_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
-    return documents.map(this.mapToGroupedApprovals);
+    return documents.map(doc => this.mapToGroupedApprovals(doc as DocumentWithRelations));
   }
 
   async findGroupedByParticipant(userId: string): Promise<GroupedDocumentApprovals[]> {
@@ -111,24 +126,34 @@ export class PrismaApprovalRepository implements IApprovalRepository {
       include: DOCUMENT_WITH_DEFENSE_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
-    return documents.map(this.mapToGroupedApprovals);
+    return documents.map(doc => this.mapToGroupedApprovals(doc as DocumentWithRelations));
   }
 
   async delete(id: string): Promise<void> {
     await this.prisma.approval.delete({ where: { id } });
   }
 
-  private mapToGroupedApprovals = (doc: any): GroupedDocumentApprovals => ({
-    documentId: doc.id,
-    documentTitle: doc.defense.title,
-    students: doc.defense.students.map((ds: any) => ({
+  private mapToGroupedApprovals(doc: DocumentWithRelations): GroupedDocumentApprovals {
+    return {
+      documentId: doc.id,
+      documentTitle: doc.defense.title,
+      students: this.mapStudents(doc.defense.students),
+      courseName: doc.defense.students[0]?.student.course.name || 'N/A',
+      createdAt: doc.createdAt,
+      approvals: this.mapApprovals(doc.approvals),
+    };
+  }
+
+  private mapStudents(students: DocumentWithRelations['defense']['students']): StudentInfo[] {
+    return students.map(ds => ({
       name: ds.student.user.name,
       email: ds.student.user.email,
       registration: ds.student.registration,
-    })),
-    courseName: doc.defense.students[0]?.student.course.name || 'N/A',
-    createdAt: doc.createdAt,
-    approvals: doc.approvals.map((approval: any) => ({
+    }));
+  }
+
+  private mapApprovals(approvals: DocumentWithRelations['approvals']): ApprovalItem[] {
+    return approvals.map(approval => ({
       id: approval.id,
       role: approval.role as ApprovalRole,
       status: approval.status as ApprovalStatus,
@@ -136,6 +161,6 @@ export class PrismaApprovalRepository implements IApprovalRepository {
       approvedAt: approval.approvedAt || undefined,
       justification: approval.justification || undefined,
       approverId: approval.approverId || undefined,
-    })),
-  });
+    }));
+  }
 }

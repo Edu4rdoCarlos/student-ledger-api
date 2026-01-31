@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import {
@@ -19,15 +19,30 @@ interface RejectDocumentResponse {
 
 @Injectable()
 export class RejectDocumentUseCase {
-  private readonly logger = new Logger(RejectDocumentUseCase.name);
-
   constructor(
     @Inject(APPROVAL_REPOSITORY)
     private readonly approvalRepository: IApprovalRepository,
   ) {}
 
   async execute(request: RejectDocumentRequest): Promise<RejectDocumentResponse> {
-    const approval = await this.approvalRepository.findById(request.approvalId);
+    this.validateJustification(request.justification);
+
+    const approval = await this.findAndValidateApproval(request.approvalId);
+
+    approval.reject(request.userId, request.justification);
+    const updatedApproval = await this.approvalRepository.update(approval);
+
+    return { approval: updatedApproval };
+  }
+
+  private validateJustification(justification: string): void {
+    if (!justification || justification.trim().length === 0) {
+      throw new MissingJustificationError();
+    }
+  }
+
+  private async findAndValidateApproval(approvalId: string): Promise<Approval> {
+    const approval = await this.approvalRepository.findById(approvalId);
 
     if (!approval) {
       throw new ApprovalNotFoundError();
@@ -38,17 +53,11 @@ export class RejectDocumentUseCase {
     }
 
     if (approval.role === ApprovalRole.COORDINATOR) {
-      throw new ForbiddenException('Coordenadores não podem rejeitar documentos. Apenas orientadores e estudantes podem rejeitar.');
+      throw new ForbiddenException(
+        'Coordenadores não podem rejeitar documentos. Apenas orientadores e estudantes podem rejeitar.',
+      );
     }
 
-    if (!request.justification || request.justification.trim().length === 0) {
-      throw new MissingJustificationError();
-    }
-
-    approval.reject(request.userId, request.justification);
-
-    const updatedApproval = await this.approvalRepository.update(approval);
-
-    return { approval: updatedApproval };
+    return approval;
   }
 }
