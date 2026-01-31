@@ -5,6 +5,7 @@ import { CreateCoordinatorUseCase } from '../src/core/modules/coordinators/appli
 import { CreateAdvisorUseCase } from '../src/core/modules/advisors/application/use-cases';
 import { CreateStudentUseCase } from '../src/core/modules/students/application/use-cases';
 import { Role, DefenseResult, DefenseStatus, DocumentStatus, ApprovalRole, ApprovalStatus } from '@prisma/client';
+import { ICurrentUser, UserRole } from '../src/shared';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import Redis from 'ioredis';
@@ -71,7 +72,7 @@ async function seedWithCertificates() {
     console.log(`  ✓ ${admin.email}`);
 
     // Admin as current user for creating other users
-    const adminCurrentUser = { id: admin.id, email: admin.email, role: admin.role };
+    const adminCurrentUser: ICurrentUser = { id: admin.id, email: admin.email, role: admin.role as UserRole };
 
     // =====================================================
     // 2. CURSOS - Direto no banco (não precisa de certificado)

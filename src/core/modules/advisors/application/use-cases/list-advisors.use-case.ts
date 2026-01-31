@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { Advisor } from '../../domain/entities';
 import { PaginationMetadata } from '../../../../../shared/dtos';
-import { ICurrentUser } from '../../../../../shared/types';
+import { ICurrentUser, UserRole } from '../../../../../shared';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 
 export interface ListAdvisorsQuery {
@@ -33,11 +33,9 @@ export class ListAdvisorsUseCase {
     let courseId = query?.courseId;
     let courseIds: string[] | undefined;
 
-    if (currentUser?.role === 'COORDINATOR' && currentUser.id) {
+    if (currentUser?.role === UserRole.COORDINATOR) {
       const courses = await this.courseRepository.findByCoordinatorId(currentUser.id);
       courseIds = courses.map(course => course.id);
-    } else if (currentUser?.role === 'COORDINATOR' && currentUser.courseId) {
-      courseId = currentUser.courseId;
     }
 
     const { items, total } = await this.advisorRepository.findAll({

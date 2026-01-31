@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Roles, CurrentUser } from '../../../../../shared/decorators';
+import { ICurrentUser } from '../../../../../shared';
 import {
   CreateAdvisorUseCase,
   GetAdvisorUseCase,
@@ -42,7 +43,7 @@ export class AdvisorsController {
   @ApiResponse({ status: 403, description: 'No permission. Only coordinators can register advisors.' })
   async create(
     @Body() dto: CreateAdvisorDto,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<HttpResponse<AdvisorResponseDto>> {
     const advisor = await this.createAdvisor.execute(dto, currentUser);
     return HttpResponseSerializer.serialize(AdvisorResponseDto.fromEntity(advisor));
@@ -55,7 +56,7 @@ export class AdvisorsController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async findAll(
     @Query() query: ListAdvisorsDto,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<AdvisorListResponse> {
     const result = await this.listAdvisors.execute(query, currentUser);
     return {

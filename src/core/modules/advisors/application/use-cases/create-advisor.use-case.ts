@@ -6,6 +6,7 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../ports';
 import { CreateAdvisorInput } from '../dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { generateRandomPassword } from '../../../../../shared/utils';
+import { ICurrentUser } from '../../../../../shared';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplate } from '../../../../toolkit/notifications/domain/enums';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
@@ -26,7 +27,7 @@ export class CreateAdvisorUseCase {
     private readonly certificateQueue: CertificateQueueService,
   ) {}
 
-  async execute(input: CreateAdvisorInput, currentUser: any): Promise<Advisor> {
+  async execute(input: CreateAdvisorInput, currentUser: ICurrentUser): Promise<Advisor> {
     if (currentUser.role === Role.COORDINATOR) {
       const coordinator = await this.coordinatorRepository.findByUserId(currentUser.id);
 
