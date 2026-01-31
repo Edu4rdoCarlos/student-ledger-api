@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma';
-import { CreateCoordinatorUseCase } from '../src/modules/coordinators/application/use-cases';
-import { CreateAdvisorUseCase } from '../src/modules/advisors/application/use-cases';
-import { CreateStudentUseCase } from '../src/modules/students/application/use-cases';
+import { CreateCoordinatorUseCase } from '../src/core/modules/coordinators/application/use-cases';
+import { CreateAdvisorUseCase } from '../src/core/modules/advisors/application/use-cases';
+import { CreateStudentUseCase } from '../src/core/modules/students/application/use-cases';
 import { Role, DefenseResult, DefenseStatus, DocumentStatus, ApprovalRole, ApprovalStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';

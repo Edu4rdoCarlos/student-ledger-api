@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma';
-import { CertificateManagementService } from '../src/modules/fabric/application/services/certificate-management.service';
-import { SignatureService } from '../src/modules/fabric/application/services';
+import { CertificateManagementService } from '../src/core/toolkit/fabric/application/services/certificate-management.service';
+import { SignatureService } from '../src/core/toolkit/fabric/application/services';
 import { Role, RevocationReason, ApprovalRole, ApprovalStatus } from '@prisma/client';
 
 async function testCertificateFlow() {
