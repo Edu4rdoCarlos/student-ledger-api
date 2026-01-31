@@ -5,8 +5,9 @@ import { Coordinator } from '../../domain/entities';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../ports';
 import { CoordinatorAlreadyExistsError, CourseRequiredError } from '../../domain/errors';
 import { CreateCoordinatorDto, CoordinatorResponseDto } from '../../presentation/dtos';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { IUserRepository, USER_REPOSITORY, User } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { Course } from '../../../courses/domain/entities';
 import { generateRandomPassword } from '../../../../../shared/utils';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplate } from '../../../../toolkit/notifications/domain/enums';
@@ -28,24 +29,41 @@ export class CreateCoordinatorUseCase {
   ) {}
 
   async execute(dto: CreateCoordinatorDto): Promise<CoordinatorResponseDto> {
-    if (!dto.courseId) {
+    const course = await this.validateAndGetCourse(dto.courseId);
+    await this.validateEmailAvailability(dto.email);
+
+    const { user, password } = await this.createUser(dto);
+    const coordinator = await this.createCoordinator(user, course);
+
+    this.triggerPostCreationActions(coordinator, password);
+
+    return CoordinatorResponseDto.fromEntity(coordinator);
+  }
+
+  private async validateAndGetCourse(courseId: string | undefined): Promise<Course> {
+    if (!courseId) {
       throw new CourseRequiredError();
     }
 
-    const courseExists = await this.courseRepository.findById(dto.courseId);
-    if (!courseExists) {
-      throw new NotFoundException(`Curso não encontrado`);
+    const course = await this.courseRepository.findById(courseId);
+    if (!course) {
+      throw new NotFoundException('Curso não encontrado');
     }
 
-    // Verificar se o curso já tem um coordenador ativo
-    const existingCoordinator = await this.coordinatorRepository.findByCourseId(dto.courseId);
-    if (existingCoordinator && existingCoordinator.isActive) {
-      throw new ConflictException('Este curso já possui um coordenador ativo. Inative o coordenador atual antes de atribuir um novo.');
+    const existingCoordinator = await this.coordinatorRepository.findByCourseId(courseId);
+    if (existingCoordinator?.isActive) {
+      throw new ConflictException(
+        'Este curso já possui um coordenador ativo. Inative o coordenador atual antes de atribuir um novo.',
+      );
     }
 
+    return course;
+  }
+
+  private async validateEmailAvailability(email: string): Promise<void> {
     const [emailExists, coordinatorExists] = await Promise.all([
-      this.userRepository.existsByEmail(dto.email),
-      this.coordinatorRepository.existsByUserId(dto.email),
+      this.userRepository.existsByEmail(email),
+      this.coordinatorRepository.existsByUserId(email),
     ]);
 
     if (emailExists) {
@@ -55,9 +73,11 @@ export class CreateCoordinatorUseCase {
     if (coordinatorExists) {
       throw new CoordinatorAlreadyExistsError();
     }
+  }
 
-    const randomPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+  private async createUser(dto: CreateCoordinatorDto): Promise<{ user: User; password: string }> {
+    const password = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.userRepository.create({
       email: dto.email,
@@ -66,40 +86,49 @@ export class CreateCoordinatorUseCase {
       role: Role.COORDINATOR,
     });
 
+    return { user, password };
+  }
+
+  private async createCoordinator(user: User, course: Course): Promise<Coordinator> {
     const coordinator = Coordinator.create({
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      courseId: courseExists.id,
+      courseId: course.id,
       isActive: true,
     });
 
-    const created = await this.coordinatorRepository.create(coordinator);
+    return this.coordinatorRepository.create(coordinator);
+  }
 
-    await this.certificateQueue.enqueueCertificateGeneration(
-      created.id,
-      created.email,
-      Role.COORDINATOR,
-    );
+  private triggerPostCreationActions(coordinator: Coordinator, password: string): void {
+    this.enqueueCertificate(coordinator);
+    this.sendWelcomeEmail(coordinator, password);
+  }
 
-    this.sendEmailUseCase.execute({
-      userId: created.id,
-      to: created.email,
-      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
-      template: {
-        id: EmailTemplate.USER_CREDENTIALS,
-        data: {
-          name: created.name,
-          email: created.email,
-          temporaryPassword: randomPassword,
-          role: 'COORDINATOR',
+  private enqueueCertificate(coordinator: Coordinator): void {
+    this.certificateQueue
+      .enqueueCertificateGeneration(coordinator.id, coordinator.email, Role.COORDINATOR)
+      .catch(error => this.logger.error(`Falha ao enfileirar certificado: ${error.message}`));
+  }
+
+  private sendWelcomeEmail(coordinator: Coordinator, password: string): void {
+    this.sendEmailUseCase
+      .execute({
+        userId: coordinator.id,
+        to: coordinator.email,
+        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+        template: {
+          id: EmailTemplate.USER_CREDENTIALS,
+          data: {
+            name: coordinator.name,
+            email: coordinator.email,
+            temporaryPassword: password,
+            role: 'COORDINATOR',
+          },
         },
-      },
-    }).catch((error) => {
-      this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`);
-    });
-
-    return CoordinatorResponseDto.fromEntity(created);
+      })
+      .catch(error => this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`));
   }
 }

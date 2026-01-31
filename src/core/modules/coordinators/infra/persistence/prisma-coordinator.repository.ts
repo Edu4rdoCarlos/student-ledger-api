@@ -8,33 +8,32 @@ import {
 } from '../../application/ports';
 import { CoordinatorMapper } from './coordinator.mapper';
 
+const COORDINATOR_INCLUDE = {
+  user: true,
+  course: true,
+} as const;
+
 @Injectable()
 export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(coordinator: Coordinator): Promise<Coordinator> {
-    const found = await this.prisma.coordinator.create({
+    const created = await this.prisma.coordinator.create({
       data: {
         id: coordinator.id,
         isActive: coordinator.isActive,
         courseId: coordinator.courseId || null,
       },
-      include: {
-        user: true,
-        course: true,
-      },
+      include: COORDINATOR_INCLUDE,
     });
 
-    return CoordinatorMapper.toDomain(found);
+    return CoordinatorMapper.toDomain(created);
   }
 
   async findById(id: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findUnique({
       where: { id },
-      include: {
-        user: true,
-        course: true
-      },
+      include: COORDINATOR_INCLUDE,
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
@@ -42,33 +41,22 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
   async findByUserId(userId: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findUnique({
       where: { id: userId },
-      include: {
-        user: true,
-        course: true,
-      },
+      include: COORDINATOR_INCLUDE,
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
 
   async findByCourseId(courseId: string): Promise<Coordinator | null> {
     const found = await this.prisma.coordinator.findFirst({
-      where: {
-        courseId: courseId,
-      },
-      include: {
-        user: true,
-        course: true
-      },
+      where: { courseId },
+      include: COORDINATOR_INCLUDE,
     });
     return found ? CoordinatorMapper.toDomain(found) : null;
   }
 
   async findAll(): Promise<Coordinator[]> {
     const coordinators = await this.prisma.coordinator.findMany({
-      include: {
-        user: true,
-        course: true
-      },
+      include: COORDINATOR_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
     return coordinators.map(CoordinatorMapper.toDomain);
@@ -82,10 +70,7 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
         isActive: data.isActive,
         courseId: data.courseId,
       },
-      include: {
-        user: true,
-        course: true
-      },
+      include: COORDINATOR_INCLUDE,
     });
     return CoordinatorMapper.toDomain(updated);
   }
@@ -95,19 +80,14 @@ export class PrismaCoordinatorRepository implements ICoordinatorRepository {
     return count > 0;
   }
 
-  async findAllPaginated(
-    options: FindAllCoordinatorsOptions = {},
-  ): Promise<FindAllCoordinatorsResult> {
+  async findAllPaginated(options: FindAllCoordinatorsOptions = {}): Promise<FindAllCoordinatorsResult> {
     const { skip = 0, take = 10 } = options;
 
     const [coordinators, total] = await Promise.all([
       this.prisma.coordinator.findMany({
         skip,
         take,
-        include: {
-          user: true,
-          course: true,
-        },
+        include: COORDINATOR_INCLUDE,
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.coordinator.count(),
