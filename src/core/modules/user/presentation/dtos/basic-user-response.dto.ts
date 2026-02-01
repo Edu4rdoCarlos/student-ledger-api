@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 export class BasicUserResponseDto {
   @ApiProperty({ description: 'ID do usuário' })
@@ -10,8 +11,8 @@ export class BasicUserResponseDto {
   @ApiProperty({ description: 'Nome do usuário' })
   name: string;
 
-  @ApiProperty({ description: 'Role do usuário', enum: ['ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT'] })
-  role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+  @ApiProperty({ description: 'Role do usuário', enum: Role })
+  role: Role;
 
   @ApiProperty({ description: 'Indica se é o primeiro acesso do usuário (deve atualizar a senha)' })
   isFirstAccess: boolean;

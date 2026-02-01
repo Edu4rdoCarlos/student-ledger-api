@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { CourseResponseDto } from '../../../courses/presentation/dtos';
 import { DefenseResponseDto } from '../../../defenses/presentation/dtos/response/defense-response.dto';
 
@@ -62,8 +63,8 @@ export class UserResponseDto {
   @ApiProperty({ description: 'Nome do usuário' })
   name: string;
 
-  @ApiProperty({ description: 'Role do usuário', enum: ['ADMIN', 'COORDINATOR', 'ADVISOR', 'STUDENT'] })
-  role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+  @ApiProperty({ description: 'Role do usuário', enum: Role })
+  role: Role;
 
   @ApiProperty({ required: false, description: 'Metadados adicionais baseados no role do usuário' })
   metadata?: UserMetadataDto;

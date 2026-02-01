@@ -11,17 +11,28 @@ export class ChangePasswordUseCase {
   ) {}
 
   async execute(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.findAndValidateUser(userId);
+    await this.validateCurrentPassword(dto.currentPassword, user.password);
+    const hashedPassword = await this.hashPassword(dto.newPassword);
+    await this.userRepository.changePassword(user.id, hashedPassword);
+  }
+
+  private async findAndValidateUser(userId: string) {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
+    return user;
+  }
 
-    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
+  private async validateCurrentPassword(currentPassword: string, storedPassword: string): Promise<void> {
+    const isPasswordValid = await bcrypt.compare(currentPassword, storedPassword);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Senha atual incorreta');
     }
+  }
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    await this.userRepository.changePassword(user.id, hashedPassword);
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 10);
   }
 }
