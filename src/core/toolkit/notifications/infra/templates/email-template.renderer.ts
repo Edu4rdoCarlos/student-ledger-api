@@ -11,7 +11,7 @@ export interface EmailTemplateResult {
 }
 
 @Injectable()
-export class EmailTemplateService {
+export class EmailTemplateRenderer {
   generateTemplate(template: EmailTemplate, data: EmailTemplateData): EmailTemplateResult {
     switch (template) {
       case EmailTemplate.DEFENSE_SCHEDULED:

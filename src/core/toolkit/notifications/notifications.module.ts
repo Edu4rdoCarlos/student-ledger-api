@@ -8,7 +8,8 @@ import {
 } from './application/ports';
 import { PrismaNotificationRepository } from './infra/persistence';
 import { SmtpEmailAdapter } from './infra/adapters/smtp-email.adapter';
-import { EmailTemplateService } from './application/services';
+import { EmailTemplateRenderer } from './infra/templates';
+import { SmtpConfigService } from './infra/config';
 
 @Global()
 @Module({
@@ -23,8 +24,9 @@ import { EmailTemplateService } from './application/services';
       useClass: SmtpEmailAdapter,
     },
     SendEmailUseCase,
-    EmailTemplateService,
+    EmailTemplateRenderer,
+    SmtpConfigService,
   ],
-  exports: [SendEmailUseCase, EmailTemplateService, NOTIFICATION_REPOSITORY, EMAIL_PROVIDER],
+  exports: [SendEmailUseCase, EmailTemplateRenderer, NOTIFICATION_REPOSITORY, EMAIL_PROVIDER],
 })
 export class NotificationsModule {}

@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import { IEmailProvider, SendEmailParams } from '../../application/ports';
-import { EmailTemplateService } from '../../application/services';
+import { EmailTemplateRenderer } from '../templates';
+import { SmtpConfigService } from '../config';
 
 @Injectable()
 export class SmtpEmailAdapter implements IEmailProvider {
@@ -13,48 +13,31 @@ export class SmtpEmailAdapter implements IEmailProvider {
   private readonly fromName: string;
 
   constructor(
-    private readonly configService: ConfigService,
-    private readonly emailTemplateService: EmailTemplateService,
+    private readonly smtpConfig: SmtpConfigService,
+    private readonly emailTemplateRenderer: EmailTemplateRenderer,
   ) {
-    const host = this.configService.get<string>('GOOGLE_SMTP_HOST', 'smtp.gmail.com');
-    const port = parseInt(this.configService.get<string>('GOOGLE_SMTP_PORT', '587'));
-    const secure = this.configService.get<string>('GOOGLE_SMTP_SECURE', 'false') === 'true';
-    const user = this.configService.get<string>('GOOGLE_SMTP_USER');
-    const password = this.configService.get<string>('GOOGLE_SMTP_PASSWORD');
+    const config = this.smtpConfig.getConfiguration();
 
-    this.fromEmail = this.configService.get<string>('GOOGLE_SMTP_FROM_EMAIL', user || '');
-    this.fromName = this.configService.get<string>('GOOGLE_SMTP_FROM_NAME', 'Student Ledger');
+    this.fromEmail = config.fromEmail;
+    this.fromName = config.fromName;
+    this.transporter = this.createTransporter(config);
+  }
 
-    if (!user || !password) {
-      this.logger.warn('SMTP credentials not configured. Email sending will fail.');
-    }
-
-    this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
+  private createTransporter(config: ReturnType<SmtpConfigService['getConfiguration']>): Transporter {
+    return nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
       auth: {
-        user,
-        pass: password,
+        user: config.user,
+        pass: config.password,
       },
     });
   }
 
   async sendEmail(params: SendEmailParams): Promise<void> {
     try {
-      let subject = params.subject;
-      let html = params.html;
-      let text = params.text;
-
-      // If template is provided, generate content from template
-      if (params.template) {
-        const templateResult = this.emailTemplateService.generateTemplate(
-          params.template.id as any,
-          params.template.data,
-        );
-        subject = templateResult.subject;
-        html = templateResult.html;
-      }
+      const { subject, html, text } = this.prepareEmailContent(params);
 
       await this.transporter.sendMail({
         from: `${this.fromName} <${this.fromEmail}>`,
@@ -66,9 +49,36 @@ export class SmtpEmailAdapter implements IEmailProvider {
 
       this.logger.log(`Email sent successfully to ${params.to}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      this.logger.error(`Failed to send email to ${params.to}: ${errorMessage}`, error instanceof Error ? error.stack : undefined);
-      throw new Error(`Falha ao enviar email: ${errorMessage}`);
+      this.handleSendError(params.to, error);
     }
+  }
+
+  private prepareEmailContent(params: SendEmailParams) {
+    if (params.template) {
+      const templateResult = this.emailTemplateRenderer.generateTemplate(
+        params.template.id as any,
+        params.template.data,
+      );
+      return {
+        subject: templateResult.subject,
+        html: templateResult.html,
+        text: params.text,
+      };
+    }
+
+    return {
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    };
+  }
+
+  private handleSendError(recipient: string, error: unknown): never {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    this.logger.error(
+      `Failed to send email to ${recipient}: ${errorMessage}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+    throw new Error(`Falha ao enviar email: ${errorMessage}`);
   }
 }

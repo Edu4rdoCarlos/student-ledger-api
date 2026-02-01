@@ -13,7 +13,7 @@ import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/applic
 import { Advisor } from '../../../advisors/domain/entities';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
-import { EmailTemplateService } from '../../../../toolkit/notifications/application/services';
+import { EmailTemplateRenderer } from '../../../../toolkit/notifications/infra/templates';
 import { EmailTemplate, NotificationContextType } from '../../../../toolkit/notifications/domain/enums';
 import { SignatureService } from '../../../../toolkit/fabric/application/services';
 
@@ -54,7 +54,7 @@ export class ApproveDocumentUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
-    private readonly emailTemplateService: EmailTemplateService,
+    private readonly emailTemplateRenderer: EmailTemplateRenderer,
     private readonly signatureService: SignatureService,
   ) {}
 
@@ -231,7 +231,7 @@ export class ApproveDocumentUseCase {
       return;
     }
 
-    const emailContent = this.emailTemplateService.generateTemplate(
+    const emailContent = this.emailTemplateRenderer.generateTemplate(
       EmailTemplate.DOCUMENT_APPROVED,
       {
         documentType: DocumentTypeLabel[DocumentType.MINUTES],

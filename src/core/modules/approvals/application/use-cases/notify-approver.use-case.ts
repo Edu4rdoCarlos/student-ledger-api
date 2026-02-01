@@ -3,7 +3,7 @@ import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { Approval, ApprovalRole } from '../../domain/entities';
 import { ApprovalNotFoundError } from '../../domain/errors';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
-import { EmailTemplateService } from '../../../../toolkit/notifications/application/services';
+import { EmailTemplateRenderer } from '../../../../toolkit/notifications/infra/templates';
 import { EmailTemplate, NotificationContextType } from '../../../../toolkit/notifications/domain/enums';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { Defense } from '../../../defenses/domain/entities';
@@ -48,7 +48,7 @@ export class NotifyApproverUseCase {
     @Inject(COORDINATOR_REPOSITORY)
     private readonly coordinatorRepository: ICoordinatorRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
-    private readonly emailTemplateService: EmailTemplateService,
+    private readonly emailTemplateRenderer: EmailTemplateRenderer,
   ) {}
 
   async execute(request: NotifyApproverRequest): Promise<NotifyApproverResponse> {
@@ -154,7 +154,7 @@ export class NotifyApproverUseCase {
   ): Promise<void> {
     const { document, defense, students } = entities;
 
-    const emailContent = this.emailTemplateService.generateTemplate(
+    const emailContent = this.emailTemplateRenderer.generateTemplate(
       EmailTemplate.DOCUMENT_APPROVAL_REQUEST,
       {
         documentType: DocumentTypeLabel[DocumentType.MINUTES],

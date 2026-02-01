@@ -33,7 +33,20 @@ export class SendEmailUseCase {
   ) {}
 
   async execute(request: SendEmailRequest): Promise<Notification> {
-    const notification = Notification.create({
+    const notification = this.createNotification(request);
+    const savedNotification = await this.saveAndMarkAsProcessing(notification);
+
+    try {
+      await this.sendEmail(request);
+      return await this.handleSuccess(savedNotification);
+    } catch (error) {
+      await this.handleError(savedNotification, error);
+      throw error;
+    }
+  }
+
+  private createNotification(request: SendEmailRequest): Notification {
+    return Notification.create({
       userId: request.userId,
       channel: NotificationChannel.EMAIL,
       to: request.to,
@@ -44,38 +57,38 @@ export class SendEmailUseCase {
       contextId: request.contextId,
       status: NotificationStatus.PENDING,
     });
+  }
 
-    // Save notification
-    const savedNotification = await this.notificationRepository.create(notification);
+  private async saveAndMarkAsProcessing(notification: Notification): Promise<Notification> {
+    const saved = await this.notificationRepository.create(notification);
+    saved.markAsProcessing();
+    return await this.notificationRepository.update(saved);
+  }
 
-    // Mark as processing
-    savedNotification.markAsProcessing();
-    await this.notificationRepository.update(savedNotification);
+  private async sendEmail(request: SendEmailRequest): Promise<void> {
+    await this.emailProvider.sendEmail({
+      to: request.to,
+      subject: request.subject,
+      html: request.html,
+      text: request.text,
+      template: request.template,
+    });
+  }
 
-    try {
-      // Send email
-      await this.emailProvider.sendEmail({
-        to: request.to,
-        subject: request.subject,
-        html: request.html,
-        text: request.text,
-        template: request.template,
-      });
+  private async handleSuccess(notification: Notification): Promise<Notification> {
+    notification.markAsSent();
+    return await this.notificationRepository.update(notification);
+  }
 
-      // Mark as sent
-      savedNotification.markAsSent();
-      return await this.notificationRepository.update(savedNotification);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao enviar email';
+  private async handleError(notification: Notification, error: unknown): Promise<void> {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao enviar email';
 
-      if (savedNotification.canRetry()) {
-        savedNotification.markForRetry(errorMessage);
-      } else {
-        savedNotification.markAsFailed(errorMessage);
-      }
-
-      await this.notificationRepository.update(savedNotification);
-      throw error;
+    if (notification.canRetry()) {
+      notification.markForRetry(errorMessage);
+    } else {
+      notification.markAsFailed(errorMessage);
     }
+
+    await this.notificationRepository.update(notification);
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { NotificationContextType, EmailTemplate } from '../../../../toolkit/notifications/domain/enums';
-import { EmailTemplateService } from '../../../../toolkit/notifications/application/services';
+import { EmailTemplateRenderer } from '../../../../toolkit/notifications/infra/templates';
 import { STUDENT_REPOSITORY, IStudentRepository } from '../../../students/application/ports';
 import { ADVISOR_REPOSITORY, IAdvisorRepository } from '../../../advisors/application/ports';
 import { USER_REPOSITORY, IUserRepository } from '../../../auth/application/ports';
@@ -19,7 +19,7 @@ export class NotifyDefenseScheduledUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
     private readonly sendEmailUseCase: SendEmailUseCase,
-    private readonly emailTemplateService: EmailTemplateService,
+    private readonly emailTemplateRenderer: EmailTemplateRenderer,
   ) {}
 
   async execute(defenseId: string): Promise<void> {
@@ -52,7 +52,7 @@ export class NotifyDefenseScheduledUseCase {
       location: defense.location,
     };
 
-    const email = this.emailTemplateService.generateTemplate(
+    const email = this.emailTemplateRenderer.generateTemplate(
       EmailTemplate.DEFENSE_SCHEDULED,
       emailData
     );
