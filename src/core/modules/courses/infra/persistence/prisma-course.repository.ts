@@ -6,6 +6,24 @@ import { CourseMapper } from './course.mapper';
 
 @Injectable()
 export class PrismaCourseRepository implements ICourseRepository {
+  private readonly defaultInclude = {
+    coordinator: {
+      where: {
+        isActive: true,
+      },
+      include: {
+        user: true,
+        course: {
+          select: {
+            code: true,
+            name: true,
+            active: true,
+          },
+        },
+      },
+    },
+  };
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(course: Course): Promise<Course> {
@@ -17,16 +35,7 @@ export class PrismaCourseRepository implements ICourseRepository {
   async findById(id: string): Promise<Course | null> {
     const found = await this.prisma.course.findUnique({
       where: { id },
-      include: {
-        coordinator: {
-          where: {
-            isActive: true,
-          },
-          include: {
-            user: true,
-          },
-        },
-      },
+      include: this.defaultInclude,
     });
     return found ? CourseMapper.toDomain(found) : null;
   }
@@ -34,16 +43,7 @@ export class PrismaCourseRepository implements ICourseRepository {
   async findByCode(code: string): Promise<Course | null> {
     const found = await this.prisma.course.findUnique({
       where: { code },
-      include: {
-        coordinator: {
-          where: {
-            isActive: true,
-          },
-          include: {
-            user: true,
-          },
-        },
-      },
+      include: this.defaultInclude,
     });
     return found ? CourseMapper.toDomain(found) : null;
   }
@@ -54,23 +54,7 @@ export class PrismaCourseRepository implements ICourseRepository {
         skip: options?.skip,
         take: options?.take,
         orderBy: { createdAt: 'asc' },
-        include: {
-          coordinator: {
-            where: {
-              isActive: true,
-            },
-            include: {
-              user: true,
-              course: {
-                select: {
-                  code: true,
-                  name: true,
-                  active: true,
-                },
-              },
-            },
-          },
-        },
+        include: this.defaultInclude,
       }),
       this.prisma.course.count(),
     ]);
@@ -94,20 +78,10 @@ export class PrismaCourseRepository implements ICourseRepository {
     const courses = await this.prisma.course.findMany({
       where: {
         coordinator: {
-          id: coordinatorId
-        }
-      },
-      include: {
-        coordinator: {
-          where: {
-            isActive: true,
-          },
-          include: {
-            user: true,
-            course: true,
-          },
+          id: coordinatorId,
         },
       },
+      include: this.defaultInclude,
     });
     return courses.map(CourseMapper.toDomain);
   }

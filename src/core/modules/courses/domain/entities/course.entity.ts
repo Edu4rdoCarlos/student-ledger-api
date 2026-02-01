@@ -62,10 +62,39 @@ export class Course {
     return this.props.updatedAt!;
   }
 
-  update(data: Partial<Pick<CourseProps, 'name' | 'active' | 'coordinatorId'>>): void {
-    if (data.name !== undefined) this.props.name = data.name;
-    if (data.active !== undefined) this.props.active = data.active;
-    if (data.coordinatorId !== undefined) this.props.coordinatorId = data.coordinatorId;
+  activate(): void {
+    this.props.active = true;
     this.props.updatedAt = new Date();
+  }
+
+  deactivate(): void {
+    this.props.active = false;
+    this.props.updatedAt = new Date();
+  }
+
+  assignCoordinator(coordinatorId: string): void {
+    if (!this.props.active) {
+      throw new Error('Não é possível atribuir um coordenador a um curso inativo');
+    }
+    this.props.coordinatorId = coordinatorId;
+    this.props.updatedAt = new Date();
+  }
+
+  removeCoordinator(): void {
+    this.props.coordinatorId = undefined;
+    this.props.updatedAt = new Date();
+  }
+
+  changeName(name: string): void {
+    this.props.name = name;
+    this.props.updatedAt = new Date();
+  }
+
+  hasCoordinator(): boolean {
+    return this.props.coordinatorId !== undefined;
+  }
+
+  isCoordinator(coordinatorId: string): boolean {
+    return this.props.coordinatorId === coordinatorId;
   }
 }
