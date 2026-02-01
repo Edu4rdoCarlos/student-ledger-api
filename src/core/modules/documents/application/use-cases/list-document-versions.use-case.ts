@@ -19,8 +19,6 @@ export class ListDocumentVersionsUseCase {
     }
 
     const versions = await this.documentRepository.findByDefenseId(defenseId);
-
-    // Retorna ordenado por versão (mais recente primeiro)
     return versions.sort((a, b) => b.version - a.version);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
@@ -21,15 +22,28 @@ export class UpdateDefenseUseCase {
   ) {}
 
   async execute(request: UpdateDefenseRequest): Promise<Defense> {
-    const defense = await this.defenseRepository.findById(request.id);
+    const defense = await this.findAndValidateDefense(request.id);
+    this.validateAccess(request.id, request.currentUser);
+    this.updateDefenseFields(defense, request);
+
+    return this.defenseRepository.update(defense);
+  }
+
+  private async findAndValidateDefense(id: string): Promise<Defense> {
+    const defense = await this.defenseRepository.findById(id);
     if (!defense) {
       throw new DefenseNotFoundError();
     }
+    return defense;
+  }
 
-    if (request.currentUser?.role === 'COORDINATOR') {
-      await this.validateCoordinatorAccess(request.id, request.currentUser.courseId);
+  private validateAccess(defenseId: string, currentUser?: ICurrentUser): void {
+    if (currentUser?.role === Role.COORDINATOR) {
+      this.validateCoordinatorAccess(defenseId, currentUser.courseId);
     }
+  }
 
+  private updateDefenseFields(defense: Defense, request: UpdateDefenseRequest): void {
     if (request.title !== undefined) {
       defense.changeTitle(request.title);
     }
@@ -45,8 +59,6 @@ export class UpdateDefenseUseCase {
     if (request.examBoard !== undefined) {
       defense.updateExamBoard(request.examBoard);
     }
-
-    return this.defenseRepository.update(defense);
   }
 
   private async validateCoordinatorAccess(defenseId: string, courseId?: string): Promise<void> {

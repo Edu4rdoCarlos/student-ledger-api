@@ -21,32 +21,41 @@ export class RescheduleDefenseUseCase {
   ) {}
 
   async execute(request: RescheduleDefenseRequest): Promise<Defense> {
-    const defense = await this.defenseRepository.findById(request.defenseId);
-    if (!defense) {
-      throw new DefenseNotFoundError();
-    }
-
+    const defense = await this.findAndValidateDefense(request.defenseId);
     const oldDate = defense.defenseDate;
 
     defense.reschedule(request.newDate, request.rescheduleReason);
     const updatedDefense = await this.defenseRepository.update(defense);
 
-    await this.defenseRepository.createEvent({
-      defenseId: request.defenseId,
-      type: 'RESCHEDULED',
-      reason: request.rescheduleReason,
-      metadata: {
-        oldDate: oldDate.toISOString(),
-        newDate: request.newDate.toISOString(),
-      },
-    });
-
-    this.notifyDefenseRescheduledUseCase
-      .execute(request.defenseId)
-      .catch((error) => {
-        this.logger.error(`Falha ao enviar notificação de reagendamento: ${error.message}`);
-      });
+    await this.createRescheduleEvent(request.defenseId, request.rescheduleReason, oldDate, request.newDate);
+    this.sendRescheduleNotification(request.defenseId);
 
     return updatedDefense;
+  }
+
+  private async findAndValidateDefense(defenseId: string): Promise<Defense> {
+    const defense = await this.defenseRepository.findById(defenseId);
+    if (!defense) {
+      throw new DefenseNotFoundError();
+    }
+    return defense;
+  }
+
+  private async createRescheduleEvent(defenseId: string, reason: string, oldDate: Date, newDate: Date): Promise<void> {
+    await this.defenseRepository.createEvent({
+      defenseId,
+      type: 'RESCHEDULED',
+      reason,
+      metadata: {
+        oldDate: oldDate.toISOString(),
+        newDate: newDate.toISOString(),
+      },
+    });
+  }
+
+  private sendRescheduleNotification(defenseId: string): void {
+    this.notifyDefenseRescheduledUseCase.execute(defenseId).catch((error) => {
+      this.logger.error(`Falha ao enviar notificação de reagendamento: ${error.message}`);
+    });
   }
 }

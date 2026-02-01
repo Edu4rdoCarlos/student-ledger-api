@@ -12,29 +12,36 @@ export class CreateDocumentUseCase {
   ) {}
 
   async execute(dto: CreateDocumentDto): Promise<DocumentResponseDto> {
-    // Check if any of the hashes already exist
+    await this.validateUniqueHashes(dto);
+    const document = this.createDocumentEntity(dto);
+    const created = await this.documentRepository.create(document);
+
+    return DocumentResponseDto.fromEntity(created);
+  }
+
+  private async validateUniqueHashes(dto: CreateDocumentDto): Promise<void> {
     if (dto.minutesHash) {
-      const hashExists = await this.documentRepository.existsByHash(dto.minutesHash);
-      if (hashExists) {
-        throw new DocumentHashAlreadyExistsError();
-      }
+      await this.validateHashDoesNotExist(dto.minutesHash);
     }
     if (dto.evaluationHash) {
-      const hashExists = await this.documentRepository.existsByHash(dto.evaluationHash);
-      if (hashExists) {
-        throw new DocumentHashAlreadyExistsError();
-      }
+      await this.validateHashDoesNotExist(dto.evaluationHash);
     }
+  }
 
-    const document = Document.create({
+  private async validateHashDoesNotExist(hash: string): Promise<void> {
+    const hashExists = await this.documentRepository.existsByHash(hash);
+    if (hashExists) {
+      throw new DocumentHashAlreadyExistsError();
+    }
+  }
+
+  private createDocumentEntity(dto: CreateDocumentDto): Document {
+    return Document.create({
       minutesHash: dto.minutesHash,
       minutesCid: dto.minutesCid,
       evaluationHash: dto.evaluationHash,
       evaluationCid: dto.evaluationCid,
       defenseId: dto.defenseId,
     });
-
-    const created = await this.documentRepository.create(document);
-    return DocumentResponseDto.fromEntity(created);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException, Logger } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
@@ -79,7 +80,7 @@ export class SubmitDefenseResultUseCase {
       throw new ForbiddenException('Só é possível submeter resultados após a data da defesa');
     }
 
-    if (currentUser?.role === 'COORDINATOR') {
+    if (currentUser?.role === Role.COORDINATOR) {
       await this.validateCoordinatorAccess(defenseId, currentUser.courseId);
     }
 

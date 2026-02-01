@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { DocumentType } from '../../domain/entities';
+import { DocumentType, DocumentStatus } from '../../domain/entities';
 import { ValidateDocumentResponseDto, DefenseInfoDto } from '../../presentation/dtos';
 import { FabricService } from '../../../../toolkit/fabric/fabric.service';
 import { FabricUser } from '../../../../toolkit/fabric/application/ports';
@@ -21,6 +21,31 @@ export class ValidateDocumentUseCase {
     private readonly ipfsService: IpfsService,
   ) {}
 
+  async execute(
+    fileBuffer: Buffer,
+    currentUser: ICurrentUser
+  ): Promise<ValidateDocumentResponseDto> {
+    if (!Buffer.isBuffer(fileBuffer)) {
+      return this.buildNotFoundResponse();
+    }
+
+    const cid = await this.ipfsService.calculateCid(fileBuffer);
+    const localDocument = await this.documentRepository.findByCid(cid);
+
+    if (!localDocument) {
+      return this.buildNotFoundResponse();
+    }
+
+    const defenseInfo = await this.getDefenseInfo(localDocument.defenseId);
+    const documentType = this.determineDocumentType(localDocument, cid);
+
+    if (localDocument.status === DocumentStatus.INACTIVE) {
+      return this.buildInactiveResponse(localDocument, documentType, defenseInfo);
+    }
+
+    return this.verifyInBlockchain(localDocument, documentType, defenseInfo, currentUser);
+  }
+
   private async getDefenseInfo(defenseId: string): Promise<DefenseInfoDto | undefined> {
     const defense = await this.defenseRepository.findById(defenseId);
     if (!defense) return undefined;
@@ -32,55 +57,94 @@ export class ValidateDocumentUseCase {
     };
   }
 
-  async execute(
-    fileBuffer: Buffer,
+  private determineDocumentType(document: any, cid: string): DocumentType {
+    return document.minutesCid === cid ? DocumentType.MINUTES : DocumentType.EVALUATION;
+  }
+
+  private buildNotFoundResponse(): ValidateDocumentResponseDto {
+    return {
+      isValid: false,
+      status: 'NOT_FOUND',
+    };
+  }
+
+  private buildInactiveResponse(
+    document: any,
+    documentType: DocumentType,
+    defenseInfo?: DefenseInfoDto
+  ): ValidateDocumentResponseDto {
+    return {
+      isValid: false,
+      status: DocumentStatus.INACTIVE,
+      document: {
+        id: document.id,
+        documentType,
+        minutesHash: document.minutesHash,
+        minutesCid: document.minutesCid,
+        evaluationHash: document.evaluationHash,
+        evaluationCid: document.evaluationCid,
+        status: DocumentStatus.INACTIVE,
+        defenseInfo,
+      },
+    };
+  }
+
+  private buildPendingResponse(
+    document: any,
+    documentType: DocumentType,
+    defenseInfo?: DefenseInfoDto
+  ): ValidateDocumentResponseDto {
+    return {
+      isValid: false,
+      status: 'PENDING',
+      document: {
+        id: document.id,
+        documentType,
+        minutesHash: document.minutesHash,
+        minutesCid: document.minutesCid,
+        evaluationHash: document.evaluationHash,
+        evaluationCid: document.evaluationCid,
+        status: document.status,
+        defenseInfo,
+      },
+    };
+  }
+
+  private buildApprovedResponse(
+    fabricResult: any,
+    defenseInfo?: DefenseInfoDto
+  ): ValidateDocumentResponseDto {
+    return {
+      isValid: true,
+      status: DocumentStatus.APPROVED,
+      document: {
+        id: fabricResult.document.documentId,
+        documentType: fabricResult.documentType as DocumentType,
+        minutesHash: fabricResult.document.minutesHash,
+        minutesCid: fabricResult.document.minutesCid,
+        evaluationHash: fabricResult.document.evaluationHash,
+        evaluationCid: fabricResult.document.evaluationCid,
+        status: DocumentStatus.APPROVED,
+        defenseInfo,
+        blockchainData: {
+          matriculas: fabricResult.document.matriculas,
+          defenseDate: fabricResult.document.defenseDate,
+          notaFinal: fabricResult.document.notaFinal,
+          resultado: fabricResult.document.resultado,
+          versao: fabricResult.document.versao,
+          signatures: fabricResult.document.signatures,
+          validatedAt: fabricResult.document.validatedAt,
+        },
+      },
+    };
+  }
+
+  private async verifyInBlockchain(
+    localDocument: any,
+    documentType: DocumentType,
+    defenseInfo: DefenseInfoDto | undefined,
     currentUser: ICurrentUser
   ): Promise<ValidateDocumentResponseDto> {
-    if (!Buffer.isBuffer(fileBuffer)) {
-      return {
-        isValid: false,
-        status: 'NOT_FOUND',
-      };
-    }
-
-    const cid = await this.ipfsService.calculateCid(fileBuffer);
-
-    // 1. Verificar se o documento existe no banco local
-    const localDocument = await this.documentRepository.findByCid(cid);
-
-    if (!localDocument) {
-      // Documento não existe no sistema - possível fraude
-      return {
-        isValid: false,
-        status: 'NOT_FOUND',
-      };
-    }
-
-    // Buscar informações da defesa
-    const defenseInfo = await this.getDefenseInfo(localDocument.defenseId);
-
-    // Determinar qual tipo de documento está sendo validado
-    const documentType = localDocument.minutesCid === cid ? DocumentType.MINUTES : DocumentType.EVALUATION;
-
-    // 2. Se documento está inativo
-    if (localDocument.status === 'INACTIVE') {
-      return {
-        isValid: false,
-        status: 'INACTIVE',
-        document: {
-          id: localDocument.id,
-          documentType,
-          minutesHash: localDocument.minutesHash,
-          minutesCid: localDocument.minutesCid,
-          evaluationHash: localDocument.evaluationHash,
-          evaluationCid: localDocument.evaluationCid,
-          status: 'INACTIVE',
-          defenseInfo,
-        },
-      };
-    }
-
-    // 3. Verificar na blockchain
     const fabricUser: FabricUser = {
       id: currentUser.id,
       email: currentUser.email,
@@ -88,68 +152,16 @@ export class ValidateDocumentUseCase {
     };
 
     try {
-      const fabricResult = await this.fabricService.verifyDocument(fabricUser, cid);
+      const fabricResult = await this.fabricService.verifyDocument(fabricUser, localDocument.minutesCid || localDocument.evaluationCid);
 
       if (fabricResult.valid && fabricResult.document && fabricResult.documentType) {
-        // Documento válido e registrado na blockchain
-        return {
-          isValid: true,
-          status: 'APPROVED',
-          document: {
-            id: fabricResult.document.documentId,
-            documentType: fabricResult.documentType as DocumentType,
-            minutesHash: fabricResult.document.minutesHash,
-            minutesCid: fabricResult.document.minutesCid,
-            evaluationHash: fabricResult.document.evaluationHash,
-            evaluationCid: fabricResult.document.evaluationCid,
-            status: 'APPROVED',
-            defenseInfo,
-            blockchainData: {
-              matriculas: fabricResult.document.matriculas,
-              defenseDate: fabricResult.document.defenseDate,
-              notaFinal: fabricResult.document.notaFinal,
-              resultado: fabricResult.document.resultado,
-              versao: fabricResult.document.versao,
-              signatures: fabricResult.document.signatures,
-              validatedAt: fabricResult.document.validatedAt,
-            },
-          },
-        };
+        return this.buildApprovedResponse(fabricResult, defenseInfo);
       }
 
-      // Documento existe no banco mas não está na blockchain - pendente de aprovação
-      return {
-        isValid: false,
-        status: 'PENDING',
-        document: {
-          id: localDocument.id,
-          documentType,
-          minutesHash: localDocument.minutesHash,
-          minutesCid: localDocument.minutesCid,
-          evaluationHash: localDocument.evaluationHash,
-          evaluationCid: localDocument.evaluationCid,
-          status: localDocument.status,
-          defenseInfo,
-        },
-      };
+      return this.buildPendingResponse(localDocument, documentType, defenseInfo);
     } catch (error) {
       this.logger.error(`Falha ao verificar na blockchain: ${error.message}`);
-
-      // Em caso de erro, retornar como pendente já que existe no banco
-      return {
-        isValid: false,
-        status: 'PENDING',
-        document: {
-          id: localDocument.id,
-          documentType,
-          minutesHash: localDocument.minutesHash,
-          minutesCid: localDocument.minutesCid,
-          evaluationHash: localDocument.evaluationHash,
-          evaluationCid: localDocument.evaluationHash,
-          status: localDocument.status,
-          defenseInfo,
-        },
-      };
+      return this.buildPendingResponse(localDocument, documentType, defenseInfo);
     }
   }
 }

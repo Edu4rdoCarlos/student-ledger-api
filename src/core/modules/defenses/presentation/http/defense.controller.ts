@@ -17,6 +17,7 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Role } from '@prisma/client';
 import { JwtAuthGuard, RolesGuard } from '../../../../../shared/guards';
 import { Roles, CurrentUser } from '../../../../../shared/decorators';
 import { PdfContentValidator } from '../../../../../shared/validators';
@@ -128,7 +129,7 @@ export class DefenseController {
   @ApiOperation({ summary: 'Get defense by ID' })
   @ApiDefenseOkResponse()
   async findOne(
-    @CurrentUser() user: { id: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+    @CurrentUser() user: { id: string; role: Role },
     @Param('id') id: string,
   ): Promise<HttpResponse<DefenseResponseDto>> {
     const defense = await this.getDefenseUseCase.execute(id);
@@ -185,7 +186,6 @@ export class DefenseController {
       throw new BadRequestException('Ambos os arquivos são obrigatórios: Ata (minutesFile) e Avaliação de Desempenho (evaluationFile).');
     }
 
-    // Validate file types
     const pdfValidator = new PdfContentValidator({});
     for (const file of [minutesFile, evaluationFile]) {
       if (file.size > 10 * 1024 * 1024) {

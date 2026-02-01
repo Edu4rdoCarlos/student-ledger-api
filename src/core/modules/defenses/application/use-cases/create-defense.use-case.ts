@@ -1,4 +1,5 @@
 import { Injectable, Inject, ForbiddenException, Logger } from '@nestjs/common';
+import { Role, DefenseResult, DefenseStatus } from '@prisma/client';
 import { Defense, ExamBoardMember } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError, StudentAlreadyHasActiveDefenseError } from '../../domain/errors';
@@ -32,56 +33,79 @@ export class CreateDefenseUseCase {
   ) {}
 
   async execute(request: CreateDefenseRequest): Promise<Defense> {
-    const advisor = await this.advisorRepository.findById(request.advisorId);
+    await this.validateAdvisor(request.advisorId);
+    const students = await this.validateAndFetchStudents(request.studentIds);
+    this.validateCoordinatorAccess(students, request.currentUser);
+
+    const defense = this.createDefenseEntity(request);
+    const createdDefense = await this.defenseRepository.create(defense);
+
+    this.sendScheduledNotification(createdDefense.id);
+
+    return createdDefense;
+  }
+
+  private async validateAdvisor(advisorId: string): Promise<void> {
+    const advisor = await this.advisorRepository.findById(advisorId);
     if (!advisor) {
       throw new DefenseNotFoundError();
     }
+  }
 
+  private async validateAndFetchStudents(studentIds: string[]) {
     const students = [];
-    for (const studentId of request.studentIds) {
+
+    for (const studentId of studentIds) {
       const student = await this.studentRepository.findById(studentId);
       if (!student) {
         throw new DefenseNotFoundError();
       }
-      students.push(student);
 
       const hasActive = await this.defenseRepository.hasActiveDefense(studentId);
       if (hasActive) {
         throw new StudentAlreadyHasActiveDefenseError();
       }
+
+      students.push(student);
     }
 
-    if (request.currentUser?.role === 'COORDINATOR') {
-      if (!request.currentUser.courseId) {
-        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
-      }
+    return students;
+  }
 
-      const studentsWithDifferentCourse = students.filter(
-        student => student.courseId && student.courseId !== request.currentUser!.courseId
-      );
-
-      if (studentsWithDifferentCourse.length > 0) {
-        throw new ForbiddenException('Não é permitido criar defesa para alunos que já pertencem a outro curso');
-      }
+  private validateCoordinatorAccess(students: any[], currentUser?: ICurrentUser): void {
+    if (currentUser?.role !== Role.COORDINATOR) {
+      return;
     }
 
-    const defense = Defense.create({
+    if (!currentUser.courseId) {
+      throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+    }
+
+    const studentsWithDifferentCourse = students.filter(
+      student => student.courseId && student.courseId !== currentUser.courseId
+    );
+
+    if (studentsWithDifferentCourse.length > 0) {
+      throw new ForbiddenException('Não é permitido criar defesa para alunos que já pertencem a outro curso');
+    }
+  }
+
+  private createDefenseEntity(request: CreateDefenseRequest): Defense {
+    return Defense.create({
       title: request.title,
       defenseDate: request.defenseDate,
       location: request.location,
       advisorId: request.advisorId,
       studentIds: request.studentIds,
       examBoard: request.examBoard,
-      result: 'PENDING',
-      status: 'SCHEDULED',
+      result: DefenseResult.PENDING,
+      status: DefenseStatus.SCHEDULED,
     });
+  }
 
-    const createdDefense = await this.defenseRepository.create(defense);
-
-    this.notifyDefenseScheduledUseCase.execute(createdDefense.id).catch((error) => {
+  private sendScheduledNotification(defenseId: string): void {
+    this.notifyDefenseScheduledUseCase.execute(defenseId).catch((error) => {
       this.logger.error(`Failed to send defense scheduled notification: ${error.message}`);
     });
-
-    return createdDefense;
   }
 }

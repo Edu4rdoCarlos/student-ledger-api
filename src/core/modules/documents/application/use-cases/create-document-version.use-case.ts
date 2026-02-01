@@ -44,28 +44,35 @@ export class CreateDocumentVersionUseCase {
   async execute(request: CreateDocumentVersionRequest): Promise<CreateDocumentVersionResponse> {
     const currentDocument = await this.findDocument(request.documentId);
     const isFullyApproved = await this.checkIfDocumentIsFullyApproved(request.documentId);
-
-    const newDocumentHash = this.calculateAndValidateHash(request.documentFile, currentDocument, request.documentType);
-    const uploadResult = await this.fileUploadAdapter.uploadFile(request.documentFile, request.documentFilename);
+    const { hash, cid } = await this.processDocumentFile(request, currentDocument);
 
     const { createdVersion, previousVersion, wasReplaced } = await this.createOrReplaceDocument(
       currentDocument,
       isFullyApproved,
-      newDocumentHash,
-      uploadResult.cid,
+      hash,
+      cid,
       request.changeReason,
       request.documentType
     );
 
-    if (wasReplaced) {
-      await this.resetApprovalsUseCase.execute(createdVersion.id);
-    } else {
-      await this.createNewApprovals(createdVersion.id, request.coordinatorId);
-    }
-
+    await this.handleApprovals(createdVersion.id, wasReplaced, request.coordinatorId);
     await this.updateDefenseGrade(currentDocument.defenseId, request.finalGrade);
 
     return { previousVersion, newVersion: createdVersion };
+  }
+
+  private async processDocumentFile(request: CreateDocumentVersionRequest, currentDocument: Document) {
+    const hash = this.calculateAndValidateHash(request.documentFile, currentDocument, request.documentType);
+    const uploadResult = await this.fileUploadAdapter.uploadFile(request.documentFile, request.documentFilename);
+    return { hash, cid: uploadResult.cid };
+  }
+
+  private async handleApprovals(documentId: string, wasReplaced: boolean, coordinatorId: string): Promise<void> {
+    if (wasReplaced) {
+      await this.resetApprovalsUseCase.execute(documentId);
+    } else {
+      await this.createNewApprovals(documentId, coordinatorId);
+    }
   }
 
   private async findDocument(documentId: string): Promise<Document> {
