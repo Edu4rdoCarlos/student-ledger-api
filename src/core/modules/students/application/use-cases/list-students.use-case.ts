@@ -7,6 +7,9 @@ import { ICurrentUser } from '../../../../../shared/types';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { StudentListItemSerializer } from '../../presentation/serializers';
+import { Student } from '../../domain/entities';
+import { Course } from '../../../courses/domain/entities';
+import { Defense } from '../../../defenses/domain/entities';
 
 export interface ListStudentsQuery {
   page?: number;
@@ -74,7 +77,7 @@ export class ListStudentsUseCase {
     };
   }
 
-  private async fetchCoursesMap(students: any[]) {
+  private async fetchCoursesMap(students: Student[]) {
     const uniqueCourseIds = [...new Set(students.map(student => student.courseId))];
     const fetchedCourses = await Promise.all(
       uniqueCourseIds.map(id => this.courseRepository.findById(id))
@@ -84,14 +87,14 @@ export class ListStudentsUseCase {
     );
   }
 
-  private async fetchDefenses(students: any[]) {
+  private async fetchDefenses(students: Student[]) {
     const defensesPromises = students.map(student =>
       this.defenseRepository.findByStudentId(student.id)
     );
     return Promise.all(defensesPromises);
   }
 
-  private serializeStudents(students: any[], courseMap: Map<string, any>, defensesResults: any[]): StudentListItemDto[] {
+  private serializeStudents(students: Student[], courseMap: Map<string, Course>, defensesResults: Defense[][]): StudentListItemDto[] {
     return students.map((student, index) => {
       const course = courseMap.get(student.courseId);
       if (!course) {

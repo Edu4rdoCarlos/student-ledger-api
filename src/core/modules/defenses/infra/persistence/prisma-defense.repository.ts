@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../../database/prisma';
 import { Defense } from '../../domain/entities';
-import { IDefenseRepository, FindAllOptions, FindAllResult } from '../../application/ports';
+import { IDefenseRepository, FindAllOptions, FindAllResult, DefenseSummary, DefenseEvent } from '../../application/ports';
 import { DefenseMapper } from './defense.mapper';
 
 @Injectable()
@@ -104,7 +104,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     return defenses.map(DefenseMapper.toDomain);
   }
 
-  async findSummaryByAdvisorId(advisorId: string): Promise<any[]> {
+  async findSummaryByAdvisorId(advisorId: string): Promise<DefenseSummary[]> {
     const defenses = await this.prisma.defense.findMany({
       where: { advisorId },
       select: {
@@ -119,7 +119,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     return defenses;
   }
 
-  async findSummaryByStudentId(studentId: string): Promise<any[]> {
+  async findSummaryByStudentId(studentId: string): Promise<DefenseSummary[]> {
     const defenses = await this.prisma.defense.findMany({
       where: {
         students: {
@@ -159,7 +159,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
   }
 
   async findAll(options?: FindAllOptions): Promise<FindAllResult> {
-    const where: any = {};
+    const where: Prisma.DefenseWhereInput = {};
 
     if (options?.courseIds && options.courseIds.length > 0) {
       where.students = {
@@ -277,7 +277,7 @@ export class PrismaDefenseRepository implements IDefenseRepository {
     return defense?.students?.[0]?.student?.courseId || null;
   }
 
-  async createEvent(event: any): Promise<void> {
+  async createEvent(event: DefenseEvent): Promise<void> {
     await this.prisma.defenseEvent.create({
       data: {
         defenseId: event.defenseId,

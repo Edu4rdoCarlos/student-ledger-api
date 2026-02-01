@@ -4,6 +4,8 @@ import { StudentNotFoundError } from '../../domain/errors';
 import { UpdateStudentDto, StudentResponseDto } from '../../presentation/dtos';
 import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { Student } from '../../domain/entities';
+import { Course } from '../../../courses/domain/entities';
 
 @Injectable()
 export class UpdateStudentUseCase {
@@ -33,7 +35,7 @@ export class UpdateStudentUseCase {
     return student;
   }
 
-  private async updateStudentData(student: any, dto: UpdateStudentDto): Promise<void> {
+  private async updateStudentData(student: Student, dto: UpdateStudentDto): Promise<void> {
     if (dto.name !== undefined) {
       await this.userRepository.updateName(student.userId, dto.name);
     }
@@ -52,7 +54,7 @@ export class UpdateStudentUseCase {
     return course;
   }
 
-  private buildResponse(student: any, course: any): StudentResponseDto {
+  private buildResponse(student: Student, course: Course): StudentResponseDto {
     return {
       userId: student.id,
       registration: student.matricula,

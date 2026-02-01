@@ -9,10 +9,9 @@ export interface CoordinatorProps extends UserBaseProps {
 
 export class Coordinator extends UserBase {
   private constructor(props: CoordinatorProps) {
-    const { isActive, courseId, ...baseProps } = props;
-    super(baseProps);
-    (this.props as any).isActive = isActive ?? true;
-    (this.props as any).courseId = courseId;
+    super(props);
+    (this.props as any).isActive = props.isActive ?? true;
+    (this.props as any).courseId = props.courseId;
   }
 
   static create(props: CoordinatorProps): Coordinator {

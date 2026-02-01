@@ -4,8 +4,9 @@ import { Role } from '@prisma/client';
 import { Student } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { CreateStudentDto, StudentResponseDto } from '../../presentation/dtos';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { IUserRepository, USER_REPOSITORY, User } from '../../../auth/application/ports';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
+import { Course } from '../../../courses/domain/entities';
 import { generateRandomPassword } from '../../../../../shared/utils';
 import { ICurrentUser } from '../../../../../shared/types';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
@@ -82,7 +83,7 @@ export class CreateStudentUseCase {
     });
   }
 
-  private async createStudent(dto: CreateStudentDto, user: any): Promise<Student> {
+  private async createStudent(dto: CreateStudentDto, user: User): Promise<Student> {
     const student = Student.create({
       id: user.id,
       matricula: dto.registration,
@@ -122,7 +123,7 @@ export class CreateStudentUseCase {
     });
   }
 
-  private buildResponse(student: Student, course: any): StudentResponseDto {
+  private buildResponse(student: Student, course: Course): StudentResponseDto {
     return {
       userId: student.id,
       registration: student.matricula,

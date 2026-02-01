@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/ports';
+import { IUserRepository, USER_REPOSITORY, User } from '../../../auth/application/ports';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
@@ -47,7 +47,7 @@ export class GetUserUseCase {
     return user;
   }
 
-  private buildBaseUserResponse(user: any): UserResponseDto {
+  private buildBaseUserResponse(user: User): UserResponseDto {
     return {
       id: user.id,
       email: user.email,

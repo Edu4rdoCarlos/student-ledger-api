@@ -4,7 +4,7 @@ import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
 import { IpfsService } from '../../../../toolkit/ipfs/ipfs.service';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { ICurrentUser } from '../../../../../shared/types';
-import { DocumentType } from '../../domain/entities';
+import { DocumentType, Document } from '../../domain/entities';
 
 interface DownloadDocumentResponse {
   buffer: Buffer;
@@ -44,7 +44,7 @@ export class DownloadDocumentUseCase {
     return document;
   }
 
-  private async validateUserAccess(document: any, currentUser: ICurrentUser): Promise<void> {
+  private async validateUserAccess(document: Document, currentUser: ICurrentUser): Promise<void> {
     const isAdmin = currentUser.role === Role.ADMIN;
 
     if (isAdmin) {
@@ -62,7 +62,7 @@ export class DownloadDocumentUseCase {
     await this.validateAdvisorOrStudentAccess(document, currentUser);
   }
 
-  private async validateCoordinatorAccess(document: any, currentUser: ICurrentUser): Promise<void> {
+  private async validateCoordinatorAccess(document: Document, currentUser: ICurrentUser): Promise<void> {
     if (!currentUser.courseId) {
       this.logger.warn(`[DOWNLOAD] Coordenador sem curso associado: ${currentUser.id}`);
       throw new ForbiddenException('Coordenador não está associado a nenhum curso');
@@ -75,7 +75,7 @@ export class DownloadDocumentUseCase {
     }
   }
 
-  private async validateAdvisorOrStudentAccess(document: any, currentUser: ICurrentUser): Promise<void> {
+  private async validateAdvisorOrStudentAccess(document: Document, currentUser: ICurrentUser): Promise<void> {
     const defense = await this.defenseRepository.findById(document.defenseId);
 
     if (!defense) {
@@ -97,7 +97,7 @@ export class DownloadDocumentUseCase {
     }
   }
 
-  private prepareCidAndFilename(document: any, documentType?: DocumentType) {
+  private prepareCidAndFilename(document: Document, documentType?: DocumentType) {
     let cid: string | undefined;
     let filenamePrefix: string;
 

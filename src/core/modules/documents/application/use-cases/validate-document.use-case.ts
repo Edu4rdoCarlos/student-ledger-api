@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { DocumentType, DocumentStatus } from '../../domain/entities';
+import { DocumentType, DocumentStatus, Document } from '../../domain/entities';
 import { ValidateDocumentResponseDto, DefenseInfoDto } from '../../presentation/dtos';
 import { FabricService } from '../../../../toolkit/fabric/fabric.service';
-import { FabricUser } from '../../../../toolkit/fabric/application/ports';
+import { FabricUser, VerifyDocumentResult } from '../../../../toolkit/fabric/application/ports';
 import { IpfsService } from '../../../../toolkit/ipfs/ipfs.service';
 import { ICurrentUser } from '../../../../../shared/types';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
@@ -57,7 +57,7 @@ export class ValidateDocumentUseCase {
     };
   }
 
-  private determineDocumentType(document: any, cid: string): DocumentType {
+  private determineDocumentType(document: Document, cid: string): DocumentType {
     return document.minutesCid === cid ? DocumentType.MINUTES : DocumentType.EVALUATION;
   }
 
@@ -69,7 +69,7 @@ export class ValidateDocumentUseCase {
   }
 
   private buildInactiveResponse(
-    document: any,
+    document: Document,
     documentType: DocumentType,
     defenseInfo?: DefenseInfoDto
   ): ValidateDocumentResponseDto {
@@ -90,7 +90,7 @@ export class ValidateDocumentUseCase {
   }
 
   private buildPendingResponse(
-    document: any,
+    document: Document,
     documentType: DocumentType,
     defenseInfo?: DefenseInfoDto
   ): ValidateDocumentResponseDto {
@@ -111,36 +111,37 @@ export class ValidateDocumentUseCase {
   }
 
   private buildApprovedResponse(
-    fabricResult: any,
+    fabricResult: VerifyDocumentResult,
     defenseInfo?: DefenseInfoDto
   ): ValidateDocumentResponseDto {
+    const doc = fabricResult.document!;
     return {
       isValid: true,
       status: DocumentStatus.APPROVED,
       document: {
-        id: fabricResult.document.documentId,
+        id: doc.documentId,
         documentType: fabricResult.documentType as DocumentType,
-        minutesHash: fabricResult.document.minutesHash,
-        minutesCid: fabricResult.document.minutesCid,
-        evaluationHash: fabricResult.document.evaluationHash,
-        evaluationCid: fabricResult.document.evaluationCid,
+        minutesHash: doc.minutesHash,
+        minutesCid: doc.minutesCid,
+        evaluationHash: doc.evaluationHash,
+        evaluationCid: doc.evaluationCid,
         status: DocumentStatus.APPROVED,
         defenseInfo,
         blockchainData: {
-          matriculas: fabricResult.document.matriculas,
-          defenseDate: fabricResult.document.defenseDate,
-          notaFinal: fabricResult.document.notaFinal,
-          resultado: fabricResult.document.resultado,
-          versao: fabricResult.document.versao,
-          signatures: fabricResult.document.signatures,
-          validatedAt: fabricResult.document.validatedAt,
+          matriculas: doc.matriculas,
+          defenseDate: doc.defenseDate,
+          notaFinal: doc.notaFinal,
+          resultado: doc.resultado,
+          versao: doc.versao,
+          signatures: doc.signatures,
+          validatedAt: doc.validatedAt,
         },
       },
     };
   }
 
   private async verifyInBlockchain(
-    localDocument: any,
+    localDocument: Document,
     documentType: DocumentType,
     defenseInfo: DefenseInfoDto | undefined,
     currentUser: ICurrentUser
@@ -152,7 +153,11 @@ export class ValidateDocumentUseCase {
     };
 
     try {
-      const fabricResult = await this.fabricService.verifyDocument(fabricUser, localDocument.minutesCid || localDocument.evaluationCid);
+      const cid = localDocument.minutesCid || localDocument.evaluationCid;
+      if (!cid) {
+        return this.buildPendingResponse(localDocument, documentType, defenseInfo);
+      }
+      const fabricResult = await this.fabricService.verifyDocument(fabricUser, cid);
 
       if (fabricResult.valid && fabricResult.document && fabricResult.documentType) {
         return this.buildApprovedResponse(fabricResult, defenseInfo);

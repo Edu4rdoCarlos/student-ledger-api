@@ -23,7 +23,6 @@ import { PrismaUserRepository, JwtTokenAdapter, HttpCookieAdapter, PrismaRefresh
   ],
   controllers: [AuthController],
   providers: [
-    // Adapters
     {
       provide: USER_REPOSITORY,
       useClass: PrismaUserRepository,
@@ -40,11 +39,9 @@ import { PrismaUserRepository, JwtTokenAdapter, HttpCookieAdapter, PrismaRefresh
       provide: REFRESH_TOKEN_REPOSITORY,
       useClass: PrismaRefreshTokenRepository,
     },
-    // Use Cases
     LoginUseCase,
     RefreshTokensUseCase,
     LogoutUseCase,
-    // Strategy
     JwtStrategy,
   ],
   exports: [USER_REPOSITORY, TOKEN_SERVICE],

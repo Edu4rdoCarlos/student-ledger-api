@@ -28,15 +28,12 @@ import { FileUploadAdapter } from '../../../shared/adapters';
   ],
   controllers: [DocumentsController],
   providers: [
-    // Repository
     {
       provide: DOCUMENT_REPOSITORY,
       useClass: PrismaDocumentRepository,
     },
-    // Utils & Adapters
     HashUtil,
     FileUploadAdapter,
-    // Use Cases
     CreateDocumentUseCase,
     GetDocumentUseCase,
     ListDocumentsUseCase,

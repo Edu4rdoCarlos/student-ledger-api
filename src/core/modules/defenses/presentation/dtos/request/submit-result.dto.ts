@@ -17,12 +17,12 @@ export class SubmitDefenseResultDto {
     format: 'binary',
     description: 'Minutes document file (Ata) - PDF'
   })
-  minutesFile: any;
+  minutesFile: Express.Multer.File;
 
   @ApiProperty({
     type: 'string',
     format: 'binary',
     description: 'Performance evaluation document file (Avaliação de Desempenho) - PDF'
   })
-  evaluationFile: any;
+  evaluationFile: Express.Multer.File;
 }

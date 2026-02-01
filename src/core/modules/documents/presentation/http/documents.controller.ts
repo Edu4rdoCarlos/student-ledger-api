@@ -32,7 +32,7 @@ export class DocumentsController {
   async download(
     @Param('id') id: string,
     @Query('type') documentType: DocumentType | undefined,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: ICurrentUser,
     @Res({ passthrough: true }) res: Response,
   ) {
     const { buffer, filename, mimeType } = await this.downloadDocument.execute(id, currentUser, documentType);
@@ -96,7 +96,6 @@ export class DocumentsController {
       coordinatorId: currentUser.id,
     });
 
-    // Buscar todas as versões do documento pela defenseId
     const allVersions = await this.listDocumentVersions.execute(newVersion.defenseId);
 
     const responseData = {

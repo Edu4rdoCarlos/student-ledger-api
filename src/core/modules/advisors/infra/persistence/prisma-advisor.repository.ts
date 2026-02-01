@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DefenseStatus } from '@prisma/client';
+import { DefenseStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../../database/prisma';
 import { Advisor } from '../../domain/entities';
 import { IAdvisorRepository, FindAllOptions, FindAllResult } from '../../application/ports';
@@ -116,7 +116,7 @@ export class PrismaAdvisorRepository implements IAdvisorRepository {
     return count > 0;
   }
 
-  private buildCourseFilter(options?: FindAllOptions): Record<string, any> {
+  private buildCourseFilter(options?: FindAllOptions) {
     if (options?.courseIds && options.courseIds.length > 0) {
       return { courseId: { in: options.courseIds } };
     }

@@ -5,6 +5,8 @@ import { StudentNotFoundError } from '../../domain/errors';
 import { StudentResponseDto } from '../../presentation/dtos';
 import { ICourseRepository, COURSE_REPOSITORY } from '../../../courses/application/ports';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
+import { Student } from '../../domain/entities';
+import { Course } from '../../../courses/domain/entities';
 
 export interface GetStudentRequest {
   matricula: string;
@@ -55,7 +57,7 @@ export class GetStudentUseCase {
     return defenses.map(defense => defense.id);
   }
 
-  private buildResponse(student: any, course: any, defenseIds: string[]): StudentResponseDto {
+  private buildResponse(student: Student, course: Course, defenseIds: string[]): StudentResponseDto {
     return {
       userId: student.id,
       registration: student.matricula,

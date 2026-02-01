@@ -25,7 +25,7 @@ export interface DefenseEvent {
   defenseId: string;
   type: 'CANCELED' | 'RESCHEDULED';
   reason: string;
-  metadata?: any;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface IDefenseRepository {

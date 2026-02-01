@@ -16,12 +16,10 @@ export const DocumentTypeLabel: Record<DocumentType, string> = {
 
 export interface DocumentProps {
   version: number;
-  // Ata (Minutes) document
-  minutesHash?: string; // SHA-256 hash of minutes file
-  minutesCid?: string; // IPFS CID of minutes file
-  // Avaliação de Desempenho (Evaluation) document
-  evaluationHash?: string; // SHA-256 hash of evaluation file
-  evaluationCid?: string; // IPFS CID of evaluation file
+  minutesHash?: string;
+  minutesCid?: string;
+  evaluationHash?: string;
+  evaluationCid?: string;
   status: DocumentStatus;
   changeReason?: string;
   inactivationReason?: string;
@@ -195,20 +193,18 @@ export class Document {
       defenseId: this.props.defenseId,
       previousVersionId: this.id,
       changeReason: reason,
-      // Keep the other document's hash/cid from current version
       minutesHash: this.props.minutesHash,
       minutesCid: this.props.minutesCid,
       evaluationHash: this.props.evaluationHash,
       evaluationCid: this.props.evaluationCid,
     };
 
-    // Update only the specified document type
     if (documentType === 'minutes') {
       baseProps.minutesHash = hash;
-      baseProps.minutesCid = undefined; // Will be filled when uploaded to IPFS
+      baseProps.minutesCid = undefined;
     } else {
       baseProps.evaluationHash = hash;
-      baseProps.evaluationCid = undefined; // Will be filled when uploaded to IPFS
+      baseProps.evaluationCid = undefined;
     }
 
     return Document.create(baseProps);

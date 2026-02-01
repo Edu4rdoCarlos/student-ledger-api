@@ -7,6 +7,7 @@ import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/applic
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 import { ICurrentUser } from '../../../../../shared/types';
 import { NotifyDefenseScheduledUseCase } from './notify-defense-scheduled.use-case';
+import { Student } from '../../../students/domain/entities';
 
 interface CreateDefenseRequest {
   title: string;
@@ -72,7 +73,7 @@ export class CreateDefenseUseCase {
     return students;
   }
 
-  private validateCoordinatorAccess(students: any[], currentUser?: ICurrentUser): void {
+  private validateCoordinatorAccess(students: Student[], currentUser?: ICurrentUser): void {
     if (currentUser?.role !== Role.COORDINATOR) {
       return;
     }
