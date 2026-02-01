@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DocumentVersionDto } from '../../../../defenses/presentation/dtos/response/document-version.dto';
+import { ApprovalStatus, ApprovalRole } from '../../../../approvals/domain/entities';
+import { DefenseStatus, DefenseResult } from '../../../../defenses/domain/entities';
 
 export class ExamBoardMember {
   @ApiProperty({ description: 'Nome do membro da banca', example: 'Prof. Dr. Carlos Alberto Silva' })
@@ -10,8 +12,8 @@ export class ExamBoardMember {
 }
 
 export class DefenseSignature {
-  @ApiProperty({ description: 'Papel do signatário', example: 'coordinator', enum: ['coordinator', 'advisor', 'student'] })
-  role: string;
+  @ApiProperty({ description: 'Papel do signatário', example: ApprovalRole.COORDINATOR, enum: ApprovalRole })
+  role: ApprovalRole;
 
   @ApiProperty({ description: 'Email do signatário', example: 'coordinator@ifal.local' })
   email: string;
@@ -19,8 +21,8 @@ export class DefenseSignature {
   @ApiProperty({ description: 'Data e hora da assinatura', example: '2024-01-05T10:30:00.000Z' })
   timestamp: string;
 
-  @ApiProperty({ description: 'Status da assinatura', example: 'APPROVED', enum: ['APPROVED', 'REJECTED', 'PENDING'] })
-  status: 'APPROVED' | 'REJECTED' | 'PENDING';
+  @ApiProperty({ description: 'Status da assinatura', example: ApprovalStatus.APPROVED, enum: ApprovalStatus })
+  status: ApprovalStatus;
 
   @ApiPropertyOptional({ description: 'Justificativa para rejeição', example: 'Document does not meet minimum formatting requirements' })
   justification?: string;
@@ -73,8 +75,8 @@ export class DefenseRecordDto {
   @ApiProperty({ description: 'Nota final', example: 8.5, minimum: 0, maximum: 10 })
   finalGrade: number;
 
-  @ApiProperty({ description: 'Resultado da defesa', example: 'APPROVED', enum: ['APPROVED', 'FAILED'] })
-  result: 'APPROVED' | 'FAILED';
+  @ApiProperty({ description: 'Resultado da defesa', example: DefenseResult.APPROVED, enum: DefenseResult })
+  result: DefenseResult;
 
   @ApiProperty({ description: 'Motivo (se reprovado)', example: '' })
   reason: string;
@@ -82,8 +84,8 @@ export class DefenseRecordDto {
   @ApiProperty({ description: 'Email de quem registrou', example: 'coordinator@ifal.local' })
   registeredBy: string;
 
-  @ApiProperty({ description: 'Status da defesa', example: 'COMPLETED', enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'] })
-  defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+  @ApiProperty({ description: 'Status da defesa', example: DefenseStatus.COMPLETED, enum: DefenseStatus })
+  defenseStatus: DefenseStatus;
 
   @ApiPropertyOptional({
     description: 'Orientador da defesa',
@@ -129,10 +131,10 @@ export interface DefenseRecord {
   defenseDate: string;
   location?: string;
   finalGrade: number;
-  result: 'APPROVED' | 'FAILED';
+  result: DefenseResult;
   reason: string;
   registeredBy: string;
-  defenseStatus: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+  defenseStatus: DefenseStatus;
   advisor?: {
     id: string;
     name: string;
@@ -151,10 +153,10 @@ export interface DefenseRecord {
     email: string;
   }>;
   signatures: Array<{
-    role: string;
+    role: ApprovalRole;
     email: string;
     timestamp: string;
-    status: 'APPROVED' | 'REJECTED' | 'PENDING';
+    status: ApprovalStatus;
     justification?: string;
   }>;
   validatedAt: string;

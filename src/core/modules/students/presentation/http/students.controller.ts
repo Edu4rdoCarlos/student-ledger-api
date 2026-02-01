@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { Roles, CurrentUser } from '../../../../../shared/decorators';
 import {
   CreateStudentUseCase,
@@ -27,7 +28,7 @@ export class StudentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles('COORDINATOR')
+  @Roles(Role.COORDINATOR)
   @ApiOperation({
     summary: 'Register new student',
     description: 'Creates a new user with STUDENT role and links to student record. The operation is atomic: creates both or neither.'
@@ -58,18 +59,18 @@ export class StudentsController {
   }
 
   @Get()
-  @Roles('COORDINATOR')
+  @Roles(Role.COORDINATOR)
   @ApiOperation({ summary: 'List students' })
   @ApiStudentListResponse()
   async findAll(
     @Query() query: ListStudentsDto,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<ListStudentsResponse> {
     return this.listStudents.execute(currentUser, query);
   }
 
   @Get(':registration')
-  @Roles('COORDINATOR')
+  @Roles(Role.COORDINATOR)
   @ApiOperation({ summary: 'Find student by registration number with blockchain defense history' })
   @ApiStudentOkResponse()
   @ApiResponse({
@@ -82,7 +83,7 @@ export class StudentsController {
   })
   async findOne(
     @Param('registration') registration: string,
-    @CurrentUser() currentUser: { id: string; email: string; role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT' },
+    @CurrentUser() currentUser: ICurrentUser,
   ): Promise<HttpResponse<StudentResponseDto>> {
     const student = await this.getStudent.execute({
       matricula: registration,
@@ -93,7 +94,7 @@ export class StudentsController {
 
   @Put(':registration')
   @HttpCode(HttpStatus.OK)
-  @Roles('COORDINATOR')
+  @Roles(Role.COORDINATOR)
   @ApiOperation({
     summary: 'Update student data',
     description: 'Updates user name and/or student course. Only coordinators can update.'

@@ -90,7 +90,6 @@ export class CreateDocumentVersionUseCase {
   private calculateAndValidateHash(documentFile: Buffer, currentDocument: Document, documentType: DocumentType): string {
     const newDocumentHash = this.hashUtil.calculateSha256(documentFile);
 
-    // Get the current hash for the specific document type
     const currentHash = documentType === 'minutes'
       ? currentDocument.minutesHash
       : currentDocument.evaluationHash;

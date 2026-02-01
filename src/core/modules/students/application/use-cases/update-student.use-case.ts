@@ -17,11 +17,23 @@ export class UpdateStudentUseCase {
   ) {}
 
   async execute(matricula: string, dto: UpdateStudentDto): Promise<StudentResponseDto> {
+    const student = await this.findAndValidateStudent(matricula);
+    await this.updateStudentData(student, dto);
+    const updated = await this.findAndValidateStudent(matricula);
+    const course = await this.findAndValidateCourse(updated.courseId);
+
+    return this.buildResponse(updated, course);
+  }
+
+  private async findAndValidateStudent(matricula: string) {
     const student = await this.studentRepository.findByMatricula(matricula);
     if (!student) {
       throw new StudentNotFoundError(matricula);
     }
+    return student;
+  }
 
+  private async updateStudentData(student: any, dto: UpdateStudentDto): Promise<void> {
     if (dto.name !== undefined) {
       await this.userRepository.updateName(student.userId, dto.name);
     }
@@ -30,30 +42,29 @@ export class UpdateStudentUseCase {
       student.updateCourse(dto.courseId);
       await this.studentRepository.update(student);
     }
+  }
 
-    const updated = await this.studentRepository.findByMatricula(matricula);
-    if (!updated) {
-      throw new StudentNotFoundError(matricula);
-    }
-
-    const course = await this.courseRepository.findById(updated.courseId);
-
+  private async findAndValidateCourse(courseId: string) {
+    const course = await this.courseRepository.findById(courseId);
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
     }
+    return course;
+  }
 
+  private buildResponse(student: any, course: any): StudentResponseDto {
     return {
-      userId: updated.id,
-      registration: updated.matricula,
-      name: updated.name,
-      email: updated.email,
+      userId: student.id,
+      registration: student.matricula,
+      name: student.name,
+      email: student.email,
       course: {
         id: course.id,
         name: course.name,
         code: course.code,
       },
-      createdAt: updated.createdAt!,
-      updatedAt: updated.updatedAt!,
+      createdAt: student.createdAt!,
+      updatedAt: student.updatedAt!,
     };
   }
 }

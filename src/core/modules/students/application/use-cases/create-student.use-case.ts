@@ -28,15 +28,33 @@ export class CreateStudentUseCase {
   ) {}
 
   async execute(dto: CreateStudentDto, currentUser?: ICurrentUser): Promise<StudentResponseDto> {
-    if (currentUser?.role === 'COORDINATOR') {
-      if (!currentUser.courseId) {
-        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
-      }
-      if (dto.courseId !== currentUser.courseId) {
-        throw new ForbiddenException('Coordenador só pode cadastrar alunos do seu próprio curso');
-      }
+    this.validateCoordinatorAccess(dto.courseId, currentUser);
+    const course = await this.validateUniqueConstraintsAndGetCourse(dto);
+    const randomPassword = generateRandomPassword();
+    const user = await this.createUser(dto, randomPassword);
+    const created = await this.createStudent(dto, user);
+
+    this.enqueueCertificateGeneration(created);
+    this.sendWelcomeEmail(created, randomPassword);
+
+    return this.buildResponse(created, course);
+  }
+
+  private validateCoordinatorAccess(courseId: string, currentUser?: ICurrentUser): void {
+    if (currentUser?.role !== Role.COORDINATOR) {
+      return;
     }
 
+    if (!currentUser.courseId) {
+      throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+    }
+
+    if (courseId !== currentUser.courseId) {
+      throw new ForbiddenException('Coordenador só pode cadastrar alunos do seu próprio curso');
+    }
+  }
+
+  private async validateUniqueConstraintsAndGetCourse(dto: CreateStudentDto) {
     const [emailExists, matriculaExists, course] = await Promise.all([
       this.userRepository.existsByEmail(dto.email),
       this.studentRepository.existsByMatricula(dto.registration),
@@ -51,16 +69,20 @@ export class CreateStudentUseCase {
       throw new NotFoundException('Curso não encontrado');
     }
 
-    const randomPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    return course;
+  }
 
-    const user = await this.userRepository.create({
+  private async createUser(dto: CreateStudentDto, password: string) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return this.userRepository.create({
       email: dto.email,
       password: hashedPassword,
       name: dto.name,
       role: Role.STUDENT,
     });
+  }
 
+  private async createStudent(dto: CreateStudentDto, user: any): Promise<Student> {
     const student = Student.create({
       id: user.id,
       matricula: dto.registration,
@@ -70,43 +92,49 @@ export class CreateStudentUseCase {
       role: user.role,
     });
 
-    const created = await this.studentRepository.create(student);
+    return this.studentRepository.create(student);
+  }
 
-    await this.certificateQueue.enqueueCertificateGeneration(
-      created.id,
-      created.email,
+  private enqueueCertificateGeneration(student: Student): void {
+    this.certificateQueue.enqueueCertificateGeneration(
+      student.id,
+      student.email,
       Role.STUDENT,
     );
+  }
 
+  private sendWelcomeEmail(student: Student, password: string): void {
     this.sendEmailUseCase.execute({
-      userId: created.id,
-      to: created.email,
+      userId: student.id,
+      to: student.email,
       subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
       template: {
         id: EmailTemplate.USER_CREDENTIALS,
         data: {
-          name: created.name,
-          email: created.email,
-          temporaryPassword: randomPassword,
-          role: 'STUDENT',
+          name: student.name,
+          email: student.email,
+          temporaryPassword: password,
+          role: Role.STUDENT,
         },
       },
     }).catch((error) => {
       this.logger.error(`Falha ao enviar email de boas-vindas: ${error.message}`);
     });
+  }
 
+  private buildResponse(student: Student, course: any): StudentResponseDto {
     return {
-      userId: created.id,
-      registration: created.matricula,
-      name: created.name,
-      email: created.email,
+      userId: student.id,
+      registration: student.matricula,
+      name: student.name,
+      email: student.email,
       course: {
         id: course.id,
         name: course.name,
         code: course.code,
       },
-      createdAt: created.createdAt!,
-      updatedAt: created.updatedAt!,
+      createdAt: student.createdAt!,
+      updatedAt: student.updatedAt!,
     };
   }
 }

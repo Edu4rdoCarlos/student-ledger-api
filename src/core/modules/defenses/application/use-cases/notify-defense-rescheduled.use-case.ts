@@ -57,7 +57,6 @@ export class NotifyDefenseRescheduledUseCase {
       emailData
     );
 
-    // Notificar orientador
     await this.sendEmailUseCase.execute({
       userId: advisor.userId,
       to: advisor.email,
@@ -67,7 +66,6 @@ export class NotifyDefenseRescheduledUseCase {
       contextId: defense.id,
     });
 
-    // Notificar estudantes
     for (const student of validStudents) {
       await this.sendEmailUseCase.execute({
         userId: student.userId,
@@ -79,7 +77,6 @@ export class NotifyDefenseRescheduledUseCase {
       });
     }
 
-    // Notificar banca examinadora
     if (defense.examBoard && defense.examBoard.length > 0) {
       for (const member of defense.examBoard) {
         await this.sendEmailUseCase.execute({

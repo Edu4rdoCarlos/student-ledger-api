@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CourseInfo } from './student-response.dto';
+import { DefenseStatus } from '../../../../defenses/domain/entities';
 
 export class StudentListItemDto {
   @ApiProperty({ description: 'ID do usuário do estudante' })
@@ -33,9 +34,9 @@ export class StudentListItemDto {
 
   @ApiProperty({
     description: 'Status da defesa mais recente',
-    enum: ['SCHEDULED', 'CANCELED', 'COMPLETED'],
-    example: 'COMPLETED',
+    enum: DefenseStatus,
+    example: DefenseStatus.COMPLETED,
     required: false
   })
-  defenseStatus?: 'SCHEDULED' | 'CANCELED' | 'COMPLETED';
+  defenseStatus?: DefenseStatus;
 }

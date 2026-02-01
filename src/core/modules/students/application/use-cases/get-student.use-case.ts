@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../ports';
 import { StudentNotFoundError } from '../../domain/errors';
 import { StudentResponseDto } from '../../presentation/dtos';
@@ -10,7 +11,7 @@ export interface GetStudentRequest {
   currentUser: {
     id: string;
     email: string;
-    role: 'ADMIN' | 'COORDINATOR' | 'ADVISOR' | 'STUDENT';
+    role: Role;
   };
 }
 
@@ -26,21 +27,35 @@ export class GetStudentUseCase {
   ) {}
 
   async execute(request: GetStudentRequest): Promise<StudentResponseDto> {
-    const student = await this.studentRepository.findByMatricula(request.matricula);
+    const student = await this.findAndValidateStudent(request.matricula);
+    const course = await this.findAndValidateCourse(student.courseId);
+    const defenseIds = await this.getDefenseIds(student.id);
 
+    return this.buildResponse(student, course, defenseIds);
+  }
+
+  private async findAndValidateStudent(matricula: string) {
+    const student = await this.studentRepository.findByMatricula(matricula);
     if (!student) {
-      throw new StudentNotFoundError(request.matricula);
+      throw new StudentNotFoundError(matricula);
     }
+    return student;
+  }
 
-    const course = await this.courseRepository.findById(student.courseId);
-
+  private async findAndValidateCourse(courseId: string) {
+    const course = await this.courseRepository.findById(courseId);
     if (!course) {
       throw new NotFoundException('Curso não encontrado');
     }
+    return course;
+  }
 
-    const dbDefenses = await this.defenseRepository.findByStudentId(student.id);
-    const defenseIds = dbDefenses.map(defense => defense.id);
+  private async getDefenseIds(studentId: string): Promise<string[]> {
+    const defenses = await this.defenseRepository.findByStudentId(studentId);
+    return defenses.map(defense => defense.id);
+  }
 
+  private buildResponse(student: any, course: any, defenseIds: string[]): StudentResponseDto {
     return {
       userId: student.id,
       registration: student.matricula,

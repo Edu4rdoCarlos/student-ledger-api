@@ -1,13 +1,17 @@
+import { ApprovalStatus, ApprovalRole } from '../../../../approvals/domain/entities';
+import { DefenseStatus, DefenseResult } from '../../../../defenses/domain/entities';
+import { DocumentStatus } from '../../../../documents/domain/entities';
+
 export const STUDENT_RESPONSE_EXAMPLE = {
   studentRegistration: '202301',
   title: 'Sistema de Gerenciamento de TCC com Blockchain',
   defenseDate: '2024-01-05T10:00:00.000Z',
   location: 'Sala 301 - Prédio da Computação',
   finalGrade: 8.5,
-  result: 'APPROVED',
+  result: DefenseResult.APPROVED,
   reason: '',
   registeredBy: 'coordinator@ifal.local',
-  defenseStatus: 'COMPLETED',
+  defenseStatus: DefenseStatus.COMPLETED,
   advisor: {
     id: 'advisor-uuid-123',
     name: 'Prof. Dr. João Silva',
@@ -39,23 +43,23 @@ export const STUDENT_RESPONSE_EXAMPLE = {
   ],
   signatures: [
     {
-      role: 'coordinator',
+      role: ApprovalRole.COORDINATOR,
       email: 'coordinator@ifal.local',
       timestamp: '2024-01-05T10:30:00.000Z',
-      status: 'APPROVED',
+      status: ApprovalStatus.APPROVED,
     },
     {
-      role: 'advisor',
+      role: ApprovalRole.ADVISOR,
       email: 'advisor@ifal.local',
       timestamp: '2024-01-05T10:15:00.000Z',
-      status: 'REJECTED',
+      status: ApprovalStatus.REJECTED,
       justification: 'Document does not meet minimum formatting requirements',
     },
     {
-      role: 'student',
+      role: ApprovalRole.STUDENT,
       email: 'student@ifal.local',
       timestamp: '2024-01-05T10:05:00.000Z',
-      status: 'APPROVED',
+      status: ApprovalStatus.APPROVED,
     },
   ],
   validatedAt: '2024-01-05T10:30:00.000Z',
@@ -63,7 +67,7 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     {
       id: 'doc-uuid-v2',
       version: 2,
-      status: 'APPROVED',
+      status: DocumentStatus.APPROVED,
       changeReason: 'Correção de nota final após revisão',
       minutesCid: 'QmX1234567890abcdefghijklmnop',
       evaluationCid: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
@@ -73,7 +77,7 @@ export const STUDENT_RESPONSE_EXAMPLE = {
     {
       id: 'doc-uuid-v1',
       version: 1,
-      status: 'INACTIVE',
+      status: DocumentStatus.INACTIVE,
       changeReason: undefined,
       minutesCid: 'QmY9876543210zyxwvutsrqponml',
       evaluationCid: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi2',

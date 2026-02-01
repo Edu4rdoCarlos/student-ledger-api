@@ -58,7 +58,6 @@ export class NotifyDefenseResultUseCase {
       emailData
     );
 
-    // Notificar orientador
     await this.sendEmailUseCase.execute({
       userId: advisor.userId,
       to: advisor.email,
@@ -68,7 +67,6 @@ export class NotifyDefenseResultUseCase {
       contextId: defense.id,
     });
 
-    // Notificar estudantes
     for (const student of validStudents) {
       await this.sendEmailUseCase.execute({
         userId: student.userId,

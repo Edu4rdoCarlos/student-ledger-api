@@ -31,7 +31,8 @@ export class Student extends UserBase {
   }
 
   updateCourse(courseId: string): void {
-    (this.props as any).courseId = courseId;
-    (this.props as any).updatedAt = new Date();
+    const props = this.props as StudentProps;
+    (props as any).courseId = courseId;
+    (props as any).updatedAt = new Date();
   }
 }
