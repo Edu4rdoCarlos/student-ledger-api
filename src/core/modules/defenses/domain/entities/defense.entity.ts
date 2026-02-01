@@ -174,15 +174,40 @@ export class Defense {
     this.props.updatedAt = new Date();
   }
 
-  update(data: Partial<Pick<DefenseProps, 'title' | 'defenseDate' | 'location'>>): void {
-    if (data.title !== undefined) this.props.title = data.title;
-    if (data.defenseDate !== undefined) this.props.defenseDate = data.defenseDate;
-    if (data.location !== undefined) this.props.location = data.location;
+  changeTitle(title: string): void {
+    this.props.title = title;
     this.props.updatedAt = new Date();
   }
 
+  changeLocation(location: string): void {
+    this.props.location = location;
+    this.props.updatedAt = new Date();
+  }
+
+  changeDefenseDate(date: Date): void {
+    this.props.defenseDate = date;
+    this.props.updatedAt = new Date();
+  }
+
+  updateExamBoard(members: ExamBoardMember[]): void {
+    this.props.examBoard = members;
+    this.props.updatedAt = new Date();
+  }
+
+  isCompleted(): boolean {
+    return this.props.status === DefenseStatus.COMPLETED;
+  }
+
+  isCanceled(): boolean {
+    return this.props.status === DefenseStatus.CANCELED;
+  }
+
+  isScheduled(): boolean {
+    return this.props.status === DefenseStatus.SCHEDULED;
+  }
+
   cancel(reason: string): void {
-    if (this.props.status === DefenseStatus.COMPLETED) {
+    if (this.isCompleted()) {
       throw new Error('Não é possível cancelar uma defesa já concluída');
     }
     if (!reason || reason.trim().length === 0) {
@@ -195,7 +220,7 @@ export class Defense {
   }
 
   reschedule(newDate: Date, reason: string): void {
-    if (this.props.status === DefenseStatus.COMPLETED) {
+    if (this.isCompleted()) {
       throw new Error('Não é possível reagendar uma defesa já concluída');
     }
     if (!reason || reason.trim().length === 0) {

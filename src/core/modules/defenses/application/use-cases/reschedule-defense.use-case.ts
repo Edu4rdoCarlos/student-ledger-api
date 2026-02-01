@@ -1,5 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { PrismaService } from '../../../../../database/prisma';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Defense } from '../../domain/entities';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../ports';
 import { DefenseNotFoundError } from '../../domain/errors';
@@ -13,11 +12,12 @@ interface RescheduleDefenseRequest {
 
 @Injectable()
 export class RescheduleDefenseUseCase {
+  private readonly logger = new Logger(RescheduleDefenseUseCase.name);
+
   constructor(
     @Inject(DEFENSE_REPOSITORY)
     private readonly defenseRepository: IDefenseRepository,
     private readonly notifyDefenseRescheduledUseCase: NotifyDefenseRescheduledUseCase,
-    private readonly prisma: PrismaService,
   ) {}
 
   async execute(request: RescheduleDefenseRequest): Promise<Defense> {
@@ -29,25 +29,22 @@ export class RescheduleDefenseUseCase {
     const oldDate = defense.defenseDate;
 
     defense.reschedule(request.newDate, request.rescheduleReason);
-
     const updatedDefense = await this.defenseRepository.update(defense);
 
-    await this.prisma.defenseEvent.create({
-      data: {
-        defenseId: request.defenseId,
-        type: 'RESCHEDULED',
-        reason: request.rescheduleReason,
-        metadata: {
-          oldDate: oldDate.toISOString(),
-          newDate: request.newDate.toISOString(),
-        },
+    await this.defenseRepository.createEvent({
+      defenseId: request.defenseId,
+      type: 'RESCHEDULED',
+      reason: request.rescheduleReason,
+      metadata: {
+        oldDate: oldDate.toISOString(),
+        newDate: request.newDate.toISOString(),
       },
     });
 
     this.notifyDefenseRescheduledUseCase
       .execute(request.defenseId)
       .catch((error) => {
-        console.error('Failed to send reschedule notifications:', error);
+        this.logger.error(`Falha ao enviar notificação de reagendamento: ${error.message}`);
       });
 
     return updatedDefense;

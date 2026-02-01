@@ -21,6 +21,13 @@ export interface DefenseSummary {
   status: string;
 }
 
+export interface DefenseEvent {
+  defenseId: string;
+  type: 'CANCELED' | 'RESCHEDULED';
+  reason: string;
+  metadata?: any;
+}
+
 export interface IDefenseRepository {
   create(defense: Defense): Promise<Defense>;
   findById(id: string): Promise<Defense | null>;
@@ -34,6 +41,7 @@ export interface IDefenseRepository {
   update(defense: Defense): Promise<Defense>;
   hasActiveDefense(studentId: string): Promise<boolean>;
   getDefenseCourseId(defenseId: string): Promise<string | null>;
+  createEvent(event: DefenseEvent): Promise<void>;
 }
 
 export const DEFENSE_REPOSITORY = Symbol('IDefenseRepository');

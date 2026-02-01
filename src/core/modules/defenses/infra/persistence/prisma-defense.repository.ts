@@ -276,4 +276,15 @@ export class PrismaDefenseRepository implements IDefenseRepository {
 
     return defense?.students?.[0]?.student?.courseId || null;
   }
+
+  async createEvent(event: any): Promise<void> {
+    await this.prisma.defenseEvent.create({
+      data: {
+        defenseId: event.defenseId,
+        type: event.type,
+        reason: event.reason,
+        metadata: event.metadata,
+      },
+    });
+  }
 }

@@ -25,6 +25,7 @@ import { DEFENSE_REPOSITORY } from './application/ports';
 import { PrismaDefenseRepository } from './infra/persistence';
 import { DefenseController } from './presentation/http';
 import { DefenseNotificationScheduler } from './infra/schedulers/defense-notification.scheduler';
+import { FileUploadAdapter } from './infra/adapters/file-upload.adapter';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { DefenseNotificationScheduler } from './infra/schedulers/defense-notific
       useClass: PrismaDefenseRepository,
     },
     HashUtil,
+    FileUploadAdapter,
     CreateDefenseUseCase,
     GetDefenseUseCase,
     ListDefensesUseCase,

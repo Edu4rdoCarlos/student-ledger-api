@@ -27,28 +27,36 @@ export class UpdateDefenseUseCase {
     }
 
     if (request.currentUser?.role === 'COORDINATOR') {
-      if (!request.currentUser.courseId) {
-        throw new ForbiddenException('Coordenador não está associado a nenhum curso');
-      }
-
-      const defenseCourseId = await this.defenseRepository.getDefenseCourseId(request.id);
-      if (defenseCourseId !== request.currentUser.courseId) {
-        throw new ForbiddenException('Coordenador só pode atualizar defesas do seu curso');
-      }
+      await this.validateCoordinatorAccess(request.id, request.currentUser.courseId);
     }
 
-    defense.update({
-      title: request.title,
-      defenseDate: request.defenseDate,
-      location: request.location,
-    });
+    if (request.title !== undefined) {
+      defense.changeTitle(request.title);
+    }
 
-    // Atualizar exam board se fornecido
+    if (request.defenseDate !== undefined) {
+      defense.changeDefenseDate(request.defenseDate);
+    }
+
+    if (request.location !== undefined) {
+      defense.changeLocation(request.location);
+    }
+
     if (request.examBoard !== undefined) {
-      (defense as any).props.examBoard = request.examBoard;
-      (defense as any).props.updatedAt = new Date();
+      defense.updateExamBoard(request.examBoard);
     }
 
     return this.defenseRepository.update(defense);
+  }
+
+  private async validateCoordinatorAccess(defenseId: string, courseId?: string): Promise<void> {
+    if (!courseId) {
+      throw new ForbiddenException('Coordenador não está associado a nenhum curso');
+    }
+
+    const defenseCourseId = await this.defenseRepository.getDefenseCourseId(defenseId);
+    if (defenseCourseId !== courseId) {
+      throw new ForbiddenException('Coordenador só pode atualizar defesas do seu curso');
+    }
   }
 }
