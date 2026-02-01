@@ -17,9 +17,7 @@ import { HashUtil } from './infra/utils/hash.util';
 import { IpfsModule } from '../../toolkit/ipfs/ipfs.module';
 import { DefensesModule } from '../defenses/defenses.module';
 import { ApprovalsModule } from '../approvals/approvals.module';
-import { StudentsModule } from '../students/students.module';
-import { AdvisorsModule } from '../advisors/advisors.module';
-import { CoordinatorsModule } from '../coordinators/coordinators.module';
+import { FileUploadAdapter } from '../../../shared/adapters';
 
 @Module({
   imports: [
@@ -27,9 +25,6 @@ import { CoordinatorsModule } from '../coordinators/coordinators.module';
     IpfsModule,
     forwardRef(() => DefensesModule),
     forwardRef(() => ApprovalsModule),
-    forwardRef(() => StudentsModule),
-    forwardRef(() => AdvisorsModule),
-    forwardRef(() => CoordinatorsModule),
   ],
   controllers: [DocumentsController],
   providers: [
@@ -38,8 +33,9 @@ import { CoordinatorsModule } from '../coordinators/coordinators.module';
       provide: DOCUMENT_REPOSITORY,
       useClass: PrismaDocumentRepository,
     },
-    // Utils
+    // Utils & Adapters
     HashUtil,
+    FileUploadAdapter,
     // Use Cases
     CreateDocumentUseCase,
     GetDocumentUseCase,

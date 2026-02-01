@@ -25,7 +25,7 @@ import { DEFENSE_REPOSITORY } from './application/ports';
 import { PrismaDefenseRepository } from './infra/persistence';
 import { DefenseController } from './presentation/http';
 import { DefenseNotificationScheduler } from './infra/schedulers/defense-notification.scheduler';
-import { FileUploadAdapter } from './infra/adapters/file-upload.adapter';
+import { FileUploadAdapter } from '../../../shared/adapters';
 
 @Module({
   imports: [

@@ -7,7 +7,7 @@ import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/app
 import { NotifyDefenseResultUseCase } from './notify-defense-result.use-case';
 import { CreateApprovalsUseCase } from '../../../approvals/application/use-cases';
 import { ICurrentUser } from '../../../../../shared/types';
-import { FileUploadAdapter } from '../../infra/adapters/file-upload.adapter';
+import { FileUploadAdapter } from '../../../../../shared/adapters';
 
 interface SubmitDefenseResultRequest {
   id: string;
