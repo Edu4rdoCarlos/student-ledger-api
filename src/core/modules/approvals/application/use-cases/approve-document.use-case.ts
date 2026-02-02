@@ -1,12 +1,14 @@
-import { Injectable, Inject, Logger, forwardRef, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, Logger, forwardRef, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { Approval, ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { ApprovalNotFoundError, ApprovalAlreadyProcessedError } from '../../domain/errors';
 import { RegisterOnBlockchainUseCase } from './register-on-blockchain.use-case';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
 import { Document, DocumentType, DocumentTypeLabel } from '../../../documents/domain/entities';
+import { DocumentNotFoundError } from '../../../documents/domain/errors';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { Defense } from '../../../defenses/domain/entities';
+import { DefenseNotFoundError } from '../../../defenses/domain/errors';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { Student } from '../../../students/domain/entities';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
@@ -15,7 +17,7 @@ import { IUserRepository, USER_REPOSITORY } from '../../../auth/application/port
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplateRenderer } from '../../../../toolkit/notifications/infra/templates';
 import { EmailTemplate, NotificationContextType } from '../../../../toolkit/notifications/domain/enums';
-import { SignatureService } from '../../../../toolkit/fabric/application/services';
+import { SignatureService } from '../../../../toolkit/fabric/domain/services/signature.service';
 
 interface ApproveDocumentRequest {
   approvalId: string;
@@ -96,17 +98,17 @@ export class ApproveDocumentUseCase {
   private async loadRequiredEntities(documentId: string): Promise<LoadedEntities> {
     const document = await this.documentRepository.findById(documentId);
     if (!document) {
-      throw new Error('Documento não encontrado');
+      throw new DocumentNotFoundError(documentId);
     }
 
     const defense = await this.defenseRepository.findById(document.defenseId);
     if (!defense) {
-      throw new Error('Defesa não encontrada');
+      throw new DefenseNotFoundError(document.defenseId);
     }
 
     const advisor = await this.advisorRepository.findById(defense.advisorId);
     if (!advisor) {
-      throw new Error('Orientador não encontrado');
+      throw new NotFoundException(`Orientador não encontrado: ${defense.advisorId}`);
     }
 
     const students = await this.loadStudents(defense.studentIds);
@@ -147,7 +149,7 @@ export class ApproveDocumentUseCase {
 
   private getCombinedHash(document: Document): string {
     if (!document.minutesHash || !document.evaluationHash) {
-      throw new Error('Documento sem hashes da ata e avaliação de desempenho');
+      throw new BadRequestException('Documento sem hashes da ata e avaliação de desempenho');
     }
     return `${document.minutesHash}:${document.evaluationHash}`;
   }

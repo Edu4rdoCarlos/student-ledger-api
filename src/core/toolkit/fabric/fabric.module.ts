@@ -1,19 +1,21 @@
 import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
-import { FabricService } from './fabric.service';
 import {
   FABRIC_GATEWAY,
   FABRIC_CA_SERVICE,
   CERTIFICATE_REPOSITORY,
-} from './application/ports';
-import { CERTIFICATE_GENERATION_QUEUE } from './application/queues/certificate-generation.queue';
-import { SignatureService } from './application/services';
-import { CertificateManagementService } from './application/services/certificate-management.service';
-import { CertificateQueueService } from './application/services/certificate-queue.service';
+  CERTIFICATE_GENERATION_QUEUE,
+  FabricService,
+  CertificateManagementService,
+} from './application';
+import { SignatureService } from './domain/services/signature.service';
+import { CertificateQueueService } from './infra/queue/certificate-queue';
 import { FabricGrpcAdapter } from './infra/adapters';
 import { FabricCAAdapter } from './infra/adapters/fabric-ca.adapter';
 import { PrismaCertificateRepository } from './infra/persistence/prisma-certificate.repository';
 import { FabricOrganizationConfig } from './infra/config/fabric-organization.config';
+import { FabricCAConfig } from './infra/config/fabric-ca.config';
+import { FabricNetworkConfig } from './infra/config/fabric-network.config';
 import { CertificateGenerationProcessor } from './infra/jobs/certificate-generation.processor';
 
 @Global()
@@ -38,6 +40,8 @@ import { CertificateGenerationProcessor } from './infra/jobs/certificate-generat
     },
     FabricService,
     FabricOrganizationConfig,
+    FabricCAConfig,
+    FabricNetworkConfig,
     SignatureService,
     CertificateManagementService,
     CertificateQueueService,

@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 import {
   CERTIFICATE_GENERATION_QUEUE,
   CertificateGenerationJobData,
-} from '../queues/certificate-generation.queue';
+} from '../../application/queues/certificate-generation.queue';
 
 @Injectable()
 export class CertificateQueueService {

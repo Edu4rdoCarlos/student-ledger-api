@@ -1,11 +1,11 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, RevocationReason } from '@prisma/client';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { ApprovalRole, ApprovalStatus } from '../../domain/entities';
 import { IStudentRepository, STUDENT_REPOSITORY } from '../../../students/application/ports';
 import { IAdvisorRepository, ADVISOR_REPOSITORY } from '../../../advisors/application/ports';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
-import { CertificateQueueService } from '../../../../toolkit/fabric/application/services/certificate-queue.service';
+import { CertificateQueueService } from '../../../../toolkit/fabric/infra/queue/certificate-queue';
 import { CertificateManagementService } from '../../../../toolkit/fabric/application/services/certificate-management.service';
 
 @Injectable()
@@ -58,7 +58,7 @@ export class ResetApprovalsForNewVersionUseCase {
     try {
       await this.certificateManagement.revokeCertificateByApprovalId(
         approvalId,
-        'Documento atualizado - nova versão enviada',
+        RevocationReason.SUPERSEDED,
         'system',
       );
     } catch (error) {

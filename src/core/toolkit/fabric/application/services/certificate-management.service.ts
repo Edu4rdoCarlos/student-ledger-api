@@ -1,12 +1,19 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, RevocationReason } from '@prisma/client';
 import * as crypto from 'crypto';
 import {
   IFabricCAService,
   FABRIC_CA_SERVICE,
   ICertificateRepository,
   CERTIFICATE_REPOSITORY,
-} from '../ports';
+} from '../../application/ports';
+import { FabricOrganizationConfig } from '../../infra/config/fabric-organization.config';
+
+interface CertificateData {
+  cert: string;
+  key: string;
+  mspId: string;
+}
 
 @Injectable()
 export class CertificateManagementService {
@@ -17,6 +24,7 @@ export class CertificateManagementService {
     private readonly fabricCA: IFabricCAService,
     @Inject(CERTIFICATE_REPOSITORY)
     private readonly certRepository: ICertificateRepository,
+    private readonly fabricOrgConfig: FabricOrganizationConfig,
   ) {}
 
   async generateUserCertificate(
@@ -25,51 +33,18 @@ export class CertificateManagementService {
     role: Role,
     approvalId?: string,
   ): Promise<void> {
-    if (approvalId) {
-      const existingCert = await this.certRepository.findActiveByApprovalId(approvalId);
-      if (existingCert) {
-        this.logger.log(`Approval ${approvalId} já possui certificado ativo, pulando geração`);
-        return;
-      }
-    } else {
-      const existingCert = await this.certRepository.findActiveByUserId(userId);
-      if (existingCert) {
-        this.logger.log(`Usuário ${userId} já possui certificado ativo, pulando geração`);
-        return;
-      }
+    if (await this.hasActiveCertificate(userId, approvalId)) {
+      this.logger.log(`Certificate already exists for ${approvalId || userId}, skipping generation`);
+      return;
     }
 
-    const { orgName, mspId, affiliation } = this.getOrgInfo(role);
-    let enrollmentId = this.createEnrollmentId(email, orgName);
+    const { orgName, mspId, affiliation } = this.fabricOrgConfig.getOrgInfo(role);
+    const enrollmentId = this.createEnrollmentId(email, orgName);
 
     try {
-      let secret: string;
-
-      try {
-        secret = await this.fabricCA.register(enrollmentId, affiliation, role.toLowerCase());
-      } catch (registerError) {
-        // If identity already registered (code 74), add version suffix and retry
-        if (registerError.message?.includes('already registered')) {
-          // Use short version suffix (6 chars) to keep total under 64 char CN limit
-          const versionSuffix = `_${Date.now().toString(36)}`; // Base36 for shorter string
-          const maxBaseLength = 64 - versionSuffix.length;
-
-          // Truncate base enrollmentId if needed
-          const baseId = enrollmentId.length > maxBaseLength
-            ? enrollmentId.substring(0, maxBaseLength)
-            : enrollmentId;
-
-          enrollmentId = `${baseId}${versionSuffix}`;
-          this.logger.log(`Identity already exists, creating new version: ${enrollmentId} (${enrollmentId.length} chars)`);
-          secret = await this.fabricCA.register(enrollmentId, affiliation, role.toLowerCase());
-        } else {
-          throw registerError;
-        }
-      }
-
+      const secret = await this.registerWithRetry(enrollmentId, affiliation, role.toLowerCase());
       const enrollment = await this.fabricCA.enroll(enrollmentId, secret);
-
-      const certInfo = this.parseCertificate(enrollment.certificate);
+      const certInfo = this.generateCertificateMetadata(enrollment.certificate);
 
       await this.certRepository.create({
         userId,
@@ -85,129 +60,127 @@ export class CertificateManagementService {
 
       this.logger.log(`Certificate generated for user ${userId} (${email}) in ${orgName}`);
     } catch (error) {
-      this.logger.error(`Failed to generate certificate for user ${userId}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to generate certificate for user ${userId}: ${errorMessage}`);
       throw error;
     }
   }
 
-  async getUserCertificate(userId: string): Promise<{
-    cert: string;
-    key: string;
-    mspId: string;
-  } | null> {
-    const certData = await this.certRepository.findActiveByUserId(userId);
-
-    if (!certData) {
-      return null;
-    }
-
-    if (new Date() > certData.notAfter) {
-      await this.certRepository.updateStatus(certData.id, 'EXPIRED');
-      return null;
-    }
-
-    return {
-      cert: certData.certificate,
-      key: certData.privateKey,
-      mspId: certData.mspId,
-    };
+  async getUserCertificate(userId: string): Promise<CertificateData | null> {
+    return this.getCertificate(userId);
   }
 
-  async getUserCertificateByApprovalId(approvalId: string): Promise<{
-    cert: string;
-    key: string;
-    mspId: string;
-  } | null> {
-    const certData = await this.certRepository.findActiveByApprovalId(approvalId);
-
-    if (!certData) {
-      return null;
-    }
-
-    if (new Date() > certData.notAfter) {
-      await this.certRepository.updateStatus(certData.id, 'EXPIRED');
-      return null;
-    }
-
-    return {
-      cert: certData.certificate,
-      key: certData.privateKey,
-      mspId: certData.mspId,
-    };
+  async getUserCertificateByApprovalId(approvalId: string): Promise<CertificateData | null> {
+    return this.getCertificate(undefined, approvalId);
   }
 
   async revokeCertificateByApprovalId(
     approvalId: string,
-    reason: string,
+    reason: RevocationReason,
     revokedBy: string,
   ): Promise<void> {
-    const certData = await this.certRepository.findActiveByApprovalId(approvalId);
-
-    if (!certData) {
-      this.logger.warn(`Nenhum certificado ativo encontrado para approval ${approvalId}`);
-      return;
-    }
-
-    await this.fabricCA.revoke(certData.enrollmentId, reason);
-    await this.certRepository.revoke(certData.id, reason as any, revokedBy);
-
-    this.logger.log(`Certificado revogado para approval ${approvalId}`);
+    return this.revoke(undefined, approvalId, reason, revokedBy);
   }
 
   async revokeCertificate(
     userId: string,
-    reason: string,
+    reason: RevocationReason,
     revokedBy: string,
   ): Promise<void> {
-    const certData = await this.certRepository.findActiveByUserId(userId);
-
-    if (!certData) {
-      throw new Error('Nenhum certificado ativo encontrado para o usuário');
-    }
-
-    await this.fabricCA.revoke(certData.enrollmentId, reason);
-
-    await this.certRepository.revoke(certData.id, reason as any, revokedBy);
-
-    this.logger.log(`Certificate revoked for user ${userId}`);
+    return this.revoke(userId, undefined, reason, revokedBy);
   }
 
-  private getOrgInfo(role: Role): {
-    orgName: string;
-    mspId: string;
-    affiliation: string;
-  } {
-    const map: Record<Role, { orgName: string; mspId: string; affiliation: string }> = {
-      ADMIN: {
-        orgName: 'coordenacao',
-        mspId: 'CoordenacaoMSP',
-        affiliation: 'coordenacao.department1',
-      },
-      COORDINATOR: {
-        orgName: 'coordenacao',
-        mspId: 'CoordenacaoMSP',
-        affiliation: 'coordenacao.department1',
-      },
-      ADVISOR: {
-        orgName: 'orientador',
-        mspId: 'OrientadorMSP',
-        affiliation: 'orientador.department1',
-      },
-      STUDENT: {
-        orgName: 'aluno',
-        mspId: 'AlunoMSP',
-        affiliation: 'aluno.department1',
-      },
-    };
+  private async hasActiveCertificate(userId: string, approvalId?: string): Promise<boolean> {
+    const cert = approvalId
+      ? await this.certRepository.findActiveByApprovalId(approvalId)
+      : await this.certRepository.findActiveByUserId(userId);
 
-    return map[role];
+    return cert !== null;
+  }
+
+  private async getCertificate(userId?: string, approvalId?: string): Promise<CertificateData | null> {
+    if (!userId && !approvalId) {
+      throw new Error('userId or approvalId is required');
+    }
+
+    const certData = approvalId
+      ? await this.certRepository.findActiveByApprovalId(approvalId)
+      : await this.certRepository.findActiveByUserId(userId!);
+
+    if (!certData) {
+      return null;
+    }
+
+    if (new Date() > certData.notAfter) {
+      await this.certRepository.updateStatus(certData.id, 'EXPIRED');
+      return null;
+    }
+
+    return {
+      cert: certData.certificate,
+      key: certData.privateKey,
+      mspId: certData.mspId,
+    };
+  }
+
+  private async revoke(
+    userId: string | undefined,
+    approvalId: string | undefined,
+    reason: RevocationReason,
+    revokedBy: string,
+  ): Promise<void> {
+    if (!userId && !approvalId) {
+      throw new Error('userId or approvalId is required');
+    }
+
+    const certData = approvalId
+      ? await this.certRepository.findActiveByApprovalId(approvalId)
+      : await this.certRepository.findActiveByUserId(userId!);
+
+    if (!certData) {
+      const identifier = approvalId || userId;
+      this.logger.warn(`No active certificate found for ${identifier}`);
+      return;
+    }
+
+    await this.fabricCA.revoke(certData.enrollmentId, reason.toString());
+    await this.certRepository.revoke(certData.id, reason, revokedBy);
+
+    this.logger.log(`Certificate revoked for ${approvalId || userId}`);
+  }
+
+  private async registerWithRetry(
+    enrollmentId: string,
+    affiliation: string,
+    role: string,
+  ): Promise<string> {
+    try {
+      return await this.fabricCA.register(enrollmentId, affiliation, role);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (!errorMessage.includes('already registered')) {
+        throw error;
+      }
+
+      const versionSuffix = `_${Date.now().toString(36)}`;
+      const maxBaseLength = 64 - versionSuffix.length;
+      const baseId = enrollmentId.length > maxBaseLength
+        ? enrollmentId.substring(0, maxBaseLength)
+        : enrollmentId;
+
+      const newEnrollmentId = `${baseId}${versionSuffix}`;
+      this.logger.log(`Identity exists, creating version: ${newEnrollmentId}`);
+
+      return await this.fabricCA.register(newEnrollmentId, affiliation, role);
+    }
   }
 
   private createEnrollmentId(email: string, orgName: string): string {
     return `${email.replace('@', '_at_').replace(/\./g, '_')}_${orgName}`;
   }
 
-  private parseCertificate(pemCert: string): {
+  private generateCertificateMetadata(pemCert: string): {
     serialNumber: string;
     notBefore: Date;
     notAfter: Date;
@@ -219,7 +192,6 @@ export class CertificateManagementService {
 
     const certBase64 = certMatch[1].replace(/\s/g, '');
     const certDer = Buffer.from(certBase64, 'base64');
-
     const serialNumberHex = crypto.createHash('sha256').update(certDer).digest('hex').substring(0, 32);
 
     const now = new Date();

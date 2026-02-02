@@ -11,7 +11,7 @@ import { Course } from '../../../courses/domain/entities';
 import { generateRandomPassword } from '../../../../../shared/utils';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplate } from '../../../../toolkit/notifications/domain/enums';
-import { CertificateQueueService } from '../../../../toolkit/fabric/application/services/certificate-queue.service';
+import { CertificateQueueService } from '../../../../toolkit/fabric/infra/queue/certificate-queue';
 
 @Injectable()
 export class CreateCoordinatorUseCase {

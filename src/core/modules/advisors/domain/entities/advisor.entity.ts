@@ -55,11 +55,15 @@ export class Advisor extends UserBase {
   }
 
   update(data: Partial<Pick<AdvisorProps, 'specialization' | 'courseId' | 'isActive'>>): void {
-    Object.assign(this.props, {
-      ...data.specialization !== undefined && { specialization: data.specialization },
-      ...data.courseId !== undefined && { courseId: data.courseId },
-      ...data.isActive !== undefined && { isActive: data.isActive },
-      updatedAt: new Date(),
-    });
+    if (data.specialization !== undefined) {
+      this.props.specialization = data.specialization;
+    }
+    if (data.courseId !== undefined) {
+      this.props.courseId = data.courseId;
+    }
+    if (data.isActive !== undefined) {
+      this.props.isActive = data.isActive;
+    }
+    this.props.updatedAt = new Date();
   }
 }

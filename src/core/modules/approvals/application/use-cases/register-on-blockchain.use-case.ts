@@ -1,11 +1,13 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Role, RevocationReason } from '@prisma/client';
 import { IApprovalRepository, APPROVAL_REPOSITORY } from '../ports';
 import { Approval, ApprovalStatus, ApprovalRole } from '../../domain/entities';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
 import { Document } from '../../../documents/domain/entities';
+import { DocumentNotFoundError } from '../../../documents/domain/errors';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { Defense } from '../../../defenses/domain/entities';
+import { DefenseNotFoundError } from '../../../defenses/domain/errors';
 import { IFabricGateway, FABRIC_GATEWAY, DocumentSignature, DefenseResult as FabricDefenseResult } from '../../../../toolkit/fabric/application/ports';
 import { IUserRepository, USER_REPOSITORY, User } from '../../../auth/application/ports';
 import { FabricOrganizationConfig } from '../../../../toolkit/fabric/infra/config/fabric-organization.config';
@@ -83,12 +85,12 @@ export class RegisterOnBlockchainUseCase {
   private async loadRequiredEntities(documentId: string, approvals: Approval[]): Promise<LoadedEntities> {
     const document = await this.documentRepository.findById(documentId);
     if (!document) {
-      throw new Error('Documento não encontrado');
+      throw new DocumentNotFoundError(documentId);
     }
 
     const defense = await this.defenseRepository.findById(document.defenseId);
     if (!defense) {
-      throw new Error('Defesa não encontrada');
+      throw new DefenseNotFoundError(document.defenseId);
     }
 
     const users = await this.loadUsers(approvals);
@@ -109,12 +111,12 @@ export class RegisterOnBlockchainUseCase {
   private findCoordinator(approvals: Approval[], users: Map<string, User>): User {
     const coordinatorApproval = approvals.find(a => a.role === ApprovalRole.COORDINATOR);
     if (!coordinatorApproval?.approverId) {
-      throw new Error('Aprovação do coordenador não encontrada');
+      throw new NotFoundException('Aprovação do coordenador não encontrada');
     }
 
     const coordinator = users.get(coordinatorApproval.approverId);
     if (!coordinator) {
-      throw new Error('Coordenador não encontrado');
+      throw new NotFoundException(`Coordenador não encontrado: ${coordinatorApproval.approverId}`);
     }
 
     return coordinator;
@@ -133,37 +135,37 @@ export class RegisterOnBlockchainUseCase {
         `Documento possui ${approvals.length} aprovações, mas esperava ${expected} ` +
         `(coordenador + orientador + ${defense.studentIds.length} aluno(s))`
       );
-      throw new Error(`Número inválido de aprovações: ${approvals.length}. Esperado: ${expected}`);
+      throw new BadRequestException(`Número inválido de aprovações: ${approvals.length}. Esperado: ${expected}`);
     }
   }
 
   private validateDocumentHashes(document: Document): void {
     if (!document.minutesHash) {
-      throw new Error('Documento não possui hash SHA-256 da Ata');
+      throw new BadRequestException('Documento não possui hash SHA-256 da Ata');
     }
     if (!document.minutesCid) {
-      throw new Error('Documento não possui CID do IPFS da Ata');
+      throw new BadRequestException('Documento não possui CID do IPFS da Ata');
     }
     if (!document.evaluationHash) {
-      throw new Error('Documento não possui hash SHA-256 da Avaliação de Desempenho');
+      throw new BadRequestException('Documento não possui hash SHA-256 da Avaliação de Desempenho');
     }
     if (!document.evaluationCid) {
-      throw new Error('Documento não possui CID do IPFS da Avaliação de Desempenho');
+      throw new BadRequestException('Documento não possui CID do IPFS da Avaliação de Desempenho');
     }
   }
 
   private validateDefense(defense: Defense): void {
     if (!defense.studentIds?.length) {
-      throw new Error('Defesa não possui alunos vinculados');
+      throw new BadRequestException('Defesa não possui alunos vinculados');
     }
     if (defense.finalGrade === null || defense.finalGrade === undefined) {
-      throw new Error('Defesa não possui nota final');
+      throw new BadRequestException('Defesa não possui nota final');
     }
     if (!defense.result) {
-      throw new Error('Defesa não possui resultado');
+      throw new BadRequestException('Defesa não possui resultado');
     }
     if (defense.result !== 'APPROVED' && defense.result !== 'FAILED') {
-      throw new Error(`Defesa possui resultado inválido para registro no blockchain: ${defense.result}`);
+      throw new BadRequestException(`Defesa possui resultado inválido para registro no blockchain: ${defense.result}`);
     }
   }
 
@@ -200,7 +202,7 @@ export class RegisterOnBlockchainUseCase {
       return result.documentId;
     } catch (error) {
       this.logger.error(`Failed to register document on blockchain: ${error.message}`, error.stack);
-      throw new Error(`Falha ao registrar documento no blockchain: ${error.message}`);
+      throw new BadRequestException(`Falha ao registrar documento no blockchain: ${error.message}`);
     }
   }
 
@@ -215,7 +217,7 @@ export class RegisterOnBlockchainUseCase {
 
       const user = users.get(approval.approverId!);
       if (!user) {
-        throw new Error(`Usuário aprovador não encontrado: ${approval.approverId}`);
+        throw new NotFoundException(`Usuário aprovador não encontrado: ${approval.approverId}`);
       }
 
       if (isCoordinatorAlsoAdvisor && approval.role === ApprovalRole.ADVISOR) {
@@ -240,13 +242,13 @@ export class RegisterOnBlockchainUseCase {
 
   private validateApprovalForSignature(approval: Approval): void {
     if (!approval.approverId) {
-      throw new Error(`Aprovação ${approval.id} não possui aprovador identificado`);
+      throw new BadRequestException(`Aprovação ${approval.id} não possui aprovador identificado`);
     }
     if (!approval.approvedAt) {
-      throw new Error(`Aprovação ${approval.id} não possui data de aprovação`);
+      throw new BadRequestException(`Aprovação ${approval.id} não possui data de aprovação`);
     }
     if (!approval.cryptographicSignature) {
-      throw new Error(`Aprovação ${approval.id} não possui assinatura criptográfica`);
+      throw new BadRequestException(`Aprovação ${approval.id} não possui assinatura criptográfica`);
     }
   }
 

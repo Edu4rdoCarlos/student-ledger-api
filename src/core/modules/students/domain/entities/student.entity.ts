@@ -6,8 +6,11 @@ export interface StudentProps extends UserBaseProps {
 }
 
 export class Student extends UserBase {
+  private readonly studentProps: StudentProps;
+
   private constructor(props: StudentProps) {
     super(props);
+    this.studentProps = props;
   }
 
   static create(props: StudentProps): Student {
@@ -19,7 +22,7 @@ export class Student extends UserBase {
   }
 
   get matricula(): string {
-    return (this.props as StudentProps).matricula;
+    return this.studentProps.matricula;
   }
 
   get userId(): string {
@@ -27,11 +30,11 @@ export class Student extends UserBase {
   }
 
   get courseId(): string {
-    return (this.props as StudentProps).courseId;
+    return this.studentProps.courseId;
   }
 
   updateCourse(courseId: string): void {
-    (this.props as any).courseId = courseId;
-    (this.props as any).updatedAt = new Date();
+    this.studentProps.courseId = courseId;
+    this.studentProps.updatedAt = new Date();
   }
 }

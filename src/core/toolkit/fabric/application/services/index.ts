@@ -1,1 +1,2 @@
-export * from './signature.service';
+export * from './fabric.service';
+export * from './certificate-management.service';

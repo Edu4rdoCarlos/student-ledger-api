@@ -49,7 +49,6 @@ export class IpfsHttpAdapter implements IIpfsStorage {
     });
   }
 
-  // === Métodos Públicos ===
 
   async healthCheck(): Promise<IpfsHealthStatus> {
     this.ensureConfigured();

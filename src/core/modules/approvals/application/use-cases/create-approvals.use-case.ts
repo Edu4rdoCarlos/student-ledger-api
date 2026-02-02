@@ -14,7 +14,7 @@ import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordin
 import { Coordinator } from '../../../coordinators/domain/entities';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../../../documents/application/ports';
 import { Document, DocumentType, DocumentTypeLabel } from '../../../documents/domain/entities';
-import { CertificateQueueService } from '../../../../toolkit/fabric/application/services/certificate-queue.service';
+import { CertificateQueueService } from '../../../../toolkit/fabric/infra/queue/certificate-queue';
 import { Role } from '@prisma/client';
 
 interface CreateApprovalsRequest {

@@ -8,15 +8,16 @@ export interface CoordinatorProps extends UserBaseProps {
 }
 
 export class Coordinator extends UserBase {
+  protected declare readonly props: CoordinatorProps;
+
   private constructor(props: CoordinatorProps) {
     super(props);
-    (this.props as any).isActive = props.isActive ?? true;
-    (this.props as any).courseId = props.courseId;
   }
 
   static create(props: CoordinatorProps): Coordinator {
     return new Coordinator({
       ...props,
+      isActive: props.isActive ?? true,
       createdAt: props.createdAt ?? new Date(),
       updatedAt: props.updatedAt ?? new Date(),
     });
@@ -27,40 +28,40 @@ export class Coordinator extends UserBase {
   }
 
   get courseId(): string | null {
-    return (this.props as CoordinatorProps).courseId;
+    return this.props.courseId;
   }
 
   get isActive(): boolean {
-    return (this.props as CoordinatorProps).isActive ?? true;
+    return this.props.isActive ?? true;
   }
 
   get course(): Course | undefined {
-    return (this.props as CoordinatorProps).course;
+    return this.props.course;
   }
 
   deactivate(): void {
-    (this.props as any).isActive = false;
-    (this.props as any).courseId = null;
-    (this.props as any).updatedAt = new Date();
+    this.props.isActive = false;
+    this.props.courseId = null;
+    this.props.updatedAt = new Date();
   }
 
   activate(): void {
-    (this.props as any).isActive = true;
-    (this.props as any).updatedAt = new Date();
+    this.props.isActive = true;
+    this.props.updatedAt = new Date();
   }
 
   updateCourse(courseId: string): void {
-    (this.props as any).courseId = courseId;
-    (this.props as any).updatedAt = new Date();
+    this.props.courseId = courseId;
+    this.props.updatedAt = new Date();
   }
 
   updateName(name: string): void {
-    (this.props as any).name = name;
-    (this.props as any).updatedAt = new Date();
+    this.props.name = name;
+    this.props.updatedAt = new Date();
   }
 
   removeCourse(): void {
-    (this.props as any).courseId = null;
-    (this.props as any).updatedAt = new Date();
+    this.props.courseId = null;
+    this.props.updatedAt = new Date();
   }
 }

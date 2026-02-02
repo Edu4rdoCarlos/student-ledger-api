@@ -10,7 +10,7 @@ import { ICurrentUser } from '../../../../../shared';
 import { SendEmailUseCase } from '../../../../toolkit/notifications/application/use-cases';
 import { EmailTemplate } from '../../../../toolkit/notifications/domain/enums';
 import { ICoordinatorRepository, COORDINATOR_REPOSITORY } from '../../../coordinators/application/ports';
-import { CertificateQueueService } from '../../../../toolkit/fabric/application/services/certificate-queue.service';
+import { CertificateQueueService } from '../../../../toolkit/fabric/infra/queue/certificate-queue';
 
 @Injectable()
 export class CreateAdvisorUseCase {

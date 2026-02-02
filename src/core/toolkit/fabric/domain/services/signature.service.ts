@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { CertificateManagementService } from './certificate-management.service';
+import { CertificateManagementService } from '../../application/services/certificate-management.service';
 
 @Injectable()
 export class SignatureService {
