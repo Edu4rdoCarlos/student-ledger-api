@@ -1,4 +1,4 @@
-# Student Ledger API
+# Academic Ledger API
 
 API para gerenciamento de documentos acadêmicos com blockchain (Hyperledger Fabric) e armazenamento descentralizado (IPFS).
 
