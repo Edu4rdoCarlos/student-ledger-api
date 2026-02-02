@@ -17,15 +17,3 @@ export class IpfsFileNotFoundError extends NotFoundException {
     super(`Arquivo não encontrado no IPFS: ${cid}`);
   }
 }
-
-export class IpfsInvalidCidError extends BadRequestException {
-  constructor(cid: string) {
-    super(`CID inválido: ${cid}. Formato esperado: CIDv0 (Qm...) ou CIDv1 (bafy...)`);
-  }
-}
-
-export class IpfsPinError extends BadRequestException {
-  constructor(cid: string, action: 'pin' | 'unpin') {
-    super(`Falha ao ${action === 'pin' ? 'fixar' : 'remover fixação do'} CID: ${cid}`);
-  }
-}

@@ -1,164 +1,149 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import { Agent } from 'https';
 import * as FormData from 'form-data';
 import {
   IIpfsStorage,
   IpfsUploadResult,
-  IpfsFileInfo,
   IpfsHealthStatus,
 } from '../../application/ports';
 import {
   IpfsConnectionError,
   IpfsUploadError,
   IpfsFileNotFoundError,
-  IpfsPinError,
 } from '../../domain/errors';
+import { IpfsConfigService } from '../config';
 
-/**
- * Implementação HTTP do adapter IPFS
- * Conecta via API REST do nó IPFS (porta 5001)
- *
- * SEGURANÇA: O IPFS deve estar configurado para aceitar conexões
- * apenas da rede interna (localhost ou rede Docker).
- * NÃO expor a porta 5001 publicamente.
- */
 @Injectable()
 export class IpfsHttpAdapter implements IIpfsStorage {
   private readonly logger = new Logger(IpfsHttpAdapter.name);
-  private readonly client: AxiosInstance;
+  private readonly client: AxiosInstance | null;
+  private readonly isConfigured: boolean;
 
-  constructor(private configService: ConfigService) {
-    const apiUrl = this.configService.get<string>('IPFS_API_URL', 'http://localhost:5001');
-    this.client = axios.create({
-      baseURL: apiUrl,
-      timeout: 30000,
+  constructor(private readonly ipfsConfig: IpfsConfigService) {
+    const config = this.ipfsConfig.getConfiguration();
+    const hasCertificates = config.tls.ca && config.tls.cert && config.tls.key;
+
+    if (hasCertificates) {
+      this.client = this.createHttpsClient(config);
+      this.isConfigured = true;
+    } else {
+      this.client = null;
+      this.isConfigured = false;
+      this.logger.error('IPFS indisponível - certificados mTLS não configurados');
+    }
+  }
+
+  private createHttpsClient(config: ReturnType<IpfsConfigService['getConfiguration']>): AxiosInstance {
+    const httpsAgent = new Agent({
+      ca: config.tls.ca || undefined,
+      cert: config.tls.cert || undefined,
+      key: config.tls.key || undefined,
+      rejectUnauthorized: config.tls.rejectUnauthorized,
+    });
+
+    return axios.create({
+      baseURL: config.apiUrl,
+      timeout: config.timeout,
+      httpsAgent,
     });
   }
 
-  async healthCheck(): Promise<IpfsHealthStatus> {
-    try {
-      const response = await this.client.post('/api/v0/id');
+  // === Métodos Públicos ===
 
+  async healthCheck(): Promise<IpfsHealthStatus> {
+    this.ensureConfigured();
+    try {
+      const response = await this.client!.post('/api/v0/id');
       return { status: 'ok', peerId: response.data.ID };
     } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Falha ao conectar ao IPFS: ${message}`);
-      throw new IpfsConnectionError(message);
+      this.handleConnectionError(error, 'Falha ao conectar ao IPFS');
     }
   }
 
   async uploadFile(file: Buffer, filename: string): Promise<IpfsUploadResult> {
+    this.ensureConfigured();
     try {
-      const formData = new FormData();
-      formData.append('file', file, { filename });
-
-      const response = await this.client.post('/api/v0/add', formData, {
+      const formData = this.createFormData(file, filename);
+      const response = await this.client!.post('/api/v0/add', formData, {
         params: { pin: true },
         headers: formData.getHeaders(),
       });
 
-      return {
-        cid: response.data.Hash,
-        name: response.data.Name,
-        size: parseInt(response.data.Size, 10),
-      };
+      return this.parseUploadResponse(response.data);
     } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro no upload IPFS: ${message}`);
-      throw new IpfsUploadError(filename, message);
+      this.handleUploadError(error, filename);
     }
   }
 
   async calculateCid(file: Buffer): Promise<string> {
+    this.ensureConfigured();
     try {
-      const formData = new FormData();
-      formData.append('file', file, { filename: 'temp' });
-
-      const response = await this.client.post('/api/v0/add', formData, {
+      const formData = this.createFormData(file, 'temp');
+      const response = await this.client!.post('/api/v0/add', formData, {
         params: { 'only-hash': true },
         headers: formData.getHeaders(),
       });
 
       return response.data.Hash;
     } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro ao calcular CID: ${message}`);
-      throw new IpfsConnectionError(message);
+      this.handleConnectionError(error, 'Erro ao calcular CID');
     }
   }
 
   async downloadFile(cid: string): Promise<Buffer> {
+    this.ensureConfigured();
     try {
-      const response = await this.client.post('/api/v0/cat', null, {
+      const response = await this.client!.post('/api/v0/cat', null, {
         params: { arg: cid },
         responseType: 'arraybuffer',
       });
 
       return Buffer.from(response.data);
     } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro no download IPFS: ${message}`);
-      throw new IpfsFileNotFoundError(cid);
+      this.handleFileNotFound(error, cid);
     }
   }
 
-  async exists(cid: string): Promise<boolean> {
-    try {
-      await this.client.post('/api/v0/object/stat', null, {
-        params: { arg: cid },
-      });
-      return true;
-    } catch {
-      return false;
+  private ensureConfigured(): void {
+    if (!this.isConfigured || !this.client) {
+      throw new IpfsConnectionError('IPFS indisponível - certificados mTLS não configurados');
     }
   }
 
-  async getFileInfo(cid: string): Promise<IpfsFileInfo> {
-    try {
-      const response = await this.client.post('/api/v0/object/stat', null, {
-        params: { arg: cid },
-      });
-
-      return {
-        cid,
-        size: response.data.CumulativeSize,
-        type: response.data.NumLinks > 0 ? 'directory' : 'file',
-      };
-    } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro ao obter info do arquivo: ${message}`);
-      throw new IpfsFileNotFoundError(cid);
-    }
+  private createFormData(file: Buffer, filename: string): FormData {
+    const formData = new FormData();
+    formData.append('file', file, { filename });
+    return formData;
   }
 
-  async pin(cid: string): Promise<void> {
-    try {
-      await this.client.post('/api/v0/pin/add', null, {
-        params: { arg: cid },
-      });
-    } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro ao fixar CID: ${message}`);
-      throw new IpfsPinError(cid, 'pin');
-    }
+  private parseUploadResponse(data: any): IpfsUploadResult {
+    return {
+      cid: data.Hash,
+      name: data.Name,
+      size: parseInt(data.Size, 10),
+    };
   }
 
-  async unpin(cid: string): Promise<void> {
-    try {
-      await this.client.post('/api/v0/pin/rm', null, {
-        params: { arg: cid },
-      });
-    } catch (error) {
-      const message = error.response?.data?.Message || error.message;
-      this.logger.error(`Erro ao remover fixação: ${message}`);
-      throw new IpfsPinError(cid, 'unpin');
-    }
+  private getErrorMessage(error: any): string {
+    return error.response?.data?.Message || error.message;
   }
 
-  isValidCid(cid: string): boolean {
-    const cidV0Regex = /^Qm[a-zA-Z0-9]{44}$/;
-    const cidV1Regex = /^bafy[a-z2-7]{55,}$/;
-    return cidV0Regex.test(cid) || cidV1Regex.test(cid);
+  private handleConnectionError(error: any, context: string): never {
+    const message = this.getErrorMessage(error);
+    this.logger.error(`${context}: ${message}`);
+    throw new IpfsConnectionError(message);
+  }
+
+  private handleUploadError(error: any, filename: string): never {
+    const message = this.getErrorMessage(error);
+    this.logger.error(`Erro no upload IPFS: ${message}`);
+    throw new IpfsUploadError(filename, message);
+  }
+
+  private handleFileNotFound(error: any, cid: string): never {
+    const message = this.getErrorMessage(error);
+    this.logger.error(`Arquivo não encontrado: ${message}`);
+    throw new IpfsFileNotFoundError(cid);
   }
 }
