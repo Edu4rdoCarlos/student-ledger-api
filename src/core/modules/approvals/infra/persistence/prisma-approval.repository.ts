@@ -89,15 +89,6 @@ export class PrismaApprovalRepository implements IApprovalRepository {
     return approvals.map(ApprovalMapper.toDomain);
   }
 
-  async findAllGrouped(): Promise<GroupedDocumentApprovals[]> {
-    const documents = await this.prisma.document.findMany({
-      where: { nextVersion: null },
-      include: DOCUMENT_WITH_DEFENSE_INCLUDE,
-      orderBy: { createdAt: 'desc' },
-    });
-    return documents.map(doc => this.mapToGroupedApprovals(doc as DocumentWithRelations));
-  }
-
   async findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]> {
     const documents = await this.prisma.document.findMany({
       where: {

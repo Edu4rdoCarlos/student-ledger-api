@@ -12,7 +12,6 @@ export interface IRefreshTokenRepository {
   findByToken(token: string): Promise<RefreshTokenData | null>;
   revokeByToken(token: string): Promise<void>;
   revokeAllByUserId(userId: string): Promise<void>;
-  deleteExpired(): Promise<number>;
 }
 
 export const REFRESH_TOKEN_REPOSITORY = Symbol('IRefreshTokenRepository');

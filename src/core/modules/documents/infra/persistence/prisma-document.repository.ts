@@ -20,19 +20,6 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     return found ? DocumentMapper.toDomain(found) : null;
   }
 
-  async findByHash(hash: string): Promise<Document | null> {
-    const found = await this.prisma.document.findFirst({
-      where: {
-        OR: [
-          { minutesHash: hash },
-          { evaluationHash: hash },
-        ],
-      },
-      orderBy: { version: 'desc' },
-    });
-    return found ? DocumentMapper.toDomain(found) : null;
-  }
-
   async findByCid(cid: string): Promise<Document | null> {
     const found = await this.prisma.document.findFirst({
       where: {
@@ -54,14 +41,6 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     return documents.map(DocumentMapper.toDomain);
   }
 
-  async findLatestVersion(defenseId: string): Promise<Document | null> {
-    const found = await this.prisma.document.findFirst({
-      where: { defenseId },
-      orderBy: { version: 'desc' },
-    });
-    return found ? DocumentMapper.toDomain(found) : null;
-  }
-
   async findAll(filters?: DocumentFilters): Promise<Document[]> {
     const documents = await this.prisma.document.findMany({
       where: {
@@ -71,24 +50,6 @@ export class PrismaDocumentRepository implements IDocumentRepository {
       orderBy: { createdAt: 'desc' },
     });
     return documents.map(DocumentMapper.toDomain);
-  }
-
-  async findHistory(documentId: string): Promise<Document[]> {
-    const history: Document[] = [];
-    let currentId: string | null = documentId;
-
-    while (currentId) {
-      const doc: PrismaDocument | null = await this.prisma.document.findUnique({
-        where: { id: currentId },
-      });
-
-      if (!doc) break;
-
-      history.push(DocumentMapper.toDomain(doc));
-      currentId = doc.previousVersionId;
-    }
-
-    return history;
   }
 
   async update(document: Document): Promise<Document> {

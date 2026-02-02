@@ -32,7 +32,6 @@ export interface IApprovalRepository {
   update(approval: Approval): Promise<Approval>;
   findById(id: string): Promise<Approval | null>;
   findByDocumentId(documentId: string): Promise<Approval[]>;
-  findAllGrouped(): Promise<GroupedDocumentApprovals[]>;
   findGroupedByCourseId(courseId: string): Promise<GroupedDocumentApprovals[]>;
   findGroupedByParticipant(userId: string): Promise<GroupedDocumentApprovals[]>;
   delete(id: string): Promise<void>;

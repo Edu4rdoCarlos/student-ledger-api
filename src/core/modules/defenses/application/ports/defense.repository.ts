@@ -33,10 +33,7 @@ export interface IDefenseRepository {
   findById(id: string): Promise<Defense | null>;
   findByAdvisorId(advisorId: string): Promise<Defense[]>;
   findByStudentId(studentId: string): Promise<Defense[]>;
-  findSummaryByAdvisorId(advisorId: string): Promise<DefenseSummary[]>;
   findSummaryByStudentId(studentId: string): Promise<DefenseSummary[]>;
-  countByAdvisorId(advisorId: string): Promise<number>;
-  countByStudentId(studentId: string): Promise<number>;
   findAll(options?: FindAllOptions): Promise<FindAllResult>;
   update(defense: Defense): Promise<Defense>;
   hasActiveDefense(studentId: string): Promise<boolean>;
