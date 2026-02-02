@@ -17,20 +17,20 @@ export class FabricCAConfig {
       coordenacao: {
         url: this.configService.get('FABRIC_CA_COORDENACAO_URL', 'https://localhost:7054'),
         name: 'ca-coordenacao',
-        adminUser: 'admin',
-        adminPassword: 'adminpw',
+        adminUser: this.configService.get('FABRIC_CA_ADMIN_USER', 'admin'),
+        adminPassword: this.configService.get('FABRIC_CA_ADMIN_PASSWORD', 'adminpw'),
       },
       orientador: {
         url: this.configService.get('FABRIC_CA_ORIENTADOR_URL', 'https://localhost:8054'),
         name: 'ca-orientador',
-        adminUser: 'admin',
-        adminPassword: 'adminpw',
+        adminUser: this.configService.get('FABRIC_CA_ADMIN_USER', 'admin'),
+        adminPassword: this.configService.get('FABRIC_CA_ADMIN_PASSWORD', 'adminpw'),
       },
       aluno: {
         url: this.configService.get('FABRIC_CA_ALUNO_URL', 'https://localhost:9054'),
         name: 'ca-aluno',
-        adminUser: 'admin',
-        adminPassword: 'adminpw',
+        adminUser: this.configService.get('FABRIC_CA_ADMIN_USER', 'admin'),
+        adminPassword: this.configService.get('FABRIC_CA_ADMIN_PASSWORD', 'adminpw'),
       },
     };
   }
