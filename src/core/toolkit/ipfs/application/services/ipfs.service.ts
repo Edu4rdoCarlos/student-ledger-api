@@ -4,8 +4,8 @@ import {
   IPFS_STORAGE,
   IpfsUploadResult,
   IpfsHealthStatus,
-} from './application';
-import { UploadFileUseCase } from './application/use-cases';
+} from '../ports';
+import { UploadFileUseCase } from '../use-cases';
 
 @Injectable()
 export class IpfsService implements OnModuleInit {

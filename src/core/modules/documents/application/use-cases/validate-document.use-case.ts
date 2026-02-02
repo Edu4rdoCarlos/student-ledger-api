@@ -4,7 +4,7 @@ import { DocumentType, DocumentStatus, Document } from '../../domain/entities';
 import { ValidateDocumentResponseDto, DefenseInfoDto } from '../../presentation/dtos';
 import { FabricService } from '../../../../toolkit/fabric/fabric.service';
 import { FabricUser, VerifyDocumentResult } from '../../../../toolkit/fabric/application/ports';
-import { IpfsService } from '../../../../toolkit/ipfs/ipfs.service';
+import { IpfsService } from '../../../../toolkit/ipfs';
 import { ICurrentUser } from '../../../../../shared/types';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 

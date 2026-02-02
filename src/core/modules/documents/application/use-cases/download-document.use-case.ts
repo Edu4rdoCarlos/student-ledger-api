@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { Role, DefenseResult } from '@prisma/client';
 import { IDocumentRepository, DOCUMENT_REPOSITORY } from '../ports';
-import { IpfsService } from '../../../../toolkit/ipfs/ipfs.service';
+import { IpfsService } from '../../../../toolkit/ipfs';
 import { IDefenseRepository, DEFENSE_REPOSITORY } from '../../../defenses/application/ports';
 import { ICurrentUser } from '../../../../../shared/types';
 import { DocumentType, Document } from '../../domain/entities';

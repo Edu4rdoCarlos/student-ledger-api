@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { HashUtil } from '../../core/modules/documents/infra/utils/hash.util';
-import { IpfsService } from '../../core/toolkit/ipfs/ipfs.service';
+import { IpfsService } from '../../core/toolkit/ipfs';
 
 export interface FileUploadResult {
   hash: string;
