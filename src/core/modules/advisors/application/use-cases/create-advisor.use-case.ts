@@ -84,7 +84,7 @@ export class CreateAdvisorUseCase {
     this.sendEmailUseCase.execute({
       userId: created.id,
       to: created.email,
-      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+      subject: 'Bem-vindo ao Academic Ledger - Credenciais de Acesso',
       template: {
         id: EmailTemplate.USER_CREDENTIALS,
         data: {

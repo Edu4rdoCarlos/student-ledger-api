@@ -118,7 +118,7 @@ export class CreateCoordinatorUseCase {
       .execute({
         userId: coordinator.id,
         to: coordinator.email,
-        subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+        subject: 'Bem-vindo ao Academic Ledger - Credenciais de Acesso',
         template: {
           id: EmailTemplate.USER_CREDENTIALS,
           data: {

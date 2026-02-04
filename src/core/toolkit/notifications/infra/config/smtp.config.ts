@@ -30,7 +30,7 @@ export class SmtpConfigService {
       user: user!,
       password: password!,
       fromEmail: this.configService.get<string>('GOOGLE_SMTP_FROM_EMAIL', user || ''),
-      fromName: this.configService.get<string>('GOOGLE_SMTP_FROM_NAME', 'Student Ledger'),
+      fromName: this.configService.get<string>('GOOGLE_SMTP_FROM_NAME', 'Academic Ledger'),
     };
   }
 

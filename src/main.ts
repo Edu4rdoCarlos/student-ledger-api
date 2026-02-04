@@ -33,7 +33,7 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('Student Ledger API')
+    .setTitle('Academic Ledger API')
     .setDescription(`
 ## Academic Document Management API with Hyperledger Fabric
 

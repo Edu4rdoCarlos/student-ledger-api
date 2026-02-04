@@ -44,12 +44,17 @@ export class NotifyDefenseCanceledUseCase {
       .filter(Boolean)
       .join(', ');
 
+    const examBoardNames = defense.examBoard && defense.examBoard.length > 0
+      ? defense.examBoard.map(member => member.name).join(', ')
+      : '';
+
     const emailData = {
       defenseTitle: defense.title,
       defenseDate: defense.defenseDate,
       studentsNames,
       advisorName: advisor.name,
       location: defense.location,
+      examBoardNames,
     };
 
     const email = this.emailTemplateRenderer.generateTemplate(

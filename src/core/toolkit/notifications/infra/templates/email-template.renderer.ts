@@ -53,6 +53,7 @@ export class EmailTemplateRenderer {
       timeStyle: 'short',
     });
     const location = data.location ? `<li><strong>Local:</strong> ${data.location}</li>` : '';
+    const examBoard = data.examBoardNames ? `<li><strong>Banca:</strong> ${data.examBoardNames}</li>` : '';
 
     return {
       subject: `Defesa agendada: ${data.defenseTitle}`,
@@ -66,10 +67,11 @@ export class EmailTemplateRenderer {
           ${location}
           <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
+          ${examBoard}
         </ul>
         <p>Por favor, prepare-se para a defesa e certifique-se de que todos os materiais necessários estejam prontos.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -80,6 +82,7 @@ export class EmailTemplateRenderer {
       dateStyle: 'full',
       timeStyle: 'short',
     });
+    const examBoard = data.examBoardNames ? `<li><strong>Banca:</strong> ${data.examBoardNames}</li>` : '';
 
     return {
       subject: `Defesa cancelada: ${data.defenseTitle}`,
@@ -92,10 +95,11 @@ export class EmailTemplateRenderer {
           <li><strong>Data:</strong> ${defenseDate}</li>
           <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
+          ${examBoard}
         </ul>
         <p>Em caso de dúvidas, entre em contato com a coordenação.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -107,6 +111,7 @@ export class EmailTemplateRenderer {
       timeStyle: 'short',
     });
     const location = data.location ? `<li><strong>Local:</strong> ${data.location}</li>` : '';
+    const examBoard = data.examBoardNames ? `<li><strong>Banca:</strong> ${data.examBoardNames}</li>` : '';
 
     return {
       subject: `Defesa reagendada: ${data.defenseTitle}`,
@@ -120,10 +125,11 @@ export class EmailTemplateRenderer {
           ${location}
           <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
+          ${examBoard}
         </ul>
         <p>Por favor, atualize sua agenda e prepare-se para a nova data.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -137,6 +143,7 @@ export class EmailTemplateRenderer {
     const isPassed = data.result === 'APPROVED';
     const resultText = isPassed ? 'APROVADO' : 'REPROVADO';
     const resultColor = isPassed ? '#22c55e' : '#ef4444';
+    const examBoard = data.examBoardNames ? `<li><strong>Banca:</strong> ${data.examBoardNames}</li>` : '';
 
     return {
       subject: `Resultado da defesa: ${data.defenseTitle}`,
@@ -149,6 +156,7 @@ export class EmailTemplateRenderer {
           <li><strong>Data:</strong> ${defenseDate}</li>
           <li><strong>Aluno(s):</strong> ${studentsNames}</li>
           <li><strong>Orientador:</strong> ${data.advisorName}</li>
+          ${examBoard}
           <li><strong>Nota Final:</strong> ${data.finalGrade}</li>
           <li><strong>Resultado:</strong> <span style="color: ${resultColor}; font-weight: bold;">${resultText}</span></li>
         </ul>
@@ -157,7 +165,7 @@ export class EmailTemplateRenderer {
           : '<p>Infelizmente não foi atingida a nota mínima necessária. Entre em contato com a coordenação para mais informações.</p>'
         }
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -191,7 +199,7 @@ export class EmailTemplateRenderer {
 
         <p>Por favor, faça login no sistema e revise o documento para aprová-lo ou rejeitá-lo.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -212,7 +220,7 @@ export class EmailTemplateRenderer {
         ${data.comments ? `<p><strong>Comentários:</strong> ${data.comments}</p>` : ''}
         <p>Parabéns! O processo foi concluído com sucesso.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -233,7 +241,7 @@ export class EmailTemplateRenderer {
         ${data.reason ? `<p><strong>Motivo:</strong> ${data.reason}</p>` : ''}
         <p>Por favor, revise o documento e submeta novamente após as correções necessárias.</p>
         <br>
-        <p>Atenciosamente,<br>Student Ledger</p>
+        <p>Atenciosamente,<br>Academic Ledger</p>
       `,
     };
   }
@@ -291,7 +299,7 @@ export class EmailTemplateRenderer {
           <br>
           <p style="color: #6b7280; font-size: 14px;">
             Atenciosamente,<br>
-            <strong>Student Ledger</strong>
+            <strong>Academic Ledger</strong>
           </p>
         </div>
       `,
@@ -303,11 +311,11 @@ export class EmailTemplateRenderer {
     const roleLabel = this.getRoleLabel(data.role);
 
     return {
-      subject: 'Bem-vindo ao Student Ledger - Credenciais de Acesso',
+      subject: 'Bem-vindo ao Academic Ledger - Credenciais de Acesso',
       html: `
-        <h2>Bem-vindo ao Student Ledger!</h2>
+        <h2>Bem-vindo ao Academic Ledger!</h2>
         <p>Olá, ${data.name}!</p>
-        <p>Sua conta foi criada com sucesso no sistema Student Ledger.</p>
+        <p>Sua conta foi criada com sucesso no sistema Academic Ledger.</p>
 
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Suas Credenciais de Acesso</h3>
@@ -334,7 +342,7 @@ export class EmailTemplateRenderer {
 
         <p>Se você tiver alguma dúvida ou precisar de ajuda, entre em contato com o suporte.</p>
         <br>
-        <p>Atenciosamente,<br>Equipe Student Ledger</p>
+        <p>Atenciosamente,<br>Equipe Academic Ledger</p>
       `,
     };
   }

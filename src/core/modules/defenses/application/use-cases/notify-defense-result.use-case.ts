@@ -44,6 +44,10 @@ export class NotifyDefenseResultUseCase {
       .filter(Boolean)
       .join(', ');
 
+    const examBoardNames = defense.examBoard && defense.examBoard.length > 0
+      ? defense.examBoard.map(member => member.name).join(', ')
+      : '';
+
     const emailData = {
       defenseTitle: defense.title,
       defenseDate: defense.defenseDate,
@@ -51,6 +55,7 @@ export class NotifyDefenseResultUseCase {
       result: defense.result,
       studentsNames,
       advisorName: advisor.name,
+      examBoardNames,
     };
 
     const email = this.emailTemplateRenderer.generateTemplate(
@@ -76,6 +81,18 @@ export class NotifyDefenseResultUseCase {
         contextType: NotificationContextType.DEFENSE_RESULT,
         contextId: defense.id,
       });
+    }
+
+    if (defense.examBoard && defense.examBoard.length > 0) {
+      for (const member of defense.examBoard) {
+        await this.sendEmailUseCase.execute({
+          to: member.email,
+          subject: email.subject,
+          html: email.html,
+          contextType: NotificationContextType.DEFENSE_RESULT,
+          contextId: defense.id,
+        });
+      }
     }
   }
 }
